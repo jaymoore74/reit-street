@@ -1,0 +1,43 @@
+name: ops-bootstrap-db
+# One time: create the reitstreet schema and its three logins on Aurora, with passwords
+# generated on the runner and stored only in AWS Secrets Manager. Safe to re-run.
+on:
+  workflow_dispatch:
+    inputs:
+      master_secret_id:
+        description: ARN of the Aurora master user secret in Secrets Manager
+        required: true
+      cluster_endpoint:
+        description: Aurora cluster writer endpoint (xxx.cluster-yyy.REGION.rds.amazonaws.com)
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ops-db-admin
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install -q --disable-pip-version-check -c constraints.txt .
+      - name: Create schema, logins and secrets
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          MASTER_SECRET_ID: ${{ inputs.master_secret_id }}
+          CLUSTER_ENDPOINT: ${{ inputs.cluster_endpoint }}
+        run: |
+          "$RUNNER_TEMP/venv/bin/python" deploy/aws/bootstrap_db.py --region "$AWS_REGION" \
+            --master-secret-id "$MASTER_SECRET_ID" --host "$CLUSTER_ENDPOINT"
+      - if: failure()
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: failure

@@ -1,4 +1,4 @@
-# ADR 0008: IR website fetcher
+# ADR 0009: IR website fetcher
 
 Status: accepted, 2026-11-26
 

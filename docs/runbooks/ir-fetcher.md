@@ -2,7 +2,7 @@
 
 `reitstreet fetch-ir` finds supplementals on each REIT's results page and downloads the
 new ones. Scheduled by `ir_fetch.bat` at 06:00 and 15:00 on weekdays, then `dq` and
-`monitor`. Design: [ADR 0008](../adr/0008-ir-fetcher.md).
+`monitor`; in production the `ops-ir-fetch` GitHub Actions workflow does the same at 14:00 and 23:00 UTC. Design: [ADR 0009](../adr/0009-ir-fetcher.md).
 
 ## Commands
 

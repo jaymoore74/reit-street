@@ -25,6 +25,11 @@ with lineage from every number back to the page it came from.
 Next: the supplemental PDF table parser, the IR email inbox and a client API. See
 [docs/architecture.md](docs/architecture.md).
 
+## Production (AWS)
+
+Runs on the Aurora MySQL cluster with scheduled GitHub Actions on a self-hosted runner in
+the same VPC; raw files go to S3. Setup: [docs/runbooks/cloud-setup.md](docs/runbooks/cloud-setup.md).
+
 ## Quick start (Windows)
 
 Full steps: [docs/runbooks/first-run-windows.md](docs/runbooks/first-run-windows.md).
@@ -74,7 +79,7 @@ until `[sec] user_agent` in `config.ini` is set.
 - [Architecture](docs/architecture.md)
 - [Data dictionary](docs/data-dictionary.md) (generated)
 - [IR website coverage](docs/ir-coverage.md)
-- [Runbooks](docs/runbooks/): first run, daily operations, IR fetcher, SEC 403, dead letters, replay,
+- [Runbooks](docs/runbooks/): cloud setup (AWS), first run, daily operations, IR fetcher, SEC 403, dead letters, replay,
   metric mappings, archive import, backup and restore, schema changes
 - [Architecture decision records](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
@@ -86,7 +91,10 @@ src/reitstreet/       core, sources, parsers, reference, warehouse, quality, del
 tests/unit/           pure functions, no database
 tests/integration/    full pipeline against MySQL with offline SEC fixtures for 12 REITs
 config/               config.example.ini (copy to ./config.ini, which git ignores)
-scripts/windows/      scheduled task scripts
+scripts/windows/      scheduled task scripts (workstation)
+deploy/aws/           runner setup, IAM policies, database bootstrap, S3 copy
+.github/workflows/    CI and the scheduled production jobs (ops-*)
+universe/reits.csv    the REIT universe
 docs/                 architecture, data dictionary, runbooks, ADRs
 ```
 

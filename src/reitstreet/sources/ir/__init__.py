@@ -13,5 +13,5 @@ releases and presentations) from its investor relations site.
   profiles     ir_profiles.csv (versioned) -> ref_ir_profile
   expectations when each company's next supplemental is due; overdue list
   coverage     per-company coverage report
-See docs/adr/0008-ir-fetcher.md.
+See docs/adr/0009-ir-fetcher.md.
 """

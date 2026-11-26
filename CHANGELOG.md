@@ -8,6 +8,13 @@ format are the public interface.
 ## [0.3.0] - 2026-11-26
 
 ### Added
+- Production on AWS: GitHub Actions workflows for the existing Aurora MySQL cluster
+  (`ops-bootstrap-db`, `ops-migrate`, `ops-first-load`, `ops-sync`, `ops-weekly`,
+  `ops-monitor`) on a self-hosted runner in the cluster's VPC. Logins from AWS Secrets
+  Manager, raw store, logs and exports copied to S3, failures raised as GitHub issues.
+  Runbook `docs/runbooks/cloud-setup.md`, ADR 0008.
+- `[db] ssl_ca` setting: TLS with certificate and host name verification.
+- `universe/reits.csv` is now versioned in the repo; scheduled runs read it from there.
 - IR website fetcher: strategy chain (Q4 feed with a key, static HTML, headless Chromium
   as last resort) per results page, with SEC 8-K exhibits as fallback and cross-check.
 - `ref_ir_profile` loaded from a versioned `ir_profiles.csv` (189 companies, from a live
@@ -21,7 +28,7 @@ format are the public interface.
 - Overdue supplemental check (company's own lag, earnings release signal), layout-break and
   failing-page alerts, `dq` checks `freshness.supplemental_overdue` and `ops.ir_site_health`.
 - `ir-coverage` command, `ir_fetch.bat` scheduled at 06:00 and 15:00 on weekdays, runbook,
-  ADR 0008, coverage baseline.
+  ADR 0009, coverage baseline.
 
 ### Changed
 - Non-SEC requests no longer fall back to the SEC User-Agent.

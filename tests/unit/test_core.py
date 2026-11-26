@@ -32,6 +32,19 @@ def test_config_secrets_redacted() -> None:
     assert "hunter2" not in str(s.redacted())
 
 
+def test_config_tls_ca_reaches_driver(tmp_path: Path) -> None:
+    from sqlalchemy import make_url
+    from sqlalchemy.dialects.mysql.pymysql import MySQLDialect_pymysql
+
+    ca = tmp_path / "global bundle.pem"
+    s = cfgmod.load("missing.ini", environ={"REITSTREET_DB_SSL_CA": str(ca), "REITSTREET_DB_HOST": "db.example"})
+    _, kw = MySQLDialect_pymysql().create_connect_args(make_url(s.sqlalchemy_url()))
+    assert kw["ssl"]["ca"] == str(ca)
+    assert kw["ssl"]["check_hostname"] is True
+    plain = cfgmod.load("missing.ini", environ={})
+    assert "ssl" not in MySQLDialect_pymysql().create_connect_args(make_url(plain.sqlalchemy_url()))[1]
+
+
 @pytest.mark.parametrize("ua", ["", cfgmod.UA_PLACEHOLDER, "Jane jane@example.com", "Jane Smith"])
 def test_user_agent_must_be_real(ua: str) -> None:
     s = cfgmod.load("missing.ini", environ={"REITSTREET_SEC_USER_AGENT": ua})

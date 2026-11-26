@@ -1,0 +1,59 @@
+name: ops-weekly
+# Sunday full refresh: universe, forced XBRL reload, IR fetch, parse, checks, client export.
+# 13:30 UTC = 5:30 AM Pacific. Kill switch: repository variable REITSTREET_SCHEDULES = off.
+on:
+  schedule:
+    - cron: "30 13 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ops-weekly
+  cancel-in-progress: false
+
+env:
+  BUCKET: ${{ vars.REITSTREET_S3_BUCKET }}
+
+jobs:
+  weekly:
+    if: github.event_name == 'workflow_dispatch' || vars.REITSTREET_SCHEDULES != 'off'
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 600
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/reitstreet-env
+        with:
+          role: loader
+          aws-region: ${{ vars.AWS_REGION }}
+          sec-user-agent: ${{ vars.REITSTREET_SEC_USER_AGENT }}
+      - id: ready
+        run: python deploy/aws/ready.py
+      - if: steps.ready.outputs.ready == 'true'
+        run: reitstreet universe
+      - name: SEC sync, forced
+        if: steps.ready.outputs.ready == 'true'
+        run: reitstreet sec-sync --force
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet fetch-ir
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet parse-docs
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet dq
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet export
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet monitor
+      - name: Copy raw store, logs and exports to S3
+        if: always() && steps.ready.outputs.ready == 'true'
+        run: deploy/aws/s3-sync.sh raw logs exports
+      - if: failure()
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: failure
+      - if: success() && steps.ready.outputs.ready == 'true'
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: success
