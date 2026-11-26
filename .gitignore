@@ -1,0 +1,30 @@
+# secrets and local config: never commit
+config.ini
+*.env
+.env*
+!config/*.example.ini
+
+# data: raw objects, downloads, exports, logs live outside git
+data/
+exports/
+*.log
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

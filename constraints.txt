@@ -1,0 +1,12 @@
+# Exact versions CI and production installs use:  pip install -c constraints.txt -e .[dev]
+# Bump deliberately (one PR, CI green), never implicitly.
+SQLAlchemy==2.1.9
+alembic==1.20.1
+PyMySQL==1.2.4
+cryptography==50.0.1
+requests==2.34.2
+pytest==9.1.1
+ruff==0.17.6
+mypy==2.3.1
+types-PyMySQL==1.2.4.20261122
+types-requests==2.33.0.20261030

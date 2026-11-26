@@ -1,0 +1,11 @@
+# Architecture decision records
+
+One file per decision. To change a decision, add a new ADR that supersedes the old one.
+
+- [0001](0001-layered-single-schema.md): Layered tables in one MySQL schema
+- [0002](0002-alembic-raw-sql.md): Alembic migrations with raw SQL, no ORM
+- [0003](0003-content-addressed-raw-store.md): Content-addressed, immutable raw store
+- [0004](0004-bitemporal-metrics.md): Bitemporal metric values
+- [0005](0005-mappings-as-data.md): Metric mappings are data, not code
+- [0006](0006-ingestion-roadmap.md): Ingestion order: SEC first, then supplementals, IR sites, inbox
+- [0007](0007-mysql.md): MySQL 8 as the warehouse
