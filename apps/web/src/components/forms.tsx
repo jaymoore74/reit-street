@@ -4,6 +4,8 @@ import { useActionState } from "react";
 import type { FormState } from "@/app/actions";
 import {
   changePasswordAction,
+  confirmNewsletterAction,
+  forgotPasswordAction,
   newsletterAction,
   setPasswordAction,
   signInAction,
@@ -161,6 +163,37 @@ export function SignOutOthersForm() {
       <Status state={state} />
       <button type="submit" className="secondary" disabled={pending}>
         Sign out my other devices
+      </button>
+    </form>
+  );
+}
+
+export function ForgotPasswordForm() {
+  const [state, action, pending] = useActionState(forgotPasswordAction, {});
+  if (state.message) return <Status state={state} />;
+  return (
+    <form action={action} className="stack">
+      <label>
+        Email
+        <input type="email" name="email" autoComplete="username" required maxLength={254} />
+      </label>
+      <Status state={state} />
+      <button type="submit" disabled={pending}>
+        {pending ? "Sending..." : "Send me a reset link"}
+      </button>
+    </form>
+  );
+}
+
+export function ConfirmNewsletterForm({ token }: { token: string }) {
+  const [state, action, pending] = useActionState(confirmNewsletterAction, {});
+  if (state.message) return <Status state={state} />;
+  return (
+    <form action={action} className="stack">
+      <input type="hidden" name="token" value={token} />
+      <Status state={state} />
+      <button type="submit" disabled={pending}>
+        {pending ? "Confirming..." : "Confirm"}
       </button>
     </form>
   );

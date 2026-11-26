@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { changePassword, setPasswordWithToken, signIn } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { publicSignup, setMySubscriptions } from "@/lib/newsletter";
+import { emailEnabled } from "@/lib/email";
+import { requestPasswordReset } from "@/lib/forgot";
+import { confirmSubscription, publicSignup, setMySubscriptions } from "@/lib/newsletter";
 import { PASSWORD_MAX } from "@/lib/password";
 import { clientInfo } from "@/lib/request";
 import { currentUser, revokeSessions } from "@/lib/session";
@@ -54,7 +56,24 @@ export async function newsletterAction(_: FormState, form: FormData): Promise<Fo
   const result = await publicSignup(email.data, list.data, await clientInfo());
   if (result === "throttled") return { error: "Too many sign-ups from your network. Try again later." };
   if (result === "no_list") return { error: "That newsletter isn't available." };
-  return { message: "Thanks. We've saved your sign-up; you'll get an email to confirm it before anything is sent." };
+  return {
+    message: emailEnabled()
+      ? "Thanks. Check your inbox for a link to confirm your sign-up."
+      : "Thanks. We've saved your sign-up; you'll get an email to confirm it before anything is sent.",
+  };
+}
+
+export async function confirmNewsletterAction(_: FormState, form: FormData): Promise<FormState> {
+  const ok = await confirmSubscription(str(form, "token", 200), await clientInfo());
+  return ok ? { message: "Confirmed." } : { error: "This link has expired or was already used." };
+}
+
+export async function forgotPasswordAction(_: FormState, form: FormData): Promise<FormState> {
+  if (!emailEnabled()) return { error: "Ask your account contact for a reset link." };
+  const email = emailSchema.safeParse(str(form, "email", 300));
+  if (!email.success) return { error: "Enter a valid email address." };
+  await requestPasswordReset(email.data, await clientInfo());
+  return { message: "If that address has an account, we've sent it a link to reset the password. The link works for an hour." };
 }
 
 export async function changePasswordAction(_: FormState, form: FormData): Promise<FormState> {

@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { siteName } from "@/lib/brand";
 import { env } from "@/lib/env";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: { default: "REIT Street", template: "%s | REIT Street" },
-  description: "REIT research and data.",
-  robots: { index: false, follow: false }, // not public yet
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const name = siteName();
+  return {
+    title: { default: name, template: `%s | ${name}` },
+    description: "REIT research and data.", // PLACEHOLDER copy, see docs/web-copy-review.md
+    robots: { index: false, follow: false }, // not public yet
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   await headers(); // every page renders per request, so each gets its own CSP nonce

@@ -21,12 +21,18 @@ reitstreet web --by "Jason" grant --plan core --kind research --value core
 reitstreet web --by "Jason" org-create --slug acme-capital --name "Acme Capital" --plan core --seats 5 --contract-end 2027-12-31
 
 # 3. a person at the firm: prints a single-use link valid 7 days
-reitstreet web --by "Jason" user-invite --org acme-capital --email ann@acme.com --name "Ann Lee" --base-url https://YOUR-SITE
+reitstreet web --by "Jason" user-invite --org acme-capital --email ann@acme.com --name "Ann Lee"
 ```
 
-Send the printed link to the person yourself (there is no email service yet). They open
-it, choose a password and are signed in. Inviting the same person again replaces the old
-link and takes no extra seat.
+Links point at the site address in `REITSTREET_WEB_BASE_URL` or `[web] base_url`
+(e.g. `https://research.jwalteranalytics.com`); `--base-url` overrides it for one command,
+and with neither set they point at `http://localhost:3000`.
+
+Send the printed link to the person yourself. Once email is on (`[web] email_provider =
+ses`, see [web hosting](web-hosting.md#email-optional-amazon-ses)), add `--email-link` and
+the command emails it instead of printing it; with email off, `--email-link` refuses before
+making a link. They open it, choose a password and are signed in. Inviting the same person
+again replaces the old link and takes no extra seat.
 
 ## Grants
 
@@ -53,7 +59,7 @@ link and takes no extra seat.
 
 | Task | Command |
 |---|---|
-| forgotten password | `web user-reset --email ann@acme.com --base-url https://YOUR-SITE` (link valid 1 day) |
+| forgotten password | `web user-reset --email ann@acme.com` (link valid 1 day; `--email-link` to email it). With email on, clients can also use "Forgot password" on the sign-in page (link valid 60 minutes) |
 | someone leaves | `web user-disable --email ann@acme.com` (signs them out at once, frees the seat) |
 | bring back | `web user-enable --email ann@acme.com`, then `user-reset` |
 | firm stops paying | `web org-set --slug acme-capital --status suspended` (all its users signed out) |

@@ -196,3 +196,17 @@ def test_web_cli(app_db: Db, tmp_path: Path, capsys: pytest.CaptureFixture[str])
     assert cli("web", "--by", "test", "list") == 0
     listing = json.loads(capsys.readouterr().out)
     assert [o["slug"] for o in listing["organizations"]] == ["our-firm"]
+
+
+def test_web_cli_base_url_setting_and_email_off(
+    app_db: Db, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli("web", "--by", "t", "org-create", "--slug", "acme-co", "--name", "Acme", "--plan", "staff") == 0
+    monkeypatch.setenv("REITSTREET_WEB_BASE_URL", "https://research.test.example")
+    capsys.readouterr()
+    assert cli("web", "--by", "t", "user-invite", "--org", "acme-co", "--email", "ann@acme.example") == 0
+    assert json.loads(capsys.readouterr().out)["link"].startswith("https://research.test.example/invite/")
+    # email is off by default: refused before any new link is made
+    before = app_db.scalar("SELECT COUNT(*) FROM app_user_token")
+    assert cli("web", "--by", "t", "user-reset", "--email", "ann@acme.example", "--email-link") != 0
+    assert app_db.scalar("SELECT COUNT(*) FROM app_user_token") == before

@@ -68,6 +68,11 @@ class Settings:
     alerts_to: str = ""
     alerts_webhook_url: str = ""
     alerts_min_severity: str = "warn"
+    # [web] client website (ADR 0013)
+    web_base_url: str = ""  # e.g. https://research.jwalteranalytics.com; used in invite and reset links
+    web_email_provider: str = "none"  # none: print links for staff to send | ses: Amazon SES
+    web_email_from: str = ""  # sender address, on a domain verified in SES
+    web_email_region: str = "us-east-2"
     # [monitor]
     monitor_max_hours_since_sync: float = 30.0
     monitor_stale_heartbeat_minutes: float = 30.0

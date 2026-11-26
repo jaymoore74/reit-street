@@ -1,6 +1,6 @@
 # Data dictionary
 
-Generated from the database schema at Alembic revision `a0001` by `reitstreet db-docs --target app`. Do not edit by hand: change the COMMENT in a migration and regenerate.
+Generated from the database schema at Alembic revision `a0002` by `reitstreet db-docs --target app`. Do not edit by hand: change the COMMENT in a migration and regenerate.
 
 ## app_* Client web application: organizations, entitlements, users, sessions, research, audit (ADR 0013)
 
@@ -109,7 +109,7 @@ Table. Newsletter sign-ups with the consent given. No email is sent until a mail
 | `status` | enum('pending','confirmed','unsubscribed') | NO |  | pending until the email address is confirmed (double opt-in) |
 | `source` | enum('public_form','account','admin') | NO |  | Where the request came from |
 | `consent_text` | varchar(1024) | NO |  | Exact consent wording the person agreed to |
-| `confirm_token_hash` | char(64) | YES |  | SHA-256 of the confirmation token sent by email |
+| `confirm_token_hash` | char(64) | YES | MUL | SHA-256 of the confirmation token sent by email |
 | `requested_at` | datetime(6) | NO |  | Latest sign-up request (UTC) |
 | `confirmed_at` | datetime(6) | YES |  | Confirmation time (UTC) |
 | `unsubscribed_at` | datetime(6) | YES |  | Unsubscribe time (UTC) |

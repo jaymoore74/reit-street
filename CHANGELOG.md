@@ -20,22 +20,39 @@ format are the public interface.
     `filings`, with filters and an as-of date. Every attempt is logged with rows, bytes and
     SHA-256; Excel and Parquet files carry the download id.
   - Newsletter lists and subscriptions (public sign-up stays pending until confirmed).
+  - Email behind one setting (`RS_EMAIL_PROVIDER`: none, ses, file for development):
+    newsletter confirmation links with a Confirm page, self-service "Forgot password" with
+    per-IP and per-account limits. Off by default.
   - Content-Security-Policy with a per-request nonce, security headers, Origin checks.
-  - Dockerfile (standalone server, non-root), unit tests, 30-check end-to-end run.
+  - Site name as a setting (`RS_SITE_NAME`); all client-facing wording listed for review in
+    `docs/web-copy-review.md`.
+  - Dockerfile (standalone server, non-root, RDS CA bundle), 38 unit tests, end-to-end run
+    of 31 checks (38 with a development mailbox).
+- Hosting as code, nothing created: CloudFormation for option A (`deploy/aws/web/web-fargate.yaml`,
+  Fargate behind a load balancer with ACM) and option B (`web-ec2.yaml`, one instance with
+  Caddy), test domain `research.jwalteranalytics.com` as the one `DomainName` parameter.
+  Manual `ops-web-image` workflow builds the image on the runner and pushes it to ECR;
+  `deploy/aws/iam/web-image-policy.json`. Runbook `docs/runbooks/web-hosting.md`.
 - Website schema `reitstreet_app` with its own Alembic history (`migrations_app`,
   revision `a0001`), `[db] app_name` setting, `migrate --target warehouse|app|all`,
   `db-docs --target app`, generated `docs/data-dictionary-app.md`.
 - `reitstreet web` admin commands: plan-create, grant, revoke, org-create, org-set,
   user-invite, user-reset, user-disable, user-enable, article, list. Runbook
-  `docs/runbooks/web-admin.md`.
+  `docs/runbooks/web-admin.md`. Links use `[web] base_url`; `--email-link` sends them
+  through Amazon SES when `[web] email_provider = ses` (`src/reitstreet/web/mail.py`).
+- App schema revision `a0002`: index on the newsletter confirmation token.
 - View `dl_metric_definitions` (revision `0006`, after 0005).
 - `scripts/dev/seed_web.py`: development databases from the synthetic fixtures.
-- CI: website lint, types, tests, build, end-to-end run against MySQL, image build.
+- CI: website lint, types, tests, build, end-to-end run against MySQL with a file
+  mailbox, image build.
+- Dev dependency PyYAML (template tests).
 
 ### Changed
 - `deploy/aws/bootstrap_db.py` and ops-bootstrap-db create the second schema and a fourth
   login, `rs_web`; `rs_loader` can write the website schema; `rs_reader` cannot see it.
 - ops-migrate takes a `target` input (default `all`); ops-first-load migrates both schemas.
+- `runner-setup.sh` installs Docker and a 2 GB swap file so the runner can build the
+  website image.
 
 ## [0.4.0] - 2026-11-26
 

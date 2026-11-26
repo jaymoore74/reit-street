@@ -46,6 +46,20 @@ one public interface). The site should read those views and nothing else of the 
   `reitstreet web user-invite`, which prints a single-use link (7 days); there is no
   public sign-up. Password reset links come from `user-reset` the same way. Until an email
   service is approved, staff send these links by hand.
+
+### Email
+- One setting turns it on: `RS_EMAIL_PROVIDER` on the site and `[web] email_provider` for
+  the staff commands, `none` (default) or `ses`. Amazon SES in his account, called with the
+  server's AWS role (no keys); the site's role may send only from `RS_EMAIL_FROM`. A `file`
+  provider writes emails to a folder for development and CI only.
+- With email on: public newsletter sign-ups get a confirmation link (7 days; the link opens
+  a page with a Confirm button, so mail scanners that open links confirm nothing), clients
+  get "Forgot password" (5 requests per IP per hour, one link per account per 10 minutes,
+  60 minutes valid, the same answer for unknown addresses), and staff commands can email
+  links with `--email-link`. Sending happens after the response, so its timing reveals
+  nothing; failures are logged without the message.
+- App schema revision `a0002` indexes the confirmation token.
+- Wording of every email and page is placeholder copy listed in `docs/web-copy-review.md`.
 - Passwords: scrypt (N=2^15, r=8, p=3), 12 to 256 characters, rehashed when the cost
   changes. Unknown emails take the same time as wrong passwords.
 - Sessions live in the database (only a SHA-256 of the token is stored), cookie
@@ -80,14 +94,16 @@ one public interface). The site should read those views and nothing else of the 
 - CSV cells that start with `= + - @` are neutralized; decimals are exact (Parquet
   DECIMAL(28,6)).
 
-### Hosting (proposed; needs his yes before anything is created)
-In his AWS account, us-east-2, next to Aurora. Prices below are us-east-1 list prices read
-on 2026-11-26; Ohio is usually the same for these services, confirm before building.
+### Hosting (written as code; needs his yes before anything is created)
+In his AWS account, us-east-2, next to Aurora. Both options are CloudFormation templates in
+`deploy/aws/web/` with the same parameters, checked by cfn-lint and unit tests; steps are in
+`docs/runbooks/web-hosting.md`. Prices below are us-east-1 list prices read on 2026-11-26;
+Ohio is usually the same for these services, confirm before building.
 
 | Option | What | $/month |
 |---|---|---:|
-| **A (recommended)** | ECS Fargate (ARM, 0.5 vCPU, 1 GB, one task) behind an Application Load Balancer with a free ACM certificate, task in the Aurora VPC with a public IP that only the ALB can reach | about 40 to 48 |
-| B | One more t4g.small EC2 instance running the container behind Caddy (automatic TLS) | about 16 |
+| **A (recommended)** `web-fargate.yaml` | ECS Fargate (ARM, 0.5 vCPU, 1 GB, one task) behind an Application Load Balancer with a free ACM certificate, task in the Aurora VPC with a public IP that only the ALB can reach | about 40 to 48 |
+| B `web-ec2.yaml` | One t4g.small EC2 instance running the container behind Caddy (Let's Encrypt certificate), Elastic IP, Session Manager instead of SSH | about 16 |
 
 Option A breakdown: Fargate 14.42, ALB 16.43 plus about 2 to 6 for load units, three
 public IPv4 addresses 10.95 (two for the ALB, one for the task), logs and secrets about 2.
@@ -95,20 +111,32 @@ Avoiding a NAT gateway (32.85 plus data) is why the task gets a public IP. App R
 closed to new customers, so it is not an option. Option B is cheaper but is a server to
 patch; A has no servers and adds a second task for zero-downtime deploys at about 15 more.
 
-The image is `apps/web/Dockerfile` (Next standalone output, non-root, Node 22). The
-database password reaches the task from Secrets Manager, never from the repo.
+- **Domain**: the stack parameter `DomainName` is the only place it is set; it becomes
+  `RS_PUBLIC_BASE_URL` and the certificate. The test site is
+  `research.jwalteranalytics.com` (`EnvName=staging`), a name under a domain he owns whose
+  mail runs on Google Workspace: the site adds only a `research` record (and ACM or SES
+  validation CNAMEs), never MX, SPF or root records. The business site is a second stack
+  (`EnvName=production`) on its own domain once chosen.
+- **Image**: `apps/web/Dockerfile` (Next standalone output, non-root, Node 22, the RDS CA
+  bundle). The manual `ops-web-image` workflow builds it on the ARM runner (Docker and a
+  swap file added to `runner-setup.sh`) and pushes it to an immutable ECR repository the
+  stack creates, tagged with the commit SHA. Deploying is changing the tag; nothing
+  deploys on push.
+- **Secrets**: the `rs_web` login reaches the task from the `reitstreet/db/web` secret
+  (ECS secrets, or a root-only file written at each start on option B), never from the
+  repo, the template or user data. The stacks add one database rule: 3306 from the site's
+  security group.
+- **Safe start**: the service starts at 0 tasks (A), email off and the sample-data banner on.
 
 ### Steps that need his yes
-1. A domain name (registrar and about $15 a year) and a Route 53 hosted zone ($0.50).
-   reitnav.com has been suggested; it is not bought or confirmed. Nothing in the code
-   names a domain: the site's address is the one setting `RS_PUBLIC_BASE_URL`, and the
-   admin commands take `--base-url` for the links they print.
-2. Creating the AWS resources for option A or B, and re-running ops-bootstrap-db to
+1. Creating the AWS resources for option A or B, and re-running ops-bootstrap-db to
    create `rs_web` (safe to re-run; it only adds the login and grants).
-3. An email service for invites, password resets and newsletters (Amazon SES is about
-   $0.10 per 1,000 emails and needs a production access request).
+2. The DNS records for `research.jwalteranalytics.com` at that domain's DNS host, and
+   later a domain for the business (registrar about $15 a year).
+3. Amazon SES for email: verifying the domain (three DKIM CNAMEs) and the production
+   access request. About $0.10 per 1,000 emails.
 4. Two-factor or SSO vendor, if wanted.
-5. Real pricing, plan names and the public page copy (all placeholders today).
+5. Real pricing, plan names and all wording in `docs/web-copy-review.md`.
 
 ## Consequences
 - The site runs today only on a developer machine against a database seeded from
@@ -117,5 +145,5 @@ database password reaches the task from Secrets Manager, never from the repo.
 - Staff manage everything with `reitstreet web ...` commands; an admin screen can come
   later on the same tables.
 - Adding a dataset is a `dl_*` view, a spec in `src/lib/datasets.ts` and a grant value.
-- CI runs lint, types, 35 unit tests, a production build and a 30-check end-to-end run of
+- CI runs lint, types, 38 unit tests, a production build and a 38-check end-to-end run of
   the built server against MySQL on every push.

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { siteName } from "@/lib/brand";
 import { lists } from "@/lib/newsletter";
 import { currentUser } from "@/lib/session";
 import { NewsletterForm } from "@/components/forms";
@@ -9,7 +10,7 @@ export default async function Home() {
     <>
       <header className="topbar">
         <Link href="/" className="brand">
-          REIT Street
+          {siteName()}
         </Link>
         <span className="spacer" />
         <Link href={user ? "/app" : "/login"} className="button">
@@ -19,7 +20,7 @@ export default async function Home() {
       <main>
         <div className="card">
           <h1>REIT research and data</h1>
-          {/* Placeholder copy. Positioning, pricing and marketing text come from the business plan. */}
+          {/* PLACEHOLDER copy (docs/web-copy-review.md): positioning and marketing text come from the business plan. */}
           <p className="muted">
             Placeholder: company-level and property-level data for US REITs, from SEC filings and company
             supplementals, with research and downloads for clients.

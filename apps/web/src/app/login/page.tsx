@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/forms";
+import { siteName } from "@/lib/brand";
+import { emailEnabled } from "@/lib/email";
 import { currentUser } from "@/lib/session";
 import { safeNext } from "../actions";
 
@@ -14,14 +16,18 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="narrow">
       <p>
         <Link href="/" className="brand">
-          REIT Street
+          {siteName()}
         </Link>
       </p>
       <div className="card">
         <h1>Client sign in</h1>
         <LoginForm next={next} />
         <p className="muted small" style={{ marginTop: 12 }}>
-          Forgot your password? Ask your account contact for a reset link.
+          {emailEnabled() ? (
+            <Link href="/forgot">Forgot your password?</Link>
+          ) : (
+            "Forgot your password? Ask your account contact for a reset link."
+          )}
         </p>
       </div>
     </main>

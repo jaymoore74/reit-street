@@ -923,14 +923,29 @@ def cmd_web(app: App) -> int:
             )
         }
     elif act in ("user-invite", "user-reset"):
+        from .web import mail
+
+        base_url = a.base_url or app.s.web_base_url or "http://localhost:3000"
+        if a.email_link:
+            # refuse before a link exists, so a missing setting never leaves an unsent link behind
+            mail.check_settings(app.s)
+            if app.s.web_email_provider == "none":
+                raise ConfigError("--email-link needs [web] email_provider = ses; without it, send the printed link")
         if act == "user-invite":
             link = admin.user_invite(
-                db, a.org, a.email, name=a.name, role=a.role, days=a.days, base_url=a.base_url, by=by
+                db, a.org, a.email, name=a.name, role=a.role, days=a.days, base_url=base_url, by=by
             )
         else:
-            link = admin.user_reset(db, a.email, days=a.days, base_url=a.base_url, by=by)
-        # the link is a credential: it goes to the operator's terminal only, never to logs
-        out = {"email": link.email, "purpose": link.purpose, "expires_at": str(link.expires_at), "link": link.url}
+            link = admin.user_reset(db, a.email, days=a.days, base_url=base_url, by=by)
+        out = {"email": link.email, "purpose": link.purpose, "expires_at": str(link.expires_at)}
+        if a.email_link:
+            # the link goes in the email only; a failed send leaves a link nobody has, and running
+            # the command again replaces it
+            out["emailed"] = True
+            out["ses_message_id"] = mail.send(app.s, mail.compose(link))
+        else:
+            # the link is a credential: it goes to the operator's terminal only, never to logs
+            out["link"] = link.url
     elif act in ("user-disable", "user-enable"):
         out = {"updated": admin.user_set_status(db, a.email, "disabled" if act == "user-disable" else "active")}
     elif act == "article":
@@ -1153,11 +1168,13 @@ def build_parser() -> argparse.ArgumentParser:
     ui.add_argument("--name")
     ui.add_argument("--role", default="member", choices=["member", "org_admin", "staff", "staff_admin"])
     ui.add_argument("--days", type=float, default=7)
-    ui.add_argument("--base-url", default="http://localhost:3000")
+    ui.add_argument("--base-url", help="site address for the link (default: [web] base_url)")
+    ui.add_argument("--email-link", action="store_true", help="email the link with SES instead of printing it")
     ur = wsp.add_parser("user-reset", help="print a single-use password reset link")
     ur.add_argument("--email", required=True)
     ur.add_argument("--days", type=float, default=1)
-    ur.add_argument("--base-url", default="http://localhost:3000")
+    ur.add_argument("--base-url", help="site address for the link (default: [web] base_url)")
+    ur.add_argument("--email-link", action="store_true", help="email the link with SES instead of printing it")
     for name_ in ("user-disable", "user-enable"):
         ud = wsp.add_parser(name_, help=f"{name_.split('-')[1]} a user (disable also signs them out)")
         ud.add_argument("--email", required=True)

@@ -11,6 +11,8 @@ export type AuditType =
   | "password_changed"
   | "sessions_revoked"
   | "newsletter_signup"
+  | "newsletter_confirm"
+  | "password_reset_request"
   | "newsletter_change"
   | "download_denied"
   | "research_view";

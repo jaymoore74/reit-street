@@ -121,11 +121,15 @@ jobs:
           RS_DB_APP: rs_web_app_dev
           RS_PUBLIC_BASE_URL: http://localhost:3000
           RS_SAMPLE_DATA: "1"
+          # emails go to files in a folder, so the smoke run can open the links
+          RS_EMAIL_PROVIDER: file
+          RS_EMAIL_DIR: ${{ runner.temp }}/mail
         run: |
+          mkdir -p "$RS_EMAIL_DIR"
           nohup node .next/standalone/server.js > "$RUNNER_TEMP/web.log" 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:3000/api/health && exit 0; sleep 1; done
           cat "$RUNNER_TEMP/web.log"; exit 1
-      - run: node tests/e2e/smoke.mjs http://localhost:3000 "$RUNNER_TEMP/links.json"
+      - run: node tests/e2e/smoke.mjs http://localhost:3000 "$RUNNER_TEMP/links.json" "$RUNNER_TEMP/mail"
       - if: failure()
         run: cat "$RUNNER_TEMP/web.log" || true
 

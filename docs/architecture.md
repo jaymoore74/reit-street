@@ -152,3 +152,5 @@ grants, sessions, research, newsletters, download and audit logs) in a second sc
 `reitstreet_app`, through its own login `rs_web`. Every page and file is limited by the
 client firm's grants on the server. Details: [ADR 0013](adr/0013-client-website.md),
 [apps/web/README.md](../apps/web/README.md), [web admin runbook](runbooks/web-admin.md).
+Hosting is written as CloudFormation in `deploy/aws/web/` (option A Fargate, option B one
+instance) and is not created yet: [web hosting runbook](runbooks/web-hosting.md).

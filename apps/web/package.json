@@ -16,6 +16,7 @@
     "test:e2e": "node tests/e2e/smoke.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "3.1166.0",
     "exceljs": "4.4.0",
     "hyparquet-writer": "0.18.0",
     "mysql2": "3.24.6",

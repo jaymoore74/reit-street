@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { siteName } from "@/lib/brand";
 import { requireUser } from "@/lib/session";
 
 /** Every page under /app needs a signed-in user; each page also checks entitlements for its own data. */
@@ -9,7 +10,7 @@ export default async function ClientLayout({ children }: { children: React.React
     <>
       <header className="topbar">
         <Link href="/app" className="brand">
-          REIT Street
+          {siteName()}
         </Link>
         <nav className="nav" aria-label="Main">
           <Link href="/app/research">Research</Link>

@@ -15,4 +15,6 @@ pytest==9.1.1
 ruff==0.17.6
 mypy==2.3.1
 types-PyMySQL==1.2.4.20261122
+PyYAML==6.0.3
+types-PyYAML==6.0.12.20261030
 types-requests==2.33.0.20261030

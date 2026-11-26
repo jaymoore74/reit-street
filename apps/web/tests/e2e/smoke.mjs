@@ -2,7 +2,10 @@
 // (scripts/dev/seed_web.py). Uses only fetch: forms are posted the way a browser without
 // JavaScript posts them, so this also proves the pages work without JavaScript.
 //
-//   node tests/e2e/smoke.mjs http://localhost:3000 path/to/links.json
+//   node tests/e2e/smoke.mjs http://localhost:3000 path/to/links.json [mail-dir]
+//
+// With mail-dir (the site started with RS_EMAIL_PROVIDER=file and RS_EMAIL_DIR=mail-dir) it
+// also tests the newsletter confirmation and forgot-password emails.
 //
 // Exits non-zero on the first failed check.
 import { readFileSync } from "node:fs";
@@ -152,7 +155,56 @@ check("wrong password refused", r.status === 200 && (await r.text()).includes("d
 
 // public newsletter form
 r = await stranger.submitForm("/", { email: "reader@demo.invalid", consent: "yes" });
-check("public newsletter sign-up saved", r.status === 200 && (await r.text()).includes("saved your sign-up"));
+html = await r.text();
+check("public newsletter sign-up saved", r.status === 200 && /saved your sign-up|Check your inbox/.test(html));
+
+// email: with a development mailbox (RS_EMAIL_PROVIDER=file) test the flows; without one, check they're off
+const mailDir = process.argv[4];
+if (!mailDir) {
+  r = await stranger.get("/forgot");
+  check("forgot password is staff-only while email is off", (await r.text()).includes("Ask your account contact"));
+} else {
+  const { readdirSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const mailTo = async (to, pattern) => {
+    for (let i = 0; i < 50; i++) {
+      for (const f of readdirSync(mailDir).sort().reverse()) {
+        const m = JSON.parse(readFileSync(join(mailDir, f), "utf8"));
+        const link = m.to === to ? m.text.match(pattern)?.[0] : undefined;
+        if (link) return link;
+      }
+      await new Promise((ok) => setTimeout(ok, 100));
+    }
+    return undefined;
+  };
+  const mailCount = () => readdirSync(mailDir).length;
+
+  const confirmLink = await mailTo("reader@demo.invalid", /https?:\/\/\S+\/newsletter\/confirm\/[A-Za-z0-9_-]+/);
+  check("newsletter confirmation emailed", Boolean(confirmLink));
+  const confirmPath = new URL(confirmLink ?? base).pathname;
+  r = await stranger.get(confirmPath);
+  check("opening the link alone confirms nothing", (await r.text()).includes("Confirm your sign-up"));
+  r = await stranger.submitForm(confirmPath, {});
+  check("newsletter confirmed by pressing Confirm", (await r.text()).includes("on the list for"));
+  r = await stranger.get(confirmPath);
+  html = await r.text();
+  check("used link shows confirmed, offers no second confirm", html.includes("on the list for") && !html.includes("$ACTION_"));
+
+  const before = mailCount();
+  r = await stranger.submitForm("/forgot", { email: "nobody@demo.invalid" });
+  const unknownReply = await r.text();
+  r = await stranger.submitForm("/forgot", { email: "client@demo.invalid" });
+  const knownReply = await r.text();
+  const same = "If that address has an account";
+  check("forgot password answers the same for unknown addresses", unknownReply.includes(same) && knownReply.includes(same));
+  const resetLink = await mailTo("client@demo.invalid", /https?:\/\/\S+\/reset\/[A-Za-z0-9_-]+/);
+  check("reset link emailed to the account only", Boolean(resetLink) && mailCount() === before + 1);
+  const newPassword = "another long passphrase 77";
+  r = await stranger.submitForm(new URL(resetLink ?? base).pathname, { password: newPassword, confirm: newPassword });
+  check("password reset from the emailed link", r.status === 303 && stranger.jar.has("rs_session"));
+  r = await new Browser().submitForm("/login", { email: "client@demo.invalid", password: newPassword });
+  check("new password signs in", r.status === 303);
+}
 
 console.log(`\n${checks - failures}/${checks} checks passed`);
 process.exit(failures ? 1 : 0);
