@@ -6,7 +6,7 @@ format are the public interface.
 ## [Unreleased]
 
 ### Added
-- Landing page for jwalteranalytics.com in `apps/landing` (static HTML, no tracking,
+- Landing page for jwalteranalytics.com (J. Walter Analytics) in `apps/landing` (static HTML, no tracking,
   Netlify config with security headers). Not deployed. Steps in
   `docs/runbooks/landing-site.md`; wording for review in `docs/landing-copy-review.md`.
 
