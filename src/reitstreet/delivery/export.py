@@ -31,7 +31,16 @@ VIEWS = {
     "metrics_history": "dl_metrics_history",
     "filings": "dl_filings",
     "documents": "dl_documents",
+    "metric_catalog": "dl_metric_catalog",
+    "company_profile": "dl_company_profile",
+    "property_metrics": "dl_property_metrics",
+    "debt_maturities": "dl_debt_maturities",
+    "debt_instruments": "dl_debt_instruments",
+    "lease_expirations": "dl_lease_expirations",
+    "top_tenants": "dl_top_tenants",
+    "development_pipeline": "dl_development_pipeline",
 }
+NO_TICKER = {"metric_catalog"}
 
 POINT_IN_TIME_SQL = """
 SELECT c.ticker, c.cik, m.metric_code, m.name AS metric_name, m.category, v.period_type, v.period_start,
@@ -57,11 +66,11 @@ def _filters(
 ) -> tuple[list[str], dict[str, Any]]:
     where: list[str] = []
     params: dict[str, Any] = {}
-    if tickers:
+    if tickers and name not in NO_TICKER:
         c, p = in_clause("tk", tickers)
         where.append(f"{prefix}ticker IN {c}")
         params.update(p)
-    if metrics and name.startswith("metrics"):
+    if metrics and (name.startswith("metrics") or name in ("company_profile", "property_metrics", "metric_catalog")):
         c, p = in_clause("mc", metrics)
         where.append(f"{prefix.replace('c.', 'm.')}metric_code IN {c}")
         params.update(p)

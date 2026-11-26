@@ -592,6 +592,59 @@ def cmd_dead_letter(app: App) -> int:
     return EXIT_OK if n else EXIT_RUN
 
 
+def cmd_parse_eval(app: App) -> int:
+    """Parser quality on a folder of PDFs, no database or network needed."""
+    from .parsers.pdf.evaluate import evaluate_folder, write_results
+
+    a = app.a
+    folder = Path(a.folder)
+    if not folder.is_dir():
+        print(f"not a folder: {folder}", file=sys.stderr)
+        return EXIT_CONFIG
+    universe = Path(a.universe) if a.universe else app.s.universe_csv
+    results, summary = evaluate_folder(folder, universe, a.min_confidence, a.limit)
+    out = Path(a.out) if a.out else app.s.data_dir / "parse-eval" / "parse_eval.csv"
+    write_results(results, summary, out)
+    for r in results:
+        core = f"core {r.core_found}/{r.core_expected}" if r.core_expected else "core n/a"
+        print(
+            f"{r.status:<9} {r.ticker or '?':<6} {r.period_end or '?':<10} tables={r.tables:<4} "
+            f"values={r.items:<5} records={r.records:<5} {core}  {r.file}"
+        )
+    print(json.dumps({k: v for k, v in summary.items() if k != "files_per_metric"}))
+    print(f"wrote {out} and {out.with_suffix('.summary.json')}")
+    return EXIT_OK
+
+
+def cmd_parse_coverage(app: App) -> int:
+    from .quality.coverage import coverage_rows, summarize, write_csv
+
+    rows = coverage_rows(app.db, _list(app.a.tickers))
+    if app.a.out:
+        write_csv(rows, Path(app.a.out))
+    print(json.dumps(summarize(rows)))
+    if app.a.verbose_rows:
+        for r in rows:
+            core = f"{r['core_with_value']}/{r['core_metrics']}"
+            print(
+                f"{r['ticker']:<6} supp={r['supplementals']:<4} parsed={r['parsed']:<4} review={r['needs_review']:<3} "
+                f"failed={r['failed']:<3} quarantine={r['quarantine_pct'] or 0:>5}% core={core:<7} "
+                f"latest={r['latest_parsed_period'] or '-'}"
+            )
+    return EXIT_OK
+
+
+def cmd_company_profile(app: App) -> int:
+    from .delivery.profile import company_profile, format_profile
+
+    prof = company_profile(app.db, app.a.ticker)
+    if prof is None:
+        print(f"unknown ticker: {app.a.ticker}", file=sys.stderr)
+        return EXIT_CONFIG
+    print(json.dumps(prof, indent=2, default=str) if app.a.json else format_profile(prof))
+    return EXIT_OK
+
+
 def cmd_db_docs(app: App) -> int:
     from .core.dbdocs import data_dictionary
 
@@ -937,6 +990,19 @@ def build_parser() -> argparse.ArgumentParser:
     dl.add_argument("--all", action="store_true", help="include resolved and ignored")
     dd = cmd("db-docs", cmd_db_docs, "write the data dictionary from the live schema")
     dd.add_argument("--out", default="docs/data-dictionary.md")
+    pe = cmd("parse-eval", cmd_parse_eval, "measure the supplemental parser on a folder of PDFs (no database)")
+    pe.add_argument("folder")
+    pe.add_argument("--out", help="results CSV (default: <data_dir>/parse-eval/parse_eval.csv)")
+    pe.add_argument("--universe", help="reits.csv for each ticker's sector (default: [paths] universe_csv)")
+    pe.add_argument("--min-confidence", type=float, default=0.80, help="quarantine below this score")
+    pe.add_argument("--limit", type=int, help="evaluate at most N files")
+    pc = cmd("parse-coverage", cmd_parse_coverage, "per-company supplemental parse coverage from the warehouse")
+    tickers(pc)
+    pc.add_argument("--out", help="write the coverage table as CSV")
+    pc.add_argument("--rows", dest="verbose_rows", action="store_true", help="print one line per company")
+    cp = cmd("company-profile", cmd_company_profile, "all relevant data for one company, picked by its sectors")
+    cp.add_argument("--ticker", required=True)
+    cp.add_argument("--json", action="store_true", help="print JSON instead of text")
     return p
 
 

@@ -13,7 +13,7 @@ import pytest
 from reitstreet.core import migrate
 from reitstreet.core.db import Db
 from tests.integration.helpers import bootstrap, cli, last_run, metric
-from tests.sec_fixtures import IR_HOST, quarters_2024
+from tests.sec_fixtures import IR_HOST, quarters_2024, tiny_pdf
 
 pytestmark = pytest.mark.mysql
 
@@ -161,7 +161,7 @@ def test_fetch_ir_keeps_each_version_of_a_reused_url(env: Path, sec_root: Path, 
     assert db.scalar("SELECT COUNT(*) FROM stg_document WHERE source='ir_website'") == 2  # PLD and O
     assert cli("fetch-ir", "--offline-fixtures", str(site)) == 0
     assert db.scalar("SELECT COUNT(*) FROM stg_document WHERE source='ir_website'") == 2  # unchanged
-    (site / IR_HOST / "pld" / "latest-supplemental.pdf").write_bytes(b"%PDF-1.4 next quarter")
+    (site / IR_HOST / "pld" / "latest-supplemental.pdf").write_bytes(tiny_pdf("next quarter"))
     assert cli("fetch-ir", "--offline-fixtures", str(site), "--tickers", "PLD") == 0
     assert db.scalar("SELECT COUNT(*) FROM stg_document WHERE source='ir_website'") == 3
     assert db.scalar("SELECT COUNT(*) FROM ref_ir_source WHERE source_type='supplemental_pdf' "

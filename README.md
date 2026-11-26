@@ -11,8 +11,14 @@ with lineage from every number back to the page it came from.
   filed supplementals) and XBRL companyfacts, rate limited and retried.
 - Stores every byte received in a content-addressed raw store; can rebuild everything
   from it without the network (`replay`).
-- Maps XBRL tags and supplemental row labels to 53 standard REIT metrics using rules
+- Maps XBRL tags and supplemental row labels to 110 standard REIT metrics using rules
   held as data, derives discrete quarters, and keeps every restatement as a version.
+- Parses supplemental PDFs into company metrics (FFO, same-store, leasing, sector figures)
+  and schedules: debt maturities and instruments, lease expirations, top tenants,
+  development pipeline and property-level facts. Every value carries file hash, page,
+  table and a confidence score; doubtful values are quarantined, not loaded (ADR 0011).
+- Knows which metrics matter for each property sector, so `company-profile --ticker NNN`
+  returns everything relevant for a net lease REIT and nothing meant for hotels.
 - Imports an archive of older supplementals (PDF, XLSX, CSV), de-duplicated by hash.
 - Crawls each REIT's IR results page politely (robots.txt, per-host limits, conditional
   requests), records every document link, and downloads new supplementals; alerts on
@@ -25,7 +31,7 @@ with lineage from every number back to the page it came from.
 - Exports client CSVs with a manifest, as current, as known on a date, or as recorded
   at a time.
 
-Next: the supplemental PDF table parser, the IR email inbox and a client API. See
+Next: the property master and NAV models, the IR email inbox and a client API. See
 [docs/architecture.md](docs/architecture.md).
 
 ## Production (AWS)
@@ -79,6 +85,9 @@ until `[sec] user_agent` in `config.ini` is set.
 | `status` | row counts and recent runs |
 | `dead-letter` | list, show, resolve or ignore failed items |
 | `db-docs` | regenerate the data dictionary |
+| `company-profile` | every relevant metric and schedule for one company |
+| `parse-coverage` | supplemental parse coverage by company |
+| `parse-eval` | parser quality on a folder of PDFs, no database needed |
 
 `reitstreet <command> --help` for options. Exit codes: 0 ok, 1 failed or partial,
 2 configuration error, 3 already running, 4 source blocked us.

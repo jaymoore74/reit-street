@@ -20,6 +20,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from tests.pdf.pdfgen import PdfDoc
+
 REITS = {
     "PLD": (1045609, "Prologis, Inc."),
     "O": (726728, "Realty Income Corp"),
@@ -263,9 +265,7 @@ def build(root: Path) -> Path:
                     f"/Archives/edgar/data/{cik}/{nd}/{ex1}",
                     f"<html>{name} results for the period ended {report}</html>",
                 )
-                write(
-                    root, "www.sec.gov", f"/Archives/edgar/data/{cik}/{nd}/{ex2}", b"%PDF-1.4 synthetic " + a.encode()
-                )
+                write(root, "www.sec.gov", f"/Archives/edgar/data/{cik}/{nd}/{ex2}", tiny_pdf(f"synthetic {a}"))
             elif form in ("10-K", "10-Q"):
                 inst = f"{lower}-{report:%Y%m%d}_htm.xml"
                 docs = [
@@ -360,7 +360,7 @@ def build(root: Path) -> Path:
                 root,
                 IR_HOST,
                 f"/{lower}/latest-supplemental.pdf",
-                b"%PDF-1.4 synthetic IR supplemental v1 " + t.encode(),
+                tiny_pdf(f"synthetic IR supplemental v1 {t}"),
             )
         universe.append(
             f'{t},"{name}",{cik},fixture,NYSE,Industrial,Equity,,https://{IR_HOST}/{lower}/,'
@@ -374,3 +374,10 @@ if __name__ == "__main__":
     import sys
 
     print(build(Path(sys.argv[1] if len(sys.argv) > 1 else "fixtures")))
+
+
+def tiny_pdf(note: str) -> bytes:
+    """A valid one-page PDF holding a line of text and no tables (parses to needs_review)."""
+    doc = PdfDoc()
+    doc.page().text(36, 40, note)
+    return doc.render()
