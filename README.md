@@ -30,8 +30,11 @@ with lineage from every number back to the page it came from.
   supplementals against XBRL) and a monitor that alerts by email or webhook.
 - Exports client CSVs with a manifest, as current, as known on a date, or as recorded
   at a time.
+- Client website (`apps/web`, not deployed yet): sign-in for client firms, research notes,
+  metric charts, CSV, Excel and Parquet downloads limited by each firm's subscription and
+  logged, newsletter sign-up. See [apps/web/README.md](apps/web/README.md).
 
-Next: the property master and NAV models, the IR email inbox and a client API. See
+Next: the NAV models, the IR email inbox and a client API. See
 [docs/architecture.md](docs/architecture.md).
 
 ## Production (AWS)
@@ -95,10 +98,10 @@ until `[sec] user_agent` in `config.ini` is set.
 ## Documentation
 
 - [Architecture](docs/architecture.md)
-- [Data dictionary](docs/data-dictionary.md) (generated)
+- [Data dictionary](docs/data-dictionary.md) and [website schema](docs/data-dictionary-app.md) (generated)
 - [IR website coverage](docs/ir-coverage.md)
 - [Property coverage](docs/property-coverage.md)
-- [Runbooks](docs/runbooks/): cloud setup (AWS), first run, daily operations, IR fetcher, property master, SEC 403, dead letters, replay,
+- [Runbooks](docs/runbooks/): cloud setup (AWS), first run, daily operations, IR fetcher, property master, web admin, web hosting, SEC 403, dead letters, replay,
   metric mappings, archive import, backup and restore, schema changes
 - [Architecture decision records](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
@@ -106,7 +109,8 @@ until `[sec] user_agent` in `config.ini` is set.
 ## Layout
 
 ```
-src/reitstreet/       core, sources, parsers, reference, warehouse, quality, delivery, migrations
+src/reitstreet/       core, sources, parsers, reference, warehouse, quality, delivery, web, migrations
+apps/web/             client website (Next.js, TypeScript)
 tests/unit/           pure functions, no database
 tests/integration/    full pipeline against MySQL with offline SEC fixtures for 12 REITs
 config/               config.example.ini (copy to ./config.ini, which git ignores)

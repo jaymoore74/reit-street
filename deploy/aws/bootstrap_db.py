@@ -2,12 +2,14 @@
 
 Reads the cluster's master credentials from AWS Secrets Manager, then:
   1. checks the server is MySQL 8 compatible (Aurora MySQL 3.x),
-  2. creates the `reitstreet` schema,
-  3. creates three users that can only touch that schema, each with a random password
+  2. creates the `reitstreet` warehouse schema and the `reitstreet_app` web schema (ADR 0013),
+  3. creates four users that can only touch those schemas, each with a random password
      that goes straight into Secrets Manager (reitstreet/db/<role>) and is never printed:
-       rs_migrator  schema changes (Alembic) and reference seeds
-       rs_loader    data loads: SELECT, INSERT, UPDATE, DELETE
-       rs_reader    read only, for analysts and client delivery
+       rs_migrator  schema changes (Alembic) on both schemas
+       rs_loader    data loads (warehouse), and the `reitstreet web` admin commands (web schema)
+       rs_reader    warehouse read only, for analysts; no access to the web schema
+       rs_web       the client website: reads the warehouse; reads and writes the web schema,
+                    but cannot delete (download and audit logs are append-only)
 All users must connect over TLS. Safe to re-run: Secrets Manager is the source of truth,
 so an existing secret's password is re-applied, never replaced.
 
@@ -26,11 +28,21 @@ import tempfile
 
 import pymysql
 
-ROLES: dict[str, list[str]] = {
-    "migrator": ["ALL PRIVILEGES"],
-    "loader": ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE TEMPORARY TABLES", "LOCK TABLES", "EXECUTE"],
-    "reader": ["SELECT", "SHOW VIEW"],
+LOADER = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE TEMPORARY TABLES", "LOCK TABLES", "EXECUTE"]
+
+# role -> [(privileges, schema key)]; schema keys are "wh" (warehouse) and "app" (web)
+ROLES: dict[str, list[tuple[list[str], str]]] = {
+    "migrator": [(["ALL PRIVILEGES"], "wh"), (["ALL PRIVILEGES"], "app")],
+    "loader": [(LOADER, "wh"), (["SELECT", "INSERT", "UPDATE"], "app")],
+    "reader": [(["SELECT", "SHOW VIEW"], "wh")],
+    "web": [(["SELECT", "SHOW VIEW"], "wh"), (["SELECT", "INSERT", "UPDATE"], "app")],
 }
+
+
+def grant_statements(role: str, schemas: dict[str, str]) -> list[str]:
+    """GRANT statements for one role. Schema names come from our own arguments, never user input."""
+    user = f"rs_{role}"
+    return [f"GRANT {', '.join(privs)} ON `{schemas[key]}`.* TO '{user}'@'%'" for privs, key in ROLES[role]]
 
 
 def aws(region: str, *args: str) -> str:
@@ -81,6 +93,7 @@ def main() -> int:
     p.add_argument("--host", required=True, help="cluster writer endpoint")
     p.add_argument("--port", type=int, default=3306)
     p.add_argument("--schema", default="reitstreet")
+    p.add_argument("--app-schema", default="reitstreet_app")
     p.add_argument("--ca", default="/etc/reitstreet/rds-global-bundle.pem")
     a = p.parse_args()
 
@@ -111,8 +124,10 @@ def main() -> int:
             print("MySQL 8 compatible engine required (Aurora MySQL 3.x). Upgrade the cluster first.", file=sys.stderr)
             return 2
 
-        cur.execute(f"CREATE DATABASE IF NOT EXISTS `{a.schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci")
-        for role, privs in ROLES.items():
+        schemas = {"wh": a.schema, "app": a.app_schema}
+        for schema in schemas.values():
+            cur.execute(f"CREATE DATABASE IF NOT EXISTS `{schema}` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci")
+        for role in ROLES:
             user = f"rs_{role}"
             name = f"reitstreet/db/{role}"
             existing = get_secret(a.region, name)
@@ -130,14 +145,16 @@ def main() -> int:
                         "password": password,
                         "host": a.host,
                         "port": a.port,
-                        "dbname": a.schema,
+                        "dbname": a.app_schema if role == "web" else a.schema,
                     },
                 )
                 state = "secret created"
             cur.execute(f"CREATE USER IF NOT EXISTS '{user}'@'%' IDENTIFIED BY %s REQUIRE SSL", (password,))
             cur.execute(f"ALTER USER '{user}'@'%' IDENTIFIED BY %s REQUIRE SSL", (password,))
-            cur.execute(f"GRANT {', '.join(privs)} ON `{a.schema}`.* TO '{user}'@'%'")
-            print(f"{user:<12} {', '.join(privs)} on {a.schema}: {state} ({name})")
+            for stmt in grant_statements(role, schemas):
+                cur.execute(stmt)
+            granted = "; ".join(f"{', '.join(pv)} on {schemas[k]}" for pv, k in ROLES[role])
+            print(f"{user:<12} {granted}: {state} ({name})")
             check = pymysql.connect(
                 host=a.host,
                 port=a.port,

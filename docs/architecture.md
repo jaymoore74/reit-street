@@ -135,8 +135,22 @@ optionally email and a webhook, de-duplicated over 6 hours.
 | `quality/` | DQ checks, monitor, parse coverage |
 | `delivery/` | client exports with manifest, company profile |
 | `migrations/` | Alembic revisions (raw SQL DDL, every table and column commented) |
+| `migrations_app/` | Alembic revisions for the client website schema `reitstreet_app` (ADR 0013) |
+| `web/` | `reitstreet web` admin commands: plans, grants, organizations, users, research |
+| `apps/web/` (repo root) | client website, Next.js and TypeScript: sign-in, research, charts, downloads, newsletters |
 
 ## Planned modules (slots exist)
 
 1. **IR inbox**: a dedicated mailbox polled into `stg_document` with `source='email'`.
-2. **Client API**: read-only service over the `dl_*` views with the same as-of semantics as export.
+2. **Client API**: read-only service over the `dl_*` views with the same as-of semantics as
+   export, using the website's sessions and entitlements.
+
+## Client website
+
+`apps/web` reads only the `dl_*` views of the warehouse and keeps its own tables (clients,
+grants, sessions, research, newsletters, download and audit logs) in a second schema,
+`reitstreet_app`, through its own login `rs_web`. Every page and file is limited by the
+client firm's grants on the server. Details: [ADR 0013](adr/0013-client-website.md),
+[apps/web/README.md](../apps/web/README.md), [web admin runbook](runbooks/web-admin.md).
+Hosting is written as CloudFormation in `deploy/aws/web/` (option A Fargate, option B one
+instance) and is not created yet: [web hosting runbook](runbooks/web-hosting.md).

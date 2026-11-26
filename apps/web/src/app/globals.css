@@ -1,0 +1,145 @@
+/* REIT Street client site. Plain CSS, light and dark from one set of tokens. */
+:root {
+  color-scheme: light;
+  --surface-0: #f6f6f4;
+  --surface-1: #ffffff;
+  --text-primary: #191919;
+  --text-secondary: #666666;
+  --border: #e2e2e2;
+  --grid: #e7e7e7;
+  --axis: #c2c2c2;
+  --accent: #1b64be;
+  --accent-text: #ffffff;
+  --series-1: #257de0;
+  --danger: #b42318;
+  --banner: #fff4d6;
+  --banner-text: #5a4300;
+  --radius: 8px;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --surface-0: #111111;
+    --surface-1: #191919;
+    --text-primary: #efefef;
+    --text-secondary: #9c9c9c;
+    --border: #2c2c2c;
+    --grid: #303030;
+    --axis: #474747;
+    --accent: #519ced;
+    --accent-text: #0b1b2e;
+    --series-1: #338ced;
+    --danger: #f97066;
+    --banner: #3a2f0b;
+    --banner-text: #f5dc93;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+}
+a { color: var(--accent); }
+h1 { font-size: 1.6rem; margin: 0 0 0.75rem; }
+h2 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+p { margin: 0 0 0.75rem; }
+.muted { color: var(--text-secondary); }
+.small { font-size: 0.85rem; }
+
+.banner {
+  background: var(--banner);
+  color: var(--banner-text);
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 24px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.brand { font-weight: 700; color: var(--text-primary); text-decoration: none; letter-spacing: 0.02em; }
+.nav { display: flex; gap: 16px; flex-wrap: wrap; }
+.nav a { color: var(--text-secondary); text-decoration: none; }
+.nav a:hover { color: var(--text-primary); }
+.spacer { flex: 1; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+.narrow { max-width: 440px; }
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.stat { font-size: 2rem; font-weight: 600; }
+
+form.stack { display: flex; flex-direction: column; gap: 12px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--text-secondary); }
+label.check { flex-direction: row; align-items: flex-start; gap: 8px; color: var(--text-primary); }
+input[type="text"], input[type="email"], input[type="password"], input[type="date"], select, textarea {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+button, .button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 6px;
+  padding: 8px 14px;
+  text-decoration: none;
+  display: inline-block;
+}
+button.secondary { background: transparent; color: var(--accent); }
+button:disabled { opacity: 0.6; cursor: default; }
+.error { color: var(--danger); }
+.ok { color: var(--text-primary); }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+
+table.data { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+table.data th, table.data td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+table.data th { color: var(--text-secondary); font-weight: 600; }
+table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; }
+
+.article { max-width: 720px; }
+.article table { border-collapse: collapse; }
+.article th, .article td { border: 1px solid var(--border); padding: 4px 8px; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; font-size: 0.8rem; color: var(--text-secondary); }
+
+/* charts: Recharts sets colors as SVG attributes, which can't read CSS variables, so color by class */
+.chart { width: 100%; height: 300px; }
+.chart .recharts-cartesian-grid line { stroke: var(--grid); stroke-width: 1px; }
+.chart .recharts-cartesian-axis-line, .chart .recharts-cartesian-axis-tick-line { stroke: var(--axis); }
+.chart .recharts-cartesian-axis-tick-value { fill: var(--text-secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
+.chart .series-1 .recharts-rectangle { fill: var(--series-1); }
+.chart .series-1 .recharts-curve.recharts-line-curve { stroke: var(--series-1); stroke-width: 2px; }
+.chart .series-1 .recharts-dot, .chart .recharts-active-dot circle { fill: var(--series-1); stroke: var(--surface-1); stroke-width: 2px; }
+.chart .recharts-tooltip-cursor { stroke: var(--axis); fill: var(--grid); fill-opacity: 0.5; }
+.tooltip {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+.tooltip .muted { font-size: 0.8rem; }

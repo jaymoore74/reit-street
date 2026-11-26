@@ -8,6 +8,12 @@ on:
         description: Alembic revision to upgrade to
         required: false
         default: head
+      target:
+        description: Which schema (all = warehouse, then the web app schema)
+        required: false
+        default: all
+        type: choice
+        options: [all, warehouse, app]
 
 permissions:
   contents: read
@@ -31,7 +37,8 @@ jobs:
       - name: Migrate
         env:
           REVISION: ${{ inputs.revision }}
-        run: reitstreet migrate --revision "$REVISION"
+          TARGET: ${{ inputs.target }}
+        run: reitstreet migrate --target "$TARGET" --revision "$REVISION"
       - run: reitstreet status
       - if: failure()
         uses: ./.github/actions/ops-issue
