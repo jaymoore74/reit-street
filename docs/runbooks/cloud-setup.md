@@ -168,6 +168,7 @@ quietly.
 | Workflow | When (UTC) | Does |
 |---|---|---|
 | ops-sync | weekdays every 30 min, 11:15 to 02:45 | `sec-sync`, `dq`, `monitor`, copy to S3 |
+| ops-ir-fetch | weekdays 14:00 and 23:00 | `fetch-ir`, `dq --only freshness,ops`, `monitor`, `ir-coverage`, copy to S3 |
 | ops-weekly | Sunday 13:30 | `universe`, `sec-sync --force`, `fetch-ir`, `parse-docs`, `dq`, `export`, `monitor`, copy to S3 |
 | ops-monitor | hourly at :05 | `monitor`, runner disk check |
 | ops-migrate | button | schema upgrade after a release with a migration |

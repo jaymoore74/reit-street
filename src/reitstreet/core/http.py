@@ -7,12 +7,13 @@ too (with the error), so a broken source is visible in the database, not just lo
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import threading
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -25,7 +26,7 @@ from .rawstore import RawStore
 
 log = logging.getLogger(__name__)
 
-KEEP_HEADERS = ("content-type", "last-modified", "etag", "content-length", "date")
+KEEP_HEADERS = ("content-type", "last-modified", "etag", "content-length", "date", "location")
 RETRY_STATUS = {429, 500, 502, 503, 504}
 
 # transport(url, headers) -> (status, headers, body)
@@ -40,13 +41,48 @@ class RateLimiter:
         self._lock = threading.Lock()
         self._next = 0.0
 
-    def wait(self) -> None:
+    def wait(self, url: str = "") -> None:
         with self._lock:
             now = time.monotonic()
             if now < self._next:
                 time.sleep(self._next - now)
                 now = time.monotonic()
             self._next = now + self.interval
+
+
+class HostRateLimiter:
+    """One minimum interval per host, so a crawl that walks many companies never sends
+    more than `rps` requests per second to any single server. Shared CDNs (q4cdn.com,
+    one CloudFront distribution for many Equisolve sites) count as one host. A host's
+    robots.txt Crawl-delay, when longer, wins."""
+
+    def __init__(self, rps: float, *, sleep: Callable[[float], None] | None = None):
+        self.default_interval = 1.0 / max(0.01, rps)
+        self._intervals: dict[str, float] = {}
+        self._next: dict[str, float] = {}
+        self._lock = threading.Lock()
+        self._sleep = sleep or time.sleep
+
+    @staticmethod
+    def host(url: str) -> str:
+        return (urlparse(url).hostname or "").lower()
+
+    def set_min_interval(self, host: str, seconds: float) -> None:
+        with self._lock:
+            self._intervals[host.lower()] = max(self.default_interval, float(seconds))
+
+    def interval(self, host: str) -> float:
+        return self._intervals.get(host.lower(), self.default_interval)
+
+    def wait(self, url: str = "") -> None:
+        h = self.host(url)
+        with self._lock:
+            now = time.monotonic()
+            nxt = self._next.get(h, 0.0)
+            if now < nxt:
+                self._sleep(nxt - now)
+                now = time.monotonic()
+            self._next[h] = now + self.interval(h)
 
 
 def requests_transport(timeout: float = 60.0) -> Transport:
@@ -60,14 +96,26 @@ def requests_transport(timeout: float = 60.0) -> Transport:
 
 
 def fixture_transport(root: Path) -> Transport:
-    """Serve URLs from files at root/<host>/<path>. Used by tests and offline demos."""
+    """Serve URLs from files at root/<host>/<path>. Used by tests and offline demos.
+
+    A path ending in "/" serves its index.html. Each answer carries an ETag (the file's
+    sha256), and a matching If-None-Match gets a 304, like a real web server."""
 
     def _get(url: str, headers: dict[str, str]) -> tuple[int, dict[str, str], bytes]:
         p = urlparse(url)
-        f = Path(root) / p.netloc / p.path.lstrip("/")
-        if f.is_file():
-            return 200, {"content-type": "application/octet-stream"}, f.read_bytes()
-        return 404, {}, b"Not Found"
+        rel = p.path.lstrip("/")
+        if not rel or rel.endswith("/"):
+            rel += "index.html"
+        f = Path(root) / p.netloc / rel
+        if not f.is_file():
+            return 404, {}, b"Not Found"
+        body = f.read_bytes()
+        etag = '"' + hashlib.sha256(body).hexdigest() + '"'
+        inm = {k.lower(): v for k, v in headers.items()}.get("if-none-match")
+        if inm and inm == etag:
+            return 304, {"etag": etag}, b""
+        ctype = "text/html" if f.suffix in (".html", ".htm") else "application/octet-stream"
+        return 200, {"content-type": ctype, "etag": etag}, body
 
     return _get
 
@@ -80,6 +128,12 @@ class Fetched:
     sha256: str
     fetch_id: int | None
     changed: bool  # content differs from the previous successful fetch of this URL
+    headers: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def not_modified(self) -> bool:
+        """True for a 304 answer to a conditional request: nothing new, body is empty."""
+        return self.status == 304
 
     def json(self) -> Any:
         return json.loads(self.body)
@@ -104,10 +158,11 @@ class Fetcher:
         max_retries: int = 5,
         fatal_status: tuple[int, ...] = (),
         fatal_hint: str = "",
+        limiter: RateLimiter | HostRateLimiter | None = None,
     ):
         self.source = source
         self.user_agent = user_agent
-        self.limiter = RateLimiter(rps)
+        self.limiter: RateLimiter | HostRateLimiter = limiter or RateLimiter(rps)
         self.store = store
         self.db = db
         self.run_id = run_id
@@ -121,41 +176,69 @@ class Fetcher:
     def headers(self) -> dict[str, str]:
         return {"User-Agent": self.user_agent, "Accept-Encoding": "gzip, deflate"}
 
-    def get(self, url: str, *, allow_404: bool = False) -> Fetched | None:
+    def get(
+        self,
+        url: str,
+        *,
+        allow_404: bool = False,
+        etag: str | None = None,
+        last_modified: str | None = None,
+        return_status: tuple[int, ...] = (),
+        record_url: str | None = None,
+    ) -> Fetched | None:
+        """GET with retries. `etag` / `last_modified` make it a conditional request: a 304
+        comes back as Fetched(status=304, body=b"") and is logged in raw_fetch without content.
+        Statuses in `return_status` (e.g. 401, 403 for robots.txt) are returned with their body
+        instead of raising. `record_url` is what raw_fetch stores instead of `url` (use it when
+        the URL carries a credential, e.g. an API key)."""
+        rec = record_url or url
         delay = 1.0
         last_err = ""
+        hdrs = self.headers()
+        if etag:
+            hdrs["If-None-Match"] = etag
+        if last_modified:
+            hdrs["If-Modified-Since"] = last_modified
         for attempt in range(self.max_retries + 1):
-            self.limiter.wait()
+            self.limiter.wait(url)
             self.request_count += 1
             t0 = time.monotonic()
             try:
-                status, headers, body = self.transport(url, self.headers())
+                status, headers, body = self.transport(url, hdrs)
             except requests.RequestException as e:
-                last_err = f"{type(e).__name__}: {e}"
-                log.warning("network error, retrying", extra={"url": url, "attempt": attempt, "err": last_err})
+                last_err = f"{type(e).__name__}: {e}".replace(url, rec)
+                log.warning("network error, retrying", extra={"url": rec, "attempt": attempt, "err": last_err})
                 self._sleep(delay)
                 delay = min(delay * 2, 60)
                 continue
             ms = int((time.monotonic() - t0) * 1000)
-            if status == 200:
-                return self._record_ok(url, status, headers, body, ms)
+            if status == 200 or (status in return_status and status not in RETRY_STATUS):
+                return self._record_ok(rec, status, headers, body, ms)
+            if status == 304 and (etag or last_modified):
+                self._record_error(rec, status, headers, ms, None)
+                return Fetched(rec, status, b"", "", None, False, headers)
             if status == 404 and allow_404:
-                self._record_error(url, status, headers, ms, "404 not found")
+                self._record_error(rec, status, headers, ms, "404 not found")
                 return None
             if status in self.fatal_status:
-                self._record_error(url, status, headers, ms, f"HTTP {status}")
-                raise FatalSourceError(f"HTTP {status} from {self.source} for {url}. {self.fatal_hint}".strip())
+                self._record_error(rec, status, headers, ms, f"HTTP {status}")
+                raise FatalSourceError(f"HTTP {status} from {self.source} for {rec}. {self.fatal_hint}".strip())
             if status in RETRY_STATUS and attempt < self.max_retries:
                 ra = headers.get("retry-after", "")
                 wait = float(ra) if ra.isdigit() else delay
-                log.warning("retryable status", extra={"url": url, "status": status, "wait_s": wait})
+                log.warning("retryable status", extra={"url": rec, "status": status, "wait_s": wait})
                 self._sleep(wait)
                 delay = min(delay * 2, 60)
                 continue
-            self._record_error(url, status, headers, ms, f"HTTP {status}")
-            raise TransientError(f"GET {url} -> HTTP {status}")
-        self._record_error(url, None, {}, 0, last_err or "retries exhausted")
-        raise TransientError(f"GET {url}: retries exhausted ({last_err})")
+            self._record_error(rec, status, headers, ms, f"HTTP {status}")
+            raise TransientError(f"GET {rec} -> HTTP {status}")
+        self._record_error(rec, None, {}, 0, last_err or "retries exhausted")
+        raise TransientError(f"GET {rec}: retries exhausted ({last_err})")
+
+    def capture(self, url: str, status: int, headers: dict[str, str], body: bytes, ms: int = 0) -> Fetched:
+        """Record content obtained another way (a headless browser render) exactly like a GET."""
+        self.request_count += 1
+        return self._record_ok(url, status, headers, body, ms)
 
     # ---------------------------------------------------------------- capture
     def _record_ok(self, url: str, status: int, headers: dict[str, str], body: bytes, ms: int) -> Fetched:
@@ -184,9 +267,9 @@ class Fetcher:
                 },
             )
             self.db.commit()
-        return Fetched(url, status, body, sha, fetch_id, changed)
+        return Fetched(url, status, body, sha, fetch_id, changed, headers)
 
-    def _record_error(self, url: str, status: int | None, headers: dict[str, str], ms: int, err: str) -> None:
+    def _record_error(self, url: str, status: int | None, headers: dict[str, str], ms: int, err: str | None) -> None:
         if self.db is None:
             return
         self.db.execute(
@@ -199,7 +282,7 @@ class Fetcher:
                 "st": status,
                 "hdr": json.dumps({k: headers[k] for k in KEEP_HEADERS if k in headers}),
                 "ms": ms,
-                "err": err[:2000],
+                "err": err[:2000] if err else None,
             },
         )
         self.db.commit()

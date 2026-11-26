@@ -1,0 +1,74 @@
+name: ops-ir-fetch
+# IR website fetch: new supplementals from each REIT's results page, then the freshness and
+# site-health checks and the monitor. Weekdays 6 AM and 3 PM Pacific (14:00 and 23:00 UTC).
+# Kill switch: repository variable REITSTREET_SCHEDULES = off. Runbook: docs/runbooks/ir-fetcher.md
+on:
+  schedule:
+    - cron: "0 14,23 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: comma-separated tickers (blank = whole universe)
+        required: false
+        default: ""
+      backfill:
+        description: no per-company download cap this run
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ops-ir-fetch
+  cancel-in-progress: false
+
+env:
+  BUCKET: ${{ vars.REITSTREET_S3_BUCKET }}
+
+jobs:
+  ir-fetch:
+    if: github.event_name == 'workflow_dispatch' || vars.REITSTREET_SCHEDULES != 'off'
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/reitstreet-env
+        with:
+          role: loader
+          aws-region: ${{ vars.AWS_REGION }}
+          sec-user-agent: ${{ vars.REITSTREET_SEC_USER_AGENT }}
+      - id: ready
+        run: python deploy/aws/ready.py
+      - name: IR fetch
+        if: steps.ready.outputs.ready == 'true'
+        env:
+          TICKERS: ${{ inputs.tickers }}
+          BACKFILL: ${{ inputs.backfill }}
+        run: |
+          args=()
+          if [ -n "$TICKERS" ]; then args+=(--tickers "$TICKERS"); fi
+          if [ "$BACKFILL" = "true" ]; then args+=(--backfill); fi
+          rc=0
+          reitstreet fetch-ir "${args[@]}" || rc=$?
+          # 3 = the previous run still holds the lock: not a failure
+          if [ "$rc" -eq 3 ]; then echo "::notice::previous IR fetch still running, skipped"; exit 0; fi
+          exit "$rc"
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet dq --only freshness,ops
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet monitor
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet ir-coverage
+      - name: Copy raw store and logs to S3
+        if: always() && steps.ready.outputs.ready == 'true'
+        run: deploy/aws/s3-sync.sh raw logs
+      - if: failure()
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: failure
+      - if: success() && steps.ready.outputs.ready == 'true'
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: success

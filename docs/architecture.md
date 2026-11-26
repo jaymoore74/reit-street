@@ -105,6 +105,7 @@ optionally email and a webhook, de-duplicated over 6 hours.
 | `core/` | config, db, logging (JSON lines), http, raw store, jobs, alerts, migrations runner, data dictionary |
 | `sources/sec/` | submissions, filing indexes, exhibits, companyfacts; replay from raw |
 | `sources/supplementals/` | archive import, IR website fetcher |
+| `sources/ir/` | IR website crawl: strategies, robots.txt, link classification, expectations, coverage |
 | `sources/ir_inbox/` | slot for the IR email alert inbox (planned) |
 | `parsers/` | pure functions from bytes to records; document parser registry (`documents.py`) |
 | `reference/` | universe import, seed of metric dictionary and mapping rules from CSV |

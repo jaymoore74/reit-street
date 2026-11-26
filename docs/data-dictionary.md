@@ -1,12 +1,14 @@
 # Data dictionary
 
-Generated from the database schema at Alembic revision `0002` by `reitstreet db-docs`. Do not edit by hand: change the COMMENT in a migration and regenerate.
+Generated from the database schema at Alembic revision `0003` by `reitstreet db-docs`. Do not edit by hand: change the COMMENT in a migration and regenerate.
 
 ## ops_* Operations: runs, checkpoints, dead letters, data quality, alerts
 
 - [`ops_alert`](#ops_alert): Every alert raised, sent or suppressed.
 - [`ops_dead_letter`](#ops_dead_letter): Dead-letter / QA queue: anything that could not be processed. Nothing is silently dropped.
 - [`ops_dq_result`](#ops_dq_result): Data quality results. One summary pass row per check per run plus one row per failure.
+- [`ops_ir_check`](#ops_ir_check): One row per company per IR fetch run. Source of coverage reporting and IR alerts.
+- [`ops_ir_coverage`](#ops_ir_coverage) (view): VIEW
 - [`ops_job_item`](#ops_job_item): Per-item checkpoints. --resume <run_id> skips items that finished ok in that run.
 - [`ops_job_run`](#ops_job_run): One row per job execution. The monitor alerts on failed, partial, aborted and overdue runs.
 
@@ -70,6 +72,53 @@ Table. Data quality results. One summary pass row per check per run plus one row
 | `expected` | varchar(255) | YES |  | Expected value or tolerance |
 | `details` | json | YES |  | Extra context (ids, values) for investigation |
 | `checked_at` | datetime(6) | NO |  | UTC time of the check |
+
+### ops_ir_check
+
+Table. One row per company per IR fetch run. Source of coverage reporting and IR alerts.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `check_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `run_id` | bigint unsigned | YES | MUL | Job run |
+| `company_id` | int unsigned | NO | MUL | Company |
+| `source_id` | int unsigned | YES |  | ref_ir_source page checked; NULL when the company has none |
+| `strategy` | varchar(16) | NO |  | Strategy that produced this outcome |
+| `outcome` | enum('ok','not_modified','no_documents','js_only','layout_break','robots_blocked','http_error','needs_headless','not_configured','no_source') | NO |  | What happened |
+| `http_status` | smallint | YES |  | Status of the page request |
+| `links_found` | int unsigned | NO |  | Document links on the page |
+| `supp_links` | int unsigned | NO |  | Of which classified supplemental |
+| `new_links` | int unsigned | NO |  | Links not seen before |
+| `new_docs` | int unsigned | NO |  | Documents downloaded and registered |
+| `latest_supp_period` | date | YES |  | Latest supplemental period end seen on the page |
+| `note` | varchar(1024) | YES |  | Detail |
+| `checked_at` | datetime(6) | NO |  | UTC time |
+
+### ops_ir_coverage
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `company_id` | int unsigned | YES |  | Surrogate key used everywhere |
+| `ticker` | varchar(16) | YES |  | Current primary ticker |
+| `name` | varchar(255) | YES |  | Current SEC conformed name |
+| `reit_type` | varchar(32) | YES |  | Equity, mortgage or hybrid |
+| `strategy` | varchar(11) | NO |  |  |
+| `platform` | varchar(32) | YES |  | IR site vendor or layout family, e.g. q4cdn, static-files, cloudfront, wordpress |
+| `expects_supplemental` | int | NO |  |  |
+| `probe_status` | varchar(10) | NO |  |  |
+| `probe_supp_links` | smallint unsigned | YES |  | Supplemental links the probe saw on the results page |
+| `probe_latest_period` | varchar(16) | YES |  | Latest supplemental period the probe saw, e.g. Q3 2026 |
+| `probe_date` | date | YES |  | When the probe ran |
+| `last_checked_at` | datetime(6) | YES |  | UTC time |
+| `last_strategy` | varchar(16) | YES |  | Strategy that produced this outcome |
+| `last_outcome` | enum('ok','not_modified','no_documents','js_only','layout_break','robots_blocked','http_error','needs_headless','not_configured','no_source') | YES |  | What happened |
+| `last_http_status` | smallint | YES |  | Status of the page request |
+| `last_supp_links` | int unsigned | YES |  | Of which classified supplemental |
+| `last_page_supp_period` | date | YES |  | Latest supplemental period end seen on the page |
+| `latest_supplemental_held` | date | YES |  |  |
+| `coverage` | varchar(14) | YES |  |  |
 
 ### ops_job_item
 
@@ -150,9 +199,11 @@ Table. Immutable content-addressed objects. Never updated or deleted by the pipe
 - [`ref_company`](#ref_company): Company master. One row per SEC registrant (CIK).
 - [`ref_company_name_history`](#ref_company_name_history): Former company names from SEC submissions.
 - [`ref_company_ticker_history`](#ref_company_ticker_history): Tickers over time, so old client files still resolve after a ticker change.
+- [`ref_ir_profile`](#ref_ir_profile): How each company IR site is fetched. Seeded from reference/data/ir_profiles.csv.
 - [`ref_ir_source`](#ref_ir_source): IR website, supplemental and alert-signup URLs per company. Input to the IR fetcher and inbox.
 - [`ref_metric`](#ref_metric): Standard REIT metric dictionary. Seeded from src/reitstreet/reference/data/metrics.csv.
 - [`ref_metric_map`](#ref_metric_map): Rules mapping XBRL tags and supplemental row labels to metrics. Mappings are data, not code.
+- [`ref_web_host`](#ref_web_host): robots.txt state per web host, refreshed by the IR fetcher (default every 24 hours).
 
 ### ref_company
 
@@ -206,6 +257,24 @@ Table. Tickers over time, so old client files still resolve after a ticker chang
 | `first_seen` | date | NO |  | First date we saw it |
 | `last_seen` | date | NO |  | Most recent date we saw it |
 
+### ref_ir_profile
+
+Table. How each company IR site is fetched. Seeded from reference/data/ir_profiles.csv.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `company_id` | int unsigned | NO | PRI | Company |
+| `strategy` | enum('static_html','q4_feed','headless','sec_8k','none') | NO |  | First fetch strategy to try for the results page; fallbacks follow in code |
+| `platform` | varchar(32) | YES |  | IR site vendor or layout family, e.g. q4cdn, static-files, cloudfront, wordpress |
+| `expects_supplemental` | tinyint(1) | NO |  | 1 if the company publishes a quarterly supplemental; drives the overdue check |
+| `probe_status` | enum('works','js_only','no_supp','error','not_probed') | NO |  | Result of the last manual coverage probe (from the seed file) |
+| `probe_supp_links` | smallint unsigned | YES |  | Supplemental links the probe saw on the results page |
+| `probe_latest_period` | varchar(16) | YES |  | Latest supplemental period the probe saw, e.g. Q3 2026 |
+| `probe_date` | date | YES |  | When the probe ran |
+| `notes` | varchar(1024) | YES |  | Free-text notes from the seed file |
+| `profile_source` | varchar(255) | YES |  | Seed file and hash this row came from |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
 ### ref_ir_source
 
 Table. IR website, supplemental and alert-signup URLs per company. Input to the IR fetcher and inbox.
@@ -223,6 +292,11 @@ Table. IR website, supplemental and alert-signup URLs per company. Input to the 
 | `last_checked_at` | datetime(6) | YES |  | UTC time of the last check |
 | `last_changed_at` | datetime(6) | YES |  | UTC time the content last changed |
 | `last_sha256` | char(64) | YES |  | Raw object of the last successful check |
+| `http_etag` | varchar(255) | YES |  | ETag of the last 200 response, sent back as If-None-Match |
+| `http_last_modified` | varchar(64) | YES |  | Last-Modified of the last 200 response, sent back as If-Modified-Since |
+| `last_outcome` | varchar(16) | YES |  | Outcome of the last check (see ops_ir_check.outcome) |
+| `last_link_count` | int unsigned | YES |  | Supplemental links seen at the last successful page check |
+| `max_link_count` | int unsigned | YES |  | Most supplemental links ever seen; zero after a positive count = layout break |
 | `consecutive_failures` | smallint unsigned | NO |  | Failed checks in a row; the monitor alerts past a threshold |
 | `notes` | varchar(1024) | YES |  | Free-text notes |
 
@@ -270,12 +344,26 @@ Table. Rules mapping XBRL tags and supplemental row labels to metrics. Mappings 
 | `notes` | varchar(512) | YES |  | Why this rule exists |
 | `updated_at` | datetime(6) | NO |  | Last change (UTC) |
 
+### ref_web_host
+
+Table. robots.txt state per web host, refreshed by the IR fetcher (default every 24 hours).
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `host` | varchar(255) | NO | PRI | Lower-case host name |
+| `robots_status` | smallint | YES |  | HTTP status of the last robots.txt fetch; NULL when unreachable |
+| `robots_policy` | enum('parsed','allow_all','disallow_all') | NO |  | RFC 9309: 2xx parsed, 4xx allow all, 5xx or unreachable disallow all |
+| `robots_sha256` | char(64) | YES | MUL | Raw object holding the robots.txt body |
+| `crawl_delay_s` | decimal(8,2) | YES |  | Crawl-delay for our user agent, if any |
+| `robots_fetched_at` | datetime(6) | NO |  | UTC time robots.txt was last fetched |
+
 ## stg_* Staging: parsed source records, one row per source fact, re-derivable from raw
 
 - [`stg_doc_line_item`](#stg_doc_line_item): Individual values extracted from document tables, with page and cell position.
 - [`stg_doc_parse`](#stg_doc_parse): Every parse of every document. Old parses are kept, so parser upgrades can be compared and rolled back.
 - [`stg_doc_table`](#stg_doc_table): Tables found in parsed documents.
 - [`stg_document`](#stg_document): Every supplemental, earnings release and other document from every source, one registry.
+- [`stg_ir_link`](#stg_ir_link): Every document link seen on a company IR site. New supplemental links are downloaded.
 - [`stg_sec_filing`](#stg_sec_filing): Every SEC filing of every tracked company, from data.sec.gov submissions.
 - [`stg_sec_filing_document`](#stg_sec_filing_document): Documents listed on EDGAR filing index pages (earnings 8-Ks, 10-Ks, 10-Qs).
 - [`stg_xbrl_concept`](#stg_xbrl_concept): XBRL concepts seen in companyfacts.
@@ -348,16 +436,20 @@ Table. Every supplemental, earnings release and other document from every source
 | `doc_id` | bigint unsigned | NO | PRI | Surrogate key |
 | `company_id` | int unsigned | YES | MUL | Company; NULL until identified (archive imports) |
 | `doc_kind` | enum('supplemental','earnings_release','presentation','exhibit_other','unknown') | NO |  | What the document is |
+| `kind_source` | varchar(32) | YES |  | What set doc_kind: link rule, feed, archive, sec |
 | `source` | enum('sec_8k_exhibit','ir_website','email','manual_archive') | NO | MUL | How we got it |
 | `source_url` | varchar(2048) | NO |  | Where it came from (file:// URI for archive imports) |
 | `source_url_hash` | char(64) (generated) | YES |  | Hash of source_url, for uniqueness |
 | `accession_no` | char(20) | YES |  | SEC accession, for 8-K exhibits |
 | `filing_id` | bigint unsigned | YES |  | SEC filing, for 8-K exhibits |
+| `link_id` | bigint unsigned | YES |  | stg_ir_link the document was downloaded from |
 | `original_filename` | varchar(255) | YES |  | File name as published |
+| `title` | varchar(512) | YES |  | Title as published (link text, feed title or PDF title) |
 | `sha256` | char(64) | YES | MUL | Raw object with the bytes; NULL until fetched |
 | `bytes` | bigint unsigned | YES |  | Size |
 | `mime_type` | varchar(128) | YES |  | MIME type |
 | `period_end_date` | date | YES |  | Reporting period end the document covers |
+| `period_source` | varchar(32) | YES |  | What set period_end_date: anchor, url, context, feed, pdf_text, manifest |
 | `published_date` | date | YES |  | Date published (filing date for 8-Ks) = when the market could know it |
 | `status` | enum('registered','fetched','parsed','needs_review','failed','duplicate','skipped') | NO | MUL | Lifecycle state |
 | `duplicate_of_doc_id` | bigint unsigned | YES |  | Earlier document with identical bytes |
@@ -366,6 +458,33 @@ Table. Every supplemental, earnings release and other document from every source
 | `registered_run_id` | bigint unsigned | YES |  | Run that registered it |
 | `created_at` | datetime(6) | NO |  | Row creation (UTC) |
 | `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
+### stg_ir_link
+
+Table. Every document link seen on a company IR site. New supplemental links are downloaded.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `link_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `company_id` | int unsigned | NO | MUL | Company |
+| `source_id` | int unsigned | YES |  | ref_ir_source page the link was found on |
+| `url` | varchar(2048) | NO |  | Absolute document URL (no fragment) |
+| `url_hash` | char(64) (generated) | YES |  | Hash of url, for uniqueness |
+| `anchor_text` | varchar(512) | YES |  | Link text as published |
+| `context_text` | varchar(512) | YES |  | Nearby heading or row text, used for period inference |
+| `doc_kind` | enum('supplemental','earnings_release','presentation','exhibit_other','unknown') | NO |  | Classification from link text and URL |
+| `kind_reason` | varchar(64) | YES |  | Rule that set doc_kind |
+| `fiscal_year` | smallint unsigned | YES |  | Fiscal year the document covers |
+| `fiscal_quarter` | tinyint unsigned | YES |  | Fiscal quarter (1-4) the document covers |
+| `period_end_date` | date | YES |  | Period end the document covers |
+| `period_source` | varchar(32) | YES |  | Where the period came from: anchor, url, context, feed, pdf_text |
+| `strategy` | varchar(16) | NO |  | Fetch strategy that found it |
+| `status` | enum('new','downloaded','skipped','failed','robots_blocked') | NO | MUL | Download state |
+| `status_note` | varchar(512) | YES |  | Why skipped or failed |
+| `doc_id` | bigint unsigned | YES | MUL | Document registered from this link |
+| `first_seen_at` | datetime(6) | NO |  | UTC time first seen = discovery time |
+| `last_seen_at` | datetime(6) | NO |  | UTC time last seen on the page |
+| `first_run_id` | bigint unsigned | YES |  | Run that first saw it |
 
 ### stg_sec_filing
 
