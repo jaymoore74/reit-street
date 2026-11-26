@@ -82,4 +82,47 @@ def seed_reference(db: Db) -> dict[str, int]:
     clause, params = in_clause("k", [r["map_key"] for r in rules])
     db.execute(f"UPDATE ref_metric_map SET is_active=0 WHERE origin='seed' AND map_key NOT IN {clause}", params)
     db.commit()
-    return {"metrics": len(metrics), "rules": len(rules)}
+    return {"metrics": len(metrics), "rules": len(rules), **seed_property_types(db)}
+
+
+def seed_property_types(db: Db) -> dict[str, int]:
+    """property_types.csv -> ref_property_type; property_type_map.csv -> ref_property_type_map.
+    Map rules dropped from the CSV are deleted (the table holds seed rules only)."""
+    types = _read("property_types.csv")
+    for t in types:
+        db.execute(
+            """INSERT INTO ref_property_type (type_code, sector, name, default_unit_kind, description)
+               VALUES (:c, :s, :n, :u, :d) AS new
+               ON DUPLICATE KEY UPDATE sector=new.sector, name=new.name, default_unit_kind=new.default_unit_kind,
+                 description=new.description""",
+            {
+                "c": t["type_code"],
+                "s": t["sector"],
+                "n": t["name"],
+                "u": t["default_unit_kind"],
+                "d": _none(t["description"]),
+            },
+        )
+    codes = {t["type_code"] for t in types}
+    rules = _read("property_type_map.csv")
+    for r in rules:
+        if r["type_code"] not in codes:
+            raise ValueError(f"property_type_map.csv: unknown type_code {r['type_code']} (key {r['rule_key']})")
+        db.execute(
+            """INSERT INTO ref_property_type_map (rule_key, pattern, type_code, priority, applies_to, notes)
+               VALUES (:k, :p, :t, :pr, :a, :n) AS new
+               ON DUPLICATE KEY UPDATE pattern=new.pattern, type_code=new.type_code, priority=new.priority,
+                 applies_to=new.applies_to, notes=new.notes""",
+            {
+                "k": r["rule_key"],
+                "p": r["pattern"],
+                "t": r["type_code"],
+                "pr": int(r["priority"]),
+                "a": r["applies_to"],
+                "n": _none(r["notes"]),
+            },
+        )
+    clause, params = in_clause("k", [r["rule_key"] for r in rules])
+    db.execute(f"DELETE FROM ref_property_type_map WHERE rule_key NOT IN {clause}", params)
+    db.commit()
+    return {"property_types": len(types), "property_type_rules": len(rules)}

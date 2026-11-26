@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from reitstreet.core import migrate
 from reitstreet.core.db import Db
 from tests.integration.helpers import bootstrap, cli, last_run, metric
 from tests.sec_fixtures import IR_HOST, quarters_2024
@@ -87,7 +88,7 @@ def test_export_current_and_point_in_time(env: Path, sec_root: Path, db: Db) -> 
     d1 = sorted(out.iterdir())[-1]
     manifest = json.loads((d1 / "manifest.json").read_text())
     assert manifest["files"]["companies"]["rows"] == 12
-    assert manifest["alembic_revision"] == "0003"
+    assert manifest["alembic_revision"] == migrate.head_revision()
     assert pld_q1(_read(d1 / "metrics.csv")) == [str(int(q1 * 1.01))]
     assert sorted(pld_q1(_read(d1 / "metrics_history.csv"))) == sorted([str(q1), str(int(q1 * 1.01))])
 

@@ -5,6 +5,26 @@ format are the public interface.
 
 ## [Unreleased]
 
+### Added
+- Property master (ADR 0010): one stable id per real property across REITs and years.
+  `stg_property_record` keeps every row each source gives, with lineage;
+  `wh_property_xref` links rows to properties with the rule, score and review status;
+  `wh_property_alias` keeps names, addresses and source references;
+  `wh_property_ownership` holds ownership spells (reported or inferred acquired and disposed
+  dates, knowledge time); `dl_properties` is the client view. Migration 0004 replaces the
+  never-filled baseline `wh_property`.
+- 10-K Schedule III loader from XBRL (property and aggregate rows, totals for
+  reconciliation); list loaders for HTML tables, CSV, JSON and XLSX; `import-properties`
+  for files; US Census geocoding with a cache.
+- Source map for 150 equity REITs (`property_sources.csv`, `ref_property_source`) and
+  property types (`property_types.csv`, 36 types with sector and size unit).
+- Commands `load-properties`, `import-properties`, `build-properties`,
+  `geocode-properties`, `property-coverage`, `property-review`; seven data quality checks.
+- `docs/property-coverage.md`, runbook `docs/runbooks/properties.md`.
+
+### Changed
+- XML from outside sources is parsed through `core/xmlsafe.py`, which refuses DTDs.
+
 ## [0.3.0] - 2026-11-26
 
 ### Added

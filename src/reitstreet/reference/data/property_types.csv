@@ -1,0 +1,37 @@
+type_code,sector,name,default_unit_kind,description
+apartment,residential,Apartment,units,Multifamily rental communities
+single_family_rental,residential,Single-family rental,units,Single-family homes held for rent
+manufactured_housing,residential,Manufactured housing,sites,Manufactured home communities
+rv_resort,residential,RV resort,sites,RV and campground resorts
+marina,residential,Marina,sites,Marinas (wet and dry slips)
+student_housing,residential,Student housing,beds,Purpose-built student housing
+senior_housing,healthcare,Senior housing,units,"Independent, assisted living and memory care"
+skilled_nursing,healthcare,Skilled nursing,beds,Skilled nursing and post-acute facilities
+medical_office,healthcare,Medical office,sf,Medical office buildings and outpatient
+hospital,healthcare,Hospital,beds,"Acute care, rehab, behavioral and LTAC hospitals"
+life_science,healthcare,Life science,sf,Lab and life science buildings
+office,office,Office,sf,Office buildings
+industrial,industrial,Industrial,sf,"Warehouse, distribution, flex and light industrial"
+cold_storage,industrial,Cold storage,sf,Temperature-controlled warehouses
+shopping_center,retail,Shopping center,sf,"Grocery-anchored, community and power centers"
+mall,retail,Mall,sf,Enclosed regional malls
+outlet,retail,Outlet center,sf,Outlet centers
+net_lease_retail,net_lease,Net lease retail,sf,Single-tenant retail on net leases
+net_lease_industrial,net_lease,Net lease industrial,sf,Single-tenant industrial on net leases
+net_lease_office,net_lease,Net lease office,sf,Single-tenant office on net leases
+net_lease_other,net_lease,Net lease other,sf,"Single-tenant net lease of other uses (restaurants, auto, childcare...)"
+hotel,lodging,Hotel,keys,Hotels and resorts
+self_storage,self_storage,Self storage,sf,Self storage facilities
+data_center,data_center,Data center,mw,Data centers
+tower,infrastructure,Tower,towers,Wireless towers and rooftop sites
+fiber,infrastructure,Fiber,other,Fiber and small cell networks
+billboard,specialty,Billboard,screens,Outdoor advertising structures
+gaming,specialty,Gaming,other,Casinos and gaming facilities
+experiential,specialty,Experiential,other,"Theatres, attractions, eat and play, ski"
+farmland,specialty,Farmland,acres,Farmland
+timberland,specialty,Timberland,acres,Timberlands
+land,other,Land,acres,"Land held for development, ground leases of land"
+cannabis,specialty,Cannabis,sf,Cannabis cultivation and processing facilities
+correctional,specialty,Correctional,beds,Correctional and detention facilities
+mixed_use,other,Mixed use,sf,Mixed-use properties
+other,other,Other,other,Anything not classified yet
