@@ -27,7 +27,7 @@ Options weighed:
 - Jobs: GitHub Actions workflows on one self-hosted runner (EC2 t4g.small, Ubuntu 24.04
   arm64) in a public subnet of the cluster's VPC, no inbound ports, shell through Session
   Manager. Its instance role is the only AWS credential; GitHub holds no AWS keys or
-  database passwords, only three non-secret variables.
+  database passwords, only two non-secret variables.
 - Raw store: content-addressed files on the runner's disk as a working cache, copied to
   S3 after every run (`raw/`, `logs/`, `exports/`). The role has no `s3:DeleteObject` and
   the bucket is versioned, so the raw layer is append-only (ADR 0003).

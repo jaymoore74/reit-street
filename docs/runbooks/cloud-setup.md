@@ -124,16 +124,20 @@ Back on GitHub's Runners page, `reitstreet-aws-1` shows **Idle**.
 ## 7. GitHub repository variables
 
 GitHub > repo > Settings > Secrets and variables > Actions > **Variables** tab > New
-repository variable, three times:
+repository variable, twice:
 
 | Name | Value |
 |---|---|
 | `AWS_REGION` | region code from step 1, e.g. `us-west-2` |
 | `REITSTREET_S3_BUCKET` | bucket name from step 2 |
-| `REITSTREET_SEC_USER_AGENT` | your name and email, e.g. `Jane Smith jane@yourfirm.com` (SEC requires it) |
 
-No GitHub **secrets** are needed. Optional fourth variable `REITSTREET_SCHEDULES` = `off`
-pauses all scheduled runs (the kill switch); delete it or set `on` to resume.
+No GitHub **secrets** are needed. Optional variables:
+
+- `REITSTREET_SCHEDULES` = `off` pauses all scheduled runs (the kill switch); delete it or
+  set `on` to resume.
+- `REITSTREET_SEC_USER_AGENT` overrides the contact sent to SEC EDGAR with every request.
+  SEC requires a real name and email; the jobs already send `Jason Moore reits@jwalteranalytics.com`
+  (set in `.github/actions/reitstreet-env/action.yml`), so only add this to change it.
 
 ## 8. Create the schema and logins
 
