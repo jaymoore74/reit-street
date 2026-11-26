@@ -22,6 +22,7 @@ from .errors import ConfigError
 
 UA_PLACEHOLDER = "YOUR NAME your.email@example.com"
 SECRET_KEYS = {"db_password", "alerts_smtp_password", "alerts_webhook_url", "db_url"}
+SECRET_PREFIXES = ("q4_feed_",)  # [q4_feed] keys land in Settings.extra
 
 
 @dataclass
@@ -42,8 +43,17 @@ class Settings:
     raw_dir: Path | None = None  # defaults to <data_dir>/raw
     universe_csv: Path | None = None
     # [http] non-SEC sources (IR websites)
-    http_user_agent: str = ""
+    http_user_agent: str = ""  # blank: generic ReitStreetBot UA (no personal details)
     http_requests_per_second: float = 1.0
+    # [ir] IR website fetcher
+    ir_requests_per_second: float = 0.5  # per host; robots.txt Crawl-delay wins when longer
+    ir_download_kinds: str = "supplemental"  # comma list: supplemental, earnings_release, presentation
+    ir_max_new_docs_per_company: int = 40
+    ir_robots_ttl_hours: float = 24.0
+    ir_headless: bool = False  # needs: pip install playwright && python -m playwright install chromium
+    ir_supplemental_grace_days: int = 7
+    ir_layout_break_min_links: int = 3
+    ir_alert_after_failures: int = 3
     # [alerts]
     alerts_smtp_host: str = ""
     alerts_smtp_port: int = 587
@@ -82,11 +92,26 @@ class Settings:
             )
         return ua
 
+    def web_user_agent(self, version: str) -> str:
+        """User-Agent for IR websites. Honest and generic by default: it names the bot and its
+        purpose, carries no personal name or email, and robots.txt rules address it as ReitStreetBot."""
+        return (self.http_user_agent or "").strip() or (
+            f"ReitStreetBot/{version} (REIT disclosure research; honors robots.txt)"
+        )
+
+    def ir_kinds(self) -> frozenset[str]:
+        kinds = {k.strip() for k in self.ir_download_kinds.split(",") if k.strip()}
+        bad = kinds - {"supplemental", "earnings_release", "presentation", "exhibit_other", "unknown"}
+        if bad:
+            raise ConfigError(f"[ir] download_kinds: unknown kinds {sorted(bad)}")
+        return frozenset(kinds)
+
     def redacted(self) -> dict[str, object]:
         out: dict[str, object] = {}
         for f in fields(self):
             v = getattr(self, f.name)
             out[f.name] = "***" if (f.name in SECRET_KEYS and v) else (str(v) if isinstance(v, Path) else v)
+        out["extra"] = {k: ("***" if k.startswith(SECRET_PREFIXES) and v else v) for k, v in self.extra.items()}
         return out
 
 

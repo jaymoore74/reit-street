@@ -5,6 +5,7 @@
 | Task | Script | When | Does |
 |---|---|---|---|
 | sync | `sync.bat` | weekdays every 30 min, 1 PM to 8 PM | `sec-sync`, `dq`, `monitor` |
+| ir-fetch | `ir_fetch.bat` | weekdays 6 AM and 3 PM | `fetch-ir`, `dq --only freshness,ops`, `monitor` ([ir-fetcher.md](ir-fetcher.md)) |
 | weekly | `weekly.bat` | Sunday 6 AM | `universe`, `sec-sync --force`, `fetch-ir`, `parse-docs`, `dq`, `export`, `monitor` |
 | monitor | `monitor.bat` | hourly | stale runs, failures, overdue sync, DQ errors, old dead letters |
 

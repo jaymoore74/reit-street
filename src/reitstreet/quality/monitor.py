@@ -124,5 +124,55 @@ def run_monitor(db: Db, settings: Settings, alerter: Alerter | None = None, look
             "deadletters:old",
         )
     out["old_dead_letters"] = sum(r["n"] for r in old_dl)
+    out.update(ir_alerts(db, settings, al, lookback_hours))
     out["alerts_sent"] = len(al.sent)
     return out
+
+
+def ir_alerts(db: Db, settings: Settings, al: Alerter, lookback_hours: int = 24) -> dict[str, Any]:
+    """IR website alerts: a results page that stopped listing supplementals (layout break),
+    a page or PDF URL failing run after run, and supplementals that are late."""
+    from ..sources.ir.expectations import expected_supplementals
+
+    breaks = db.query(
+        """SELECT c.ticker, k.note, s.url FROM ops_ir_check k JOIN ref_company c ON c.company_id = k.company_id
+           JOIN ref_ir_source s ON s.source_id = k.source_id
+           WHERE k.outcome='layout_break' AND k.checked_at > UTC_TIMESTAMP(6) - INTERVAL :h HOUR
+             AND k.check_id = (SELECT MAX(k2.check_id) FROM ops_ir_check k2 WHERE k2.source_id = k.source_id)""",
+        {"h": lookback_hours},
+    )
+    for r in breaks:
+        al.raise_alert(
+            "warn",
+            "ir",
+            f"{r['ticker']} IR page layout changed: no supplemental links found",
+            f"{r['url']}\n{r['note'] or ''}\nCheck the page in a browser. If it moved, update the universe file; "
+            "if it now needs JavaScript, set strategy=headless in ir_profiles.csv.",
+            f"ir-layout:{r['ticker']}",
+        )
+    failing = db.query(
+        """SELECT c.ticker, s.url, s.source_type, s.consecutive_failures, s.last_outcome FROM ref_ir_source s
+           JOIN ref_company c ON c.company_id = s.company_id
+           WHERE c.in_universe=1 AND s.is_active=1 AND s.source_type IN ('results_page','supplemental_pdf')
+             AND s.consecutive_failures >= :n""",
+        {"n": settings.ir_alert_after_failures},
+    )
+    for r in failing:
+        al.raise_alert(
+            "warn",
+            "ir",
+            f"{r['ticker']} IR {r['source_type']} failing ({r['consecutive_failures']} checks in a row)",
+            f"{r['url']}\nlast outcome: {r['last_outcome']}. See raw_fetch for the HTTP status.",
+            f"ir-fail:{r['ticker']}:{r['source_type']}",
+        )
+    overdue = [e for e in expected_supplementals(db, grace_days=settings.ir_supplemental_grace_days)
+               if e.status == "overdue"]  # fmt: skip
+    if overdue:
+        al.raise_alert(
+            "warn",
+            "ir",
+            f"{len(overdue)} supplementals overdue",
+            "\n".join(f"{e.ticker}: {e.reason}" for e in overdue),
+            f"ir-overdue:{','.join(sorted(e.ticker for e in overdue))[:150]}",
+        )
+    return {"ir_layout_breaks": len(breaks), "ir_failing_sources": len(failing), "ir_overdue": len(overdue)}

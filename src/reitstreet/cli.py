@@ -22,7 +22,7 @@ from .core import migrate
 from .core.alerts import Alerter
 from .core.db import Db, in_clause
 from .core.errors import ConfigError, FatalSourceError, LockHeldError, ParseError
-from .core.http import Fetcher, fixture_transport
+from .core.http import Fetcher, HostRateLimiter, fixture_transport
 from .core.jobs import JobRun
 from .core.rawstore import RawStore
 from .sources.sec import urls
@@ -67,18 +67,19 @@ class App:
         )
 
     def web_fetcher(self, run_id: int | None) -> Fetcher:
+        """IR websites: generic honest User-Agent, per-host rate limit, robots.txt (see sources.ir.robots)."""
         offline = getattr(self.a, "offline_fixtures", None)
-        ua = self.s.http_user_agent or (self.s.sec_user_agent if not offline else "offline-test")
-        if not offline and not ua:
-            raise ConfigError("Set [http] user_agent (or [sec] user_agent) before fetching IR websites.")
+        rps = 1000.0 if offline else self.s.ir_requests_per_second
         return Fetcher(
             source="ir_website",
-            user_agent=ua,
-            rps=1000.0 if offline else self.s.http_requests_per_second,
+            user_agent=self.s.web_user_agent(__version__),
+            rps=rps,
             store=self.store,
             db=self.db,
             run_id=run_id,
             transport=fixture_transport(Path(offline)) if offline else None,
+            limiter=HostRateLimiter(rps),
+            max_retries=3,
         )
 
     def companies(self, tickers: list[str] | None = None, *, all_companies: bool = False) -> list[dict[str, Any]]:
@@ -176,13 +177,15 @@ def cmd_migrate(app: App) -> int:
 
 def cmd_seed(app: App) -> int:
     from .reference.seed import seed_reference
+    from .sources.ir.profiles import apply_profiles
 
-    print(json.dumps(seed_reference(app.db)))
+    print(json.dumps({**seed_reference(app.db), **apply_profiles(app.db)}))
     return EXIT_OK
 
 
 def cmd_universe(app: App) -> int:
     from .reference.universe import import_universe
+    from .sources.ir.profiles import apply_profiles
 
     path = Path(app.a.csv) if app.a.csv else app.s.universe_csv
     if not path or not Path(path).exists():
@@ -192,6 +195,7 @@ def cmd_universe(app: App) -> int:
         with run.item(f"file:{Path(path).name}", stage="universe") as it:
             fetcher = app.sec_fetcher(run.run_id) if app.a.resolve_ciks else None
             res = import_universe(app.db, app.store, Path(path), run_id=run.run_id, fetcher=fetcher, prune=app.a.prune)
+            res.update(apply_profiles(app.db))
             it.rows = int(str(res["companies"]))
             it.detail = json.dumps(res, default=str)
             if res["unresolved"]:
@@ -328,25 +332,72 @@ def cmd_import_archive(app: App) -> int:
     return _job(app, "import-archive", body)
 
 
-def cmd_fetch_ir(app: App) -> int:
-    from .sources.supplementals.ir_fetcher import fetch_supplemental_pdfs
+def _ir_kinds(s: str | None) -> frozenset[str]:
+    from .sources.ir.models import DOC_KINDS
 
-    comps = app.companies(_list(app.a.tickers))
+    kinds = frozenset(k.strip().lower() for k in (s or "").split(",") if k.strip())
+    bad = sorted(kinds - set(DOC_KINDS))
+    if bad:
+        raise SystemExit(f"--kinds: unknown {', '.join(bad)}; choose from {', '.join(DOC_KINDS)}")
+    return kinds
+
+
+def cmd_fetch_ir(app: App) -> int:
+    from .sources.ir.fetch import IrOptions, fetch_company
+    from .sources.ir.robots import RobotsCache
+    from .sources.ir.strategies import q4_key_for
+
+    a = app.a
+    comps = app.companies(_list(a.tickers))
+    opts = IrOptions(
+        download=not a.no_download,
+        kinds=_ir_kinds(a.kinds) or app.s.ir_kinds(),
+        max_new_docs=app.s.ir_max_new_docs_per_company,
+        backfill=a.backfill,
+        strategy=a.strategy,
+        headless=app.s.ir_headless or a.headless,
+        conditional=not a.force,
+        layout_break_min_links=app.s.ir_layout_break_min_links,
+    )
 
     def body(run: JobRun) -> None:
         f = app.web_fetcher(run.run_id)
+        ua = f.user_agent
+        robots = RobotsCache(f, app.db, agent_token=ua.split("/")[0].split()[0], ttl_hours=app.s.ir_robots_ttl_hours)
         for c in comps:
             key = f"cik:{c['cik']}"
             if run.skip_if_resumed(key):
                 continue
             with run.item(key, stage="ir.fetch", company_id=c["company_id"]) as it:
-                r = fetch_supplemental_pdfs(app.db, f, c, run.run_id)
+                r = fetch_company(app.db, f, robots, c, run.run_id, opts, q4_key=q4_key_for(c["ticker"], app.s.extra))
                 run.http_requests = f.request_count
-                it.rows = r["new_docs"]
-                it.skipped = r["checked"] == 0
-                it.detail = json.dumps(r)
+                it.rows = r.new_docs
+                it.skipped = r.pages == 0 and not r.direct.get("checked")
+                it.detail = json.dumps(r.as_dict())
 
     return _job(app, "fetch-ir", body)
+
+
+def cmd_ir_coverage(app: App) -> int:
+    from .sources.ir.coverage import coverage_rows, summarize, write_csv
+    from .sources.ir.expectations import expected_supplementals
+
+    rows = coverage_rows(app.db)
+    exp = {e.ticker: e for e in expected_supplementals(app.db, grace_days=app.s.ir_supplemental_grace_days)}
+    if app.a.out:
+        write_csv(rows, Path(app.a.out))
+    print(json.dumps({"companies": len(rows), "coverage": summarize(rows)}))
+    overdue = [e for e in exp.values() if e.status == "overdue"]
+    for e in overdue:
+        print(f"OVERDUE {e.ticker:<6} {e.reason}")
+    if app.a.verbose_rows:
+        for r in rows:
+            supp = r["last_supp_links"] or r["probe_supp_links"] or 0
+            print(
+                f"{r['ticker']:<6} {r['coverage']:<15} {r['strategy']:<12} {r['platform'] or '':<12} "
+                f"{r['last_outcome'] or r['probe_status']:<14} supp={supp}"
+            )
+    return EXIT_OK
 
 
 def cmd_replay(app: App) -> int:
@@ -388,7 +439,16 @@ def cmd_dq(app: App) -> int:
     def body(run: JobRun) -> None:
         with run.item("dq", stage="dq") as it:
             only = [x.lower() for x in _list(app.a.only) or []] or None
-            summary = run_checks(app.db, Ctx(store=app.store), run.run_id, only=only)
+            summary = run_checks(
+                app.db,
+                Ctx(
+                    store=app.store,
+                    supplemental_grace_days=app.s.ir_supplemental_grace_days,
+                    ir_failures_threshold=app.s.ir_alert_after_failures,
+                ),
+                run.run_id,
+                only=only,
+            )
             it.rows = sum(s["findings"] for s in summary)
             for s in summary:
                 print(
@@ -599,10 +659,19 @@ def build_parser() -> argparse.ArgumentParser:
     ia = cmd("import-archive", cmd_import_archive, "import a folder of older supplementals (PDF, XLSX, CSV)")
     ia.add_argument("folder")
     ia.add_argument("--manifest", help="CSV with path,ticker,period_end,published_date,doc_kind")
-    fi = cmd("fetch-ir", cmd_fetch_ir, "download direct supplemental PDF links from ref_ir_source")
+    fi = cmd("fetch-ir", cmd_fetch_ir, "find and download new supplementals from REIT IR websites")
     tickers(fi)
     resume(fi)
     offline(fi)
+    fi.add_argument("--no-download", action="store_true", help="discover and classify links only (a probe)")
+    fi.add_argument("--kinds", help="comma-separated doc kinds to download (default: [ir] download_kinds)")
+    fi.add_argument("--backfill", action="store_true", help="no per-company cap on downloads this run")
+    fi.add_argument("--strategy", choices=["static_html", "q4_feed", "headless"], help="force one strategy")
+    fi.add_argument("--headless", action="store_true", help="allow the headless browser this run")
+    fi.add_argument("--force", action="store_true", help="ignore ETag / Last-Modified and refetch pages")
+    ic = cmd("ir-coverage", cmd_ir_coverage, "per-company IR coverage and overdue supplementals")
+    ic.add_argument("--out", help="write the coverage table as CSV")
+    ic.add_argument("--rows", dest="verbose_rows", action="store_true", help="print one line per company")
     r = cmd("replay", cmd_replay, "re-parse staging from the raw store, no network (after a parser change)")
     tickers(r)
     resume(r)

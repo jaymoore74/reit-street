@@ -1,0 +1,190 @@
+ticker,strategy,platform,expects_supplemental,probe_status,probe_supp_links,probe_latest_period,probe_date,notes
+AAT,static_html,notified,1,works,4,Q3 2026,2026-11-26,Q4 2025 through Q3 2026
+ABR,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,Investor presentations only
+ACR,static_html,cision,0,no_supp,0,Q3 2026,2026-11-26,Earnings presentations only
+ACRE,static_html,eqs,0,no_supp,0,Q3 2026,2026-11-26,Exhibit 99.2 PDFs unlabeled; verify
+ADAM,static_html,investis,1,works,3,Q3 2026,2026-11-26,2026 year page only
+ADC,static_html,q4,1,error,0,,2026-11-26,Fetch client error; not retried
+AGNC,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,Stockholder presentations and 10-Q only
+AHR,headless,q4,1,js_only,0,,2026-11-26,Summary table empty without JavaScript
+AHRT,static_html,notified,1,works,35,Q3 2026,2026-11-26,Supplemental Financial Package links 2018 to 2026
+AHT,headless,q4,1,js_only,0,,2026-11-26,Documents list empty
+AIV,headless,q4,1,js_only,0,,2026-11-26,Report list empty
+AKR,static_html,notified,1,works,23,Q3 2026,2026-11-26,Q3 PDF labelled 3Q_2026 AKR Supplemental; Excel files separate
+ALX,static_html,notified,0,no_supp,0,,2026-11-26,SEC filings page only
+AMH,headless,q4,1,js_only,0,,2026-11-26,Financial summary and reports list empty
+AMT,static_html,notified,0,no_supp,0,,2026-11-26,News list only; no quarterly results documents shown
+AOMR,headless,q4,1,js_only,0,,2026-11-26,Year accordion empty
+APLE,headless,q4,1,js_only,0,,2026-11-26,Docs page is SEC filings and the table is empty
+ARE,headless,q4,1,js_only,0,,2026-11-26,Supplemental page loads but document list empty
+ARR,static_html,notified,0,no_supp,0,,2026-11-26,Releases presentations and 10-Qs only
+BDN,headless,notified,1,js_only,0,,2026-11-26,IR home page only no quarterly list in static HTML
+BFS,headless,q4,1,js_only,0,,2026-11-26,quarterly reports list empty in static HTML Expand All control
+BHM,headless,q4,1,js_only,0,,2026-11-26,Supplemental on separate page
+BHR,headless,q4,1,js_only,0,,2026-11-26,SEC filings table empty
+BNL,headless,q4,1,js_only,0,,2026-11-26,Latest sections empty; content likely JavaScript-loaded
+BRSP,static_html,notified,1,works,10,Q3 2026,2026-11-26,page 1 of 5 only
+BRT,static_html,self_hosted,1,works,38,Q3 2026,2026-11-26,Back to 2017
+BRX,static_html,q4,1,works,23,Q3 2026,2026-11-26,At least 23 seen
+BSRT,static_html,q4,1,not_probed,,,,not probed: no results page URL in the universe file
+BXMT,headless,q4,1,js_only,0,,2026-11-26,Document lists empty in static HTML
+BXP,static_html,notified,1,works,107,Q3 2026,2026-11-26,Quarterly supplements 2000 to 2026
+CBL,headless,q4,1,js_only,0,,2026-11-26,Quarterly Supplementals tab empty statically
+CCI,static_html,notified,1,works,42,Q3 2026,2026-11-26,Supplemental Information Package per quarter
+CDP,static_html,equisolve,1,works,34,Q3 2026,2026-11-26,Page truncated; count partly from summary; quarterly back to 2017
+CDR,static_html,equisolve,1,works,13,Q2 2022,2026-11-26,Stale listing; latest Q2 2022
+CHCT,static_html,self_hosted,1,works,31,Q3 2026,2026-11-26,Financial Supplemental PDFs 2019 to 2026
+CHMI,static_html,notified,0,no_supp,0,Q2 2026,2026-11-26,Investor presentations only
+CIM,static_html,equisolve,1,works,36,Q3 2026,2026-11-26,Earnings Supplement plus Presentation PDFs approximate
+CLDT,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,news releases page not quarterly results page no supplement listed
+CLPR,static_html,wordpress,1,works,31,Q3 2026,2026-11-26,Q1 2019 through Q3 2026
+CMCT,static_html,notified,0,no_supp,0,,2026-11-26,Generic presentation and call links only
+CMTG,headless,q4,1,js_only,0,,2026-11-26,Accordion empty
+COLD,headless,q4,1,js_only,0,,2026-11-26,Financial summary and quarterly list empty no links
+CPT,static_html,q4,1,not_probed,,,,not probed: no results page URL in the universe file
+CSR,static_html,q4,0,no_supp,0,,2026-11-26,Landing page only; quarterly link not followed
+CTO,static_html,notified,1,works,24,Q3 2026,2026-11-26,Supplemental Disclosure 2020 to 2026
+CTRE,headless,q4,1,js_only,0,,2026-11-26,Quarterly results list empty
+CUBE,headless,q4,1,js_only,0,,2026-11-26,Quarterly results archive empty
+CURB,headless,q4,1,js_only,0,,2026-11-26,Year accordion list empty without JavaScript
+CUZ,headless,q4,1,js_only,0,,2026-11-26,Supplemental information heading only and no document list
+DEA,static_html,notified,1,works,1,Q3 2026,2026-11-26,Homepage lists latest only
+DEI,static_html,q4,1,works,1,Q3 2026,2026-11-26,Only latest Earnings Package on overview page
+DHC,static_html,rmr,1,works,67,Q3 2026,2026-11-26,Supplemental label to 2022; Financial Results 2023 to 2026
+DLR,static_html,notified,1,works,73,Q3 2026,2026-11-26,Earnings Supplemental label; count approximate
+DOC,headless,q4,1,js_only,0,,2026-11-26,Quarterly tables empty without JavaScript
+DRH,static_html,notified,0,no_supp,0,,2026-11-26,Presentations page; only a Nov 2026 investor update
+DX,static_html,other,0,no_supp,0,,2026-11-26,Earnings release and presentation only; no supplemental
+EFC,static_html,notified,0,no_supp,0,,2026-11-26,Earnings call presentations only
+EGP,static_html,other,1,works,54,Q3 2026,2026-11-26,Financial Supplement links 2013 to 2026
+ELS,static_html,notified,1,works,23,Q3 2026,2026-11-26,Page 1 of 3 paginated
+EPR,static_html,equisolve,1,works,51,Q3 2026,2026-11-26,51 seen verbatim rest truncated
+EPRT,static_html,eqs,1,works,34,Q3 2026,2026-11-26,Supplemental financial info PDFs 2018 to 2026 via EQS
+EQIX,static_html,equisolve,0,no_supp,0,,2026-11-26,Press release with financials; no supplemental label
+ESRT,headless,q4,1,js_only,0,,2026-11-26,Financial Summary Table empty
+ESS,headless,q4,1,js_only,0,,2026-11-26,Financial summary and quarterly list empty; needs JavaScript
+EXR,static_html,notified,1,works,65,Q4 2024,2026-11-26,No 2025 or 2026 entries on page; stale listing
+FBRT,headless,q4,1,js_only,0,,2026-11-26,quarterly archive empty in static HTML
+FCPT,headless,q4,1,js_only,0,,2026-11-26,Latest Quarters section empty; needs JavaScript
+FPI,headless,q4,1,js_only,0,,2026-11-26,SEC filings table empty no quarterly list
+FR,static_html,notified,1,works,59,Q3 2026,2026-11-26,Drupal static-files listing 2012 to 2026 Q3
+FRMI,headless,other,1,js_only,0,,2026-11-26,Heading only with no document list
+FRT,static_html,notified,1,works,3,Q3 2026,2026-11-26,2026 shown; older behind View All
+FSP,headless,q4,1,js_only,0,,2026-11-26,Quarter list empty
+FVR,headless,q4,1,js_only,0,,2026-11-26,latest quarters and archive empty in static HTML
+GIPR,static_html,equisolve,0,no_supp,0,Q3 2026,2026-11-26,10-Qs and one release only
+GLPI,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,Press releases and 10-Q only
+GNL,headless,q4,1,js_only,0,,2026-11-26,Lists empty without JavaScript
+GOOD,static_html,equisolve,0,no_supp,0,Q3 2026,2026-11-26,earnings releases and 10-Q only no supplement seen
+GPMT,static_html,equisolve,1,works,1,Q3 2026,2026-11-26,Latest quarter only
+GTY,headless,q4,1,js_only,0,,2026-11-26,Quarterly Results list empty without JavaScript
+HIW,static_html,q4,0,no_supp,0,,2026-11-26,Supplementals menu item but no supplement link here
+HPP,headless,q4,1,js_only,0,,2026-11-26,quarterly results heading with no list
+HR,headless,q4,1,js_only,0,,2026-11-26,Supplemental heading only and no document list
+HST,static_html,notified,1,error,0,,2026-11-26,302 redirect to another host not followed by probe
+ICR,static_html,other,0,no_supp,0,Q3 2026,2026-11-26,Letters and performance sheet only
+IHT,static_html,wordpress,0,no_supp,0,,2026-11-26,Press page only
+IIPR,headless,q4,1,js_only,0,,2026-11-26,Lists empty without JavaScript
+ILPT,headless,q4,1,js_only,0,,2026-11-26,select a year list empty in static HTML
+INN,headless,wordpress,1,js_only,0,,2026-11-26,Needs JS filter and form
+INVH,headless,q4,1,js_only,0,,2026-11-26,Quarterly and annual list empty; needs JavaScript
+IRM,headless,q4,1,js_only,0,,2026-11-26,Quarterly results and archive lists empty; needs JavaScript
+IRT,headless,q4,1,js_only,0,,2026-11-26,Supplemental list empty; Expand All needs JavaScript
+IVR,headless,q4,1,js_only,0,,2026-11-26,latest quarters and archive empty in static HTML
+IVT,static_html,wordpress,1,works,22,Q3 2026,2026-11-26,Supplementals listed per quarter back to 2021
+JAN,headless,q4,1,js_only,0,,2026-11-26,Latest quarters and summary empty
+JBGS,headless,other,1,js_only,0,,2026-11-26,homepage only tag script in static HTML
+KIM,static_html,equisolve,1,works,38,Q3 2026,2026-11-26,Supplemental Information from 2018
+KRC,headless,q4,1,js_only,0,,2026-11-26,Supplemental report page shows year selector but no document links
+KREF,static_html,investis,1,works,32,Q3 2026,2026-11-26,2018 to 2026
+KRG,headless,q4,1,js_only,0,,2026-11-26,Quarterly financial supplements page shows no document links
+LADR,headless,q4,1,js_only,0,,2026-11-26,Earnings supplement table has no rows
+LAMR,static_html,notified,0,no_supp,0,,2026-11-26,Fact sheet and 10-Qs only
+LAND,static_html,equisolve,0,no_supp,0,Q3 2026,2026-11-26,Earnings releases and 10-Qs only
+LFT,static_html,wordpress,1,works,14,Q3 2026,2026-11-26,Page 1 of 3
+LINE,headless,q4,1,js_only,0,,2026-11-26,Recent quarters and summary empty
+LOAN,static_html,self_hosted,1,error,0,,2026-11-26,Fetch client error; not retried
+LTC,static_html,equisolve,1,works,11,Q3 2026,2026-11-26,Labelled Supplemental Operating and Financial Data; back to Q1 2024
+MAA,headless,q4,1,js_only,0,,2026-11-26,Document list empty in static HTML
+MAC,static_html,notified,1,works,34,Q3 2026,2026-11-26,Combined release and supplement PDFs 2018 to 2026
+MDRR,static_html,self_hosted,1,works,5,Q4 2024,2026-11-26,Dropbox hosted; stops at 4Q24
+MFA,static_html,equisolve,1,works,39,Q3 2026,2026-11-26,Presentation PDFs as supplemental; count partial
+MITT,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,Presentations only
+MKZR,static_html,wordpress,0,no_supp,0,Q1 2026,2026-11-26,10-Qs and 8-Ks only
+MPT,headless,q4,1,js_only,0,,2026-11-26,Archive and summary empty
+MRP,headless,q4,1,js_only,0,,2026-11-26,Latest quarters and archive empty with no links
+NHI,headless,q4,1,js_only,0,,2026-11-26,Quarterly Supplementals accordion empty without JavaScript
+NHP,headless,q4,1,js_only,0,,2026-11-26,Lists empty without JavaScript
+NLOP,headless,q4,1,js_only,0,,2026-11-26,Document list absent
+NLY,static_html,self_hosted,1,works,31,Q3 2026,2026-11-26,31 seen before truncation
+NNN,static_html,wordpress,0,no_supp,0,Q3 2026,2026-11-26,Annual supplemental only not quarterly
+NREF,headless,q4,1,js_only,0,,2026-11-26,Accordion empty
+NTST,headless,q4,1,js_only,0,,2026-11-26,Year accordion empty without JavaScript
+NXDT,headless,q4,1,js_only,0,,2026-11-26,Summary table empty
+NXRT,headless,q4,1,js_only,0,,2026-11-26,financial summary and archive empty in static HTML
+NYC,static_html,equisolve,0,no_supp,0,Q1 2026,2026-11-26,Investor presentations only
+O,static_html,self_hosted,1,works,45,Q3 2026,2026-11-26,45 visible; truncated at Q1 2017
+OHI,static_html,equisolve,1,works,19,Q3 2026,2026-11-26,19 verbatim; more older
+OLP,static_html,self_hosted,0,no_supp,0,Q3 2026,2026-11-26,earnings press releases only no supplement
+ONL,static_html,equisolve,1,works,1,Q3 2026,2026-11-26,Latest only; filename says Draft
+OPI,headless,q4,1,js_only,0,,2026-11-26,Year selector only
+ORC,static_html,notified,0,no_supp,0,,2026-11-26,Release presentation and 10-Q only
+OUT,headless,q4,1,js_only,0,,2026-11-26,Disclaimer accept gate and empty results table
+PDM,static_html,notified,1,works,39,Q3 2026,2026-11-26,2022 to 2026 including fixed income
+PEB,headless,q4,1,js_only,0,,2026-11-26,Page shows Loading text; release list not rendered
+PECO,headless,q4,1,js_only,0,,2026-11-26,Says showing 6 items but no links in text
+PINE,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,Press releases and 10-Qs
+PK,static_html,investis,1,works,3,Q3 2026,2026-11-26,Investis Digital; page shows 2026 quarters by default
+PLD,static_html,equisolve,1,works,42,Q3 2026,2026-11-26,42 visible; page truncated
+PMT,headless,q4,1,js_only,0,,2026-11-26,quarterly earnings list absent from static HTML
+PSA,headless,q4,1,js_only,0,,2026-11-26,Document list empty; needs JavaScript
+PSTL,headless,q4,1,js_only,0,,2026-11-26,Financial Summary Table empty
+PW,static_html,self_hosted,0,no_supp,0,,2026-11-26,Only EDGAR link
+RC,headless,q4,1,js_only,0,,2026-11-26,Presentations table empty
+REFI,static_html,notified,1,works,20,Q3 2026,2026-11-26,2021 to 2026
+REG,static_html,notified,1,works,70,Q3 2026,2026-11-26,2018 to 2026 about 70
+REXR,static_html,equisolve,1,works,54,Q3 2026,2026-11-26,2013 to 2026
+RHP,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,Earnings releases transcripts and 10-Qs only
+RITM,headless,q4,1,js_only,0,,2026-11-26,Latest quarters and archive empty with no links
+RLJ,static_html,notified,0,no_supp,0,,2026-11-26,Press releases only; earnings releases not supplemental
+RPT,static_html,q4,0,no_supp,0,Q3 2026,2026-11-26,Earnings release only on overview page
+RWT,static_html,equisolve,1,works,12,Q3 2026,2026-11-26,Supplement tables are XLSX
+RYN,headless,q4,1,js_only,0,,2026-11-26,Archive year selector only and no document links
+SACH,headless,q4,1,js_only,0,,2026-11-26,Quarterly list empty
+SAFE,static_html,notified,1,works,14,Q3 2026,2026-11-26,Quarterly Earnings Presentation links used as supplemental
+SBAC,headless,q4,1,js_only,0,,2026-11-26,Earnings materials list empty; needs JavaScript
+SBRA,headless,q4,1,js_only,0,,2026-11-26,Latest quarters and archive empty with no links
+SELF,static_html,equisolve,0,no_supp,0,Q3 2026,2026-11-26,Releases and 10-Qs only
+SEVN,static_html,rmr,1,works,8,Q4 2022,2026-11-26,Supplemental label stops 2022
+SHO,headless,q4,1,js_only,0,,2026-11-26,Financial Reports section empty; likely JavaScript-loaded
+SITC,static_html,self_hosted,1,works,19,Q3 2026,2026-11-26,Q1 2022 through Q3 2026
+SKT,static_html,equisolve,1,works,17,Q3 2026,2026-11-26,17 seen verbatim
+SLG,static_html,notified,1,works,10,Q3 2026,2026-11-26,Drupal gcs-web; supplemental data links newest first
+SMA,headless,q4,1,js_only,0,,2026-11-26,Year accordion empty without JavaScript
+SPG,static_html,notified,1,works,71,Q3 2026,2026-11-26,Supplemental Information per quarter back to 2009
+SQFT,static_html,wordpress,1,works,8,Q4 2025,2026-11-26,8 supplements; gaps
+SRG,headless,q4,1,js_only,0,,2026-11-26,Quarterly list empty
+STAG,headless,q4,1,js_only,0,,2026-11-26,Quarterly results list empty expand all page
+STRW,headless,other,1,js_only,0,,2026-11-26,Homepage says Loading
+STWD,headless,q4,1,js_only,0,,2026-11-26,Quarterly list empty captcha is on email form only
+SUI,headless,notified,1,js_only,0,,2026-11-26,List loads from separate gcs-web host
+SUNS,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,Presentations only
+SVC,static_html,rmr,1,works,67,Q3 2026,2026-11-26,Financial Results links are earnings presentations count approximate
+TPTS,sec_8k,other,0,not_probed,,,,No company IR website; SEC filings only
+TRNO,headless,q4,1,js_only,0,,2026-11-26,Presentations table empty
+TRTX,static_html,q4,1,error,0,,2026-11-26,robots txt unreadable so fetch refused the page
+UDR,headless,q4,1,js_only,0,,2026-11-26,Quarterly archive and summary empty
+UE,headless,q4,1,js_only,0,,2026-11-26,Supplemental list empty; likely JavaScript-loaded
+UHT,static_html,notified,0,no_supp,0,Q3 2026,2026-11-26,press release list only no supplement
+UMH,headless,q4,1,js_only,0,,2026-11-26,Archive and summary empty
+UNIT,static_html,notified,1,works,12,Q3 2026,2026-11-26,PDF and Excel 2025 to 2026
+VICI,static_html,notified,1,works,34,Q3 2026,2026-11-26,Supplemental Financial Information since Q2 2018
+VMRK,static_html,equisolve,0,no_supp,0,,2026-11-26,Releases presentations and 10-Qs only
+VNO,static_html,notified,1,works,79,Q3 2026,2026-11-26,Financial Supplement 67 plus Fixed Income Supplemental 12 since 2010
+VTR,headless,q4,1,js_only,0,,2026-11-26,Archive and summary tables empty; needs JavaScript
+WELL,static_html,wordpress,1,works,75,Q3 2026,2026-11-26,Supplement column 2008 to 2026
+WHLR,static_html,equisolve,1,works,19,Q3 2026,2026-11-26,19 seen; partial
+WPC,headless,q4,1,js_only,0,,2026-11-26,Q4 Inc site; list empty; needs JavaScript
+WY,static_html,cision,1,works,15,Q3 2026,2026-11-26,Financial Package rows; truncated
+XHR,headless,q4,1,js_only,0,,2026-11-26,Latest Quarters section empty; needs JavaScript
+XRN,headless,q4,1,js_only,0,,2026-11-26,Document list empty in static HTML

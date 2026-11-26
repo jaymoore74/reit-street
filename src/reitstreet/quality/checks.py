@@ -41,6 +41,8 @@ class Ctx:
     sync_max_age_days: int = 3
     filing_max_age_days: int = 140
     sample_objects: int = 100
+    supplemental_grace_days: int = 7
+    ir_failures_threshold: int = 3
 
 
 @dataclass(frozen=True)
@@ -300,6 +302,44 @@ def filing_fresh(db: Db, ctx: Ctx) -> list[Finding]:
             str(r["last_filed"]),
             f"within {ctx.filing_max_age_days} days",
             r["company_id"],
+        )
+        for r in rows
+    ]
+
+
+@check("freshness.supplemental_overdue", "warn", "Each REIT's next quarterly supplemental has arrived when due")
+def supplemental_overdue(db: Db, ctx: Ctx) -> list[Finding]:
+    from ..sources.ir.expectations import expected_supplementals
+
+    return [
+        Finding(
+            f"{e.ticker} supplemental",
+            f"latest held {e.latest_period}",
+            f"{e.next_period} by {e.due_date}",
+            e.company_id,
+            {"reason": e.reason, "lag_days": e.lag_days},
+        )
+        for e in expected_supplementals(db, grace_days=ctx.supplemental_grace_days)
+        if e.status == "overdue"
+    ]
+
+
+@check("ops.ir_site_health", "warn", "IR results pages load and still list supplementals")
+def ir_site_health(db: Db, ctx: Ctx) -> list[Finding]:
+    rows = db.query(
+        """SELECT c.company_id, c.ticker, s.url, s.last_outcome, s.consecutive_failures, s.max_link_count
+           FROM ref_ir_source s JOIN ref_company c ON c.company_id = s.company_id
+           WHERE c.in_universe=1 AND s.is_active=1 AND s.source_type IN ('results_page','supplemental_pdf')
+             AND (s.last_outcome='layout_break' OR s.consecutive_failures >= :n)""",
+        {"n": ctx.ir_failures_threshold},
+    )
+    return [
+        Finding(
+            f"{r['ticker']} {r['url'][:180]}",
+            f"{r['last_outcome']}, {r['consecutive_failures']} failures in a row",
+            "loads and lists supplementals",
+            r["company_id"],
+            {"max_link_count": r["max_link_count"]},
         )
         for r in rows
     ]

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reitstreet"
-version = "0.2.0"
+version = "0.3.0"
 description = "REIT data platform: SEC EDGAR and supplemental ingestion, lineage-tracked MySQL warehouse, client delivery."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -15,9 +15,13 @@ dependencies = [
   "PyMySQL>=1.1,<2",
   "cryptography>=42",        # MySQL 8 caching_sha2_password auth
   "requests>=2.31,<3",
+  "pypdf>=6.9,<8",           # first-page title and period of downloaded PDFs
 ]
 
 [project.optional-dependencies]
+# Headless rendering for IR pages built by JavaScript (most Q4 Inc sites). Opt-in:
+#   pip install -e .[headless] && python -m playwright install chromium
+headless = ["playwright>=1.45,<2"]
 dev = [
   "pytest>=8",
   "ruff>=0.6",

@@ -5,6 +5,29 @@ format are the public interface.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-26
+
+### Added
+- IR website fetcher: strategy chain (Q4 feed with a key, static HTML, headless Chromium
+  as last resort) per results page, with SEC 8-K exhibits as fallback and cross-check.
+- `ref_ir_profile` loaded from a versioned `ir_profiles.csv` (189 companies, from a live
+  probe of 186 sites), `ref_web_host` (robots.txt cache), `stg_ir_link` (every link found,
+  with kind, period and status), `ops_ir_check` (one row per page check) and the
+  `ops_ir_coverage` view.
+- Link classification and fiscal period inference from link text, file name, headings and
+  PDF text; magic-byte check on every download.
+- Polite crawling: robots.txt (RFC 9309), per-host rate limits with Crawl-delay,
+  conditional GETs, generic User-Agent with no personal details.
+- Overdue supplemental check (company's own lag, earnings release signal), layout-break and
+  failing-page alerts, `dq` checks `freshness.supplemental_overdue` and `ops.ir_site_health`.
+- `ir-coverage` command, `ir_fetch.bat` scheduled at 06:00 and 15:00 on weekdays, runbook,
+  ADR 0008, coverage baseline.
+
+### Changed
+- Non-SEC requests no longer fall back to the SEC User-Agent.
+- `fetch-ir` gained `--kinds`, `--backfill`, `--strategy`, `--headless`, `--force`,
+  `--no-download`; downloads are capped per company per run.
+
 ## [0.2.0] - 2026-11-26
 
 ### Added

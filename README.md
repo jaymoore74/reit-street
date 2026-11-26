@@ -13,8 +13,10 @@ with lineage from every number back to the page it came from.
   from it without the network (`replay`).
 - Maps XBRL tags and supplemental row labels to 53 standard REIT metrics using rules
   held as data, derives discrete quarters, and keeps every restatement as a version.
-- Imports an archive of older supplementals (PDF, XLSX, CSV), de-duplicated by hash, and
-  downloads direct supplemental links from IR websites.
+- Imports an archive of older supplementals (PDF, XLSX, CSV), de-duplicated by hash.
+- Crawls each REIT's IR results page politely (robots.txt, per-host limits, conditional
+  requests), records every document link, and downloads new supplementals; alerts on
+  layout breaks and overdue supplementals. Coverage: [docs/ir-coverage.md](docs/ir-coverage.md).
 - Runs data quality checks (contracts, accounting identities, anomalies, reconciliation of
   supplementals against XBRL) and a monitor that alerts by email or webhook.
 - Exports client CSVs with a manifest, as current, as known on a date, or as recorded
@@ -53,7 +55,8 @@ until `[sec] user_agent` in `config.ini` is set.
 | `build-metrics` | rebuild the warehouse from staging, no network |
 | `parse-docs` | parse fetched documents with the registered parsers |
 | `import-archive` | import a folder of older supplementals |
-| `fetch-ir` | download direct supplemental links from IR websites |
+| `fetch-ir` | find and download new supplementals on IR websites |
+| `ir-coverage` | IR coverage by company, overdue supplementals |
 | `replay` | re-parse staging from the raw store, no network |
 | `dq` | data quality checks |
 | `monitor` | run health checks and alerts |
@@ -70,7 +73,8 @@ until `[sec] user_agent` in `config.ini` is set.
 
 - [Architecture](docs/architecture.md)
 - [Data dictionary](docs/data-dictionary.md) (generated)
-- [Runbooks](docs/runbooks/): first run, daily operations, SEC 403, dead letters, replay,
+- [IR website coverage](docs/ir-coverage.md)
+- [Runbooks](docs/runbooks/): first run, daily operations, IR fetcher, SEC 403, dead letters, replay,
   metric mappings, archive import, backup and restore, schema changes
 - [Architecture decision records](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
