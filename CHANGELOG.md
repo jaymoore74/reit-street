@@ -5,6 +5,22 @@ format are the public interface.
 
 ## [Unreleased]
 
+### Added
+- Local mode for a Mac: `REITSTREET_PROFILE=local` reads `config.local.ini` (MySQL on the
+  same machine). `scripts/mac/`: setup (Homebrew MySQL 8.4, Keychain passwords, a
+  read-only `reit_ro` user), first load, launchd schedules for every job, backups.
+- Local model layer (ADR 0012), `reitstreet-ai`: OpenAI-compatible client for mlx_lm.server,
+  Ollama or llama.cpp that refuses non-local hosts; `extract` reads supplemental pages into
+  numbers with a grounding check (numbers must be printed on the page, scale applied in
+  code); `ask` answers from the warehouse through read-only SQL (one SELECT on `dl_*` views,
+  row limit, READ ONLY transaction, 15 s limit).
+- Fine-tuning kit: `build-dataset` (extraction and Q&A examples from the warehouse, split
+  by company, manifest with hashes, hand-checked gold values), `train` (mlx-lm LoRA from
+  versioned recipes into a run folder per run), `fuse`, `serve`, `eval` (recall, precision,
+  made-up numbers, Q&A and gold accuracy, gates, comparison with a baseline), `models`
+  (recommended models, memory fit, conversion).
+- `docs/mac/README.md`: the step-by-step guide from buying the Mac to serving a trained model.
+
 ## [0.4.0] - 2026-11-26
 
 ### Added

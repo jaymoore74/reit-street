@@ -2,8 +2,13 @@
 
 Precedence (highest first):
   1. Environment variables  REITSTREET_<SECTION>_<KEY>  e.g. REITSTREET_DB_PASSWORD
-  2. config.ini (path from --config, REITSTREET_CONFIG, or ./config.ini)
+  2. config.ini (path from --config, REITSTREET_CONFIG, config.<profile>.ini when
+     REITSTREET_PROFILE is set, or ./config.ini)
   3. Defaults below
+
+Profiles switch between installations without editing files: REITSTREET_PROFILE=local
+reads config.local.ini (a Mac with MySQL on localhost and a local model), and
+REITSTREET_PROFILE=aurora reads config.aurora.ini. Unset, ./config.ini is used as before.
 
 Secrets (DB password, SMTP password, webhook URL) should come from environment
 variables. config.ini is git-ignored, but env vars keep secrets off disk entirely.
@@ -14,6 +19,7 @@ from __future__ import annotations
 
 import configparser
 import os
+import re
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from urllib.parse import quote_plus
@@ -21,7 +27,8 @@ from urllib.parse import quote_plus
 from .errors import ConfigError
 
 UA_PLACEHOLDER = "YOUR NAME your.email@example.com"
-SECRET_KEYS = {"db_password", "alerts_smtp_password", "alerts_webhook_url", "db_url"}
+SECRET_KEYS = {"db_password", "alerts_smtp_password", "alerts_webhook_url", "db_url", "llm_api_key", "ai_db_url"}
+PROFILE_RE = r"^[a-z0-9][a-z0-9_-]{0,31}$"
 SECRET_PREFIXES = ("q4_feed_",)  # [q4_feed] keys land in Settings.extra
 
 
@@ -72,12 +79,31 @@ class Settings:
     # [logging]
     logging_format: str = "json"  # json | text
     logging_level: str = "INFO"
+    # [llm] local model server (mlx_lm.server, Ollama or llama.cpp; all speak the OpenAI chat API)
+    llm_backend: str = "mlx"  # mlx | ollama | openai_compat
+    llm_base_url: str = ""  # blank: the backend's default on localhost
+    llm_model: str = ""  # model id the server knows; blank: the server's default
+    llm_api_key: str = ""  # local servers need none; set REITSTREET_LLM_API_KEY if one does
+    llm_temperature: float = 0.0
+    llm_max_tokens: int = 4096
+    llm_timeout_seconds: float = 600.0
+    llm_allow_remote: bool = False  # refuse non-localhost servers unless set: warehouse data stays on the machine
+    # [ai] datasets, adapters and eval reports
+    ai_dir: Path | None = None  # defaults to <data_dir>/ai
+    # SQLAlchemy URL of a read-only MySQL login for model-written queries (reitstreet-ai ask).
+    # Blank: the main login inside a READ ONLY transaction. Set REITSTREET_AI_DB_URL.
+    ai_db_url: str = ""
+    profile: str = ""  # set by load() from REITSTREET_PROFILE; informational
     extra: dict[str, str] = field(default_factory=dict)
 
     # ------------------------------------------------------------------ derived
     @property
     def raw_root(self) -> Path:
         return self.raw_dir or (self.data_dir / "raw")
+
+    @property
+    def ai_root(self) -> Path:
+        return self.ai_dir or (self.data_dir / "ai")
 
     def sqlalchemy_url(self) -> str:
         if self.db_url:
@@ -144,7 +170,16 @@ def load(
     path: str | os.PathLike[str] | None = None, *, environ: dict[str, str] | None = None, require_file: bool = False
 ) -> Settings:
     env = os.environ if environ is None else environ
-    cfg_path = Path(path or env.get("REITSTREET_CONFIG") or "config.ini")
+    profile = (env.get("REITSTREET_PROFILE") or "").strip().lower()
+    if profile and not re.match(PROFILE_RE, profile):
+        raise ConfigError(f"REITSTREET_PROFILE={profile!r}: use letters, digits, - or _ (e.g. local, aurora)")
+    default = f"config.{profile}.ini" if profile else "config.ini"
+    cfg_path = Path(path or env.get("REITSTREET_CONFIG") or default)
+    if profile and not path and not env.get("REITSTREET_CONFIG") and not cfg_path.exists():
+        raise ConfigError(
+            f"REITSTREET_PROFILE={profile} but {cfg_path} was not found. "
+            f"Copy config/config.{profile}.example.ini to {cfg_path}."
+        )
     s = Settings()
     base = Path.cwd()
     if cfg_path.exists():
@@ -164,10 +199,11 @@ def load(
     elif require_file:
         raise ConfigError(f"Config file not found: {cfg_path}. Copy config/config.example.ini to config.ini.")
     for name in _TYPES:
-        if name == "extra":
+        if name in ("extra", "profile"):
             continue
         v = env.get(f"REITSTREET_{name.upper()}")
         if v is not None:
             setattr(s, name, _coerce(name, v, base))
     s.sec_requests_per_second = max(0.1, min(float(s.sec_requests_per_second), 10.0))  # SEC hard cap
+    s.profile = profile
     return s

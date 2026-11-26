@@ -1,5 +1,6 @@
 # secrets and local config: never commit
 config.ini
+/config.*.ini
 *.env
 .env*
 !config/*.example.ini

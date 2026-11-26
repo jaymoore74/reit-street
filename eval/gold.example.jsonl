@@ -1,0 +1,12 @@
+# Hand-checked values: the final exam every model must pass with 100% before it is used.
+# Copy this file to eval/gold.jsonl (kept in git; it is our reference data) and add lines as you check numbers yourself against
+# the filing or supplemental. Only reported figures, never model outputs (no NAV, no
+# estimates). Aim for 100+ lines across sectors before trusting a fine-tuned model.
+#
+# One JSON object per line:
+#   ticker, metric_code (see ref_metric), period_end (YYYY-MM-DD), value (full units:
+#   dollars, not thousands), unit (USD, USD/shares, pct, x, sf, units, ...)
+#   optional: question (your own wording), source (where you checked it)
+#
+# Format only; replace with real values you have checked:
+# {"ticker": "ESS", "metric_code": "TOTAL_REVENUE", "period_end": "YYYY-MM-DD", "value": 0, "unit": "USD", "source": "10-Q p. 4"}

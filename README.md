@@ -39,6 +39,23 @@ Next: the property master and NAV models, the IR email inbox and a client API. S
 Runs on the Aurora MySQL cluster with scheduled GitHub Actions on a self-hosted runner in
 the same VPC; raw files go to S3. Setup: [docs/runbooks/cloud-setup.md](docs/runbooks/cloud-setup.md).
 
+## On a Mac, with a local model
+
+The whole pipeline also runs on a Mac with MySQL on the same machine, plus a local
+open-weights model (Qwen3.8-27B via mlx-lm) that reads supplemental pages and answers
+questions from the warehouse, and a kit to fine-tune it on our own data with gated
+evaluation. Step by step, from buying the Mac: [docs/mac/README.md](docs/mac/README.md).
+
+```bash
+scripts/mac/setup.sh                       # MySQL 8.4, Python, database, Keychain passwords
+scripts/mac/first_load.sh                  # overnight
+scripts/mac/install_launchd.sh --model     # schedules + model server
+reitstreet-ai models --convert qwen3.8-27b-8bit
+reitstreet-ai ask "Give me everything on NNN"
+reitstreet-ai build-dataset && reitstreet-ai eval --label base
+reitstreet-ai train --recipe extract-qa
+```
+
 ## Quick start (Windows)
 
 Full steps: [docs/runbooks/first-run-windows.md](docs/runbooks/first-run-windows.md).
@@ -100,6 +117,7 @@ until `[sec] user_agent` in `config.ini` is set.
 - [Property coverage](docs/property-coverage.md)
 - [Runbooks](docs/runbooks/): cloud setup (AWS), first run, daily operations, IR fetcher, property master, SEC 403, dead letters, replay,
   metric mappings, archive import, backup and restore, schema changes
+- [Mac and local model guide](docs/mac/README.md)
 - [Architecture decision records](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
 

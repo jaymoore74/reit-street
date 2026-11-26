@@ -1,0 +1,33 @@
+# The production recipe: one LoRA adapter for supplemental extraction and warehouse Q&A.
+# Needs a 96 GB+ Mac (128 GB recommended). About 1,000 steps; hours, not days, on an M5 Max.
+name = "extract-qa"
+model = "qwen3.8-27b-8bit"   # preset key -> data/ai/models/qwen3.8-27b-8bit
+dataset = "current"          # data/ai/datasets/current
+
+[train]
+fine_tune_type = "lora"
+num_layers = 16              # of 64; the published 57 GB run used 16
+batch_size = 1
+iters = 1000
+learning_rate = 1e-5
+max_seq_length = 6144        # a 12,000-character page plus its JSON answer
+grad_checkpoint = true       # trades speed for memory at long sequences
+mask_prompt = true           # learn the answers, not the pages
+steps_per_report = 10
+steps_per_eval = 100
+val_batches = 25
+save_every = 100
+seed = 20261126
+
+[lora]
+rank = 32
+scale = 20.0
+dropout = 0.05
+
+[mlx]
+grad_accumulation_steps = 4  # effective batch 4 at the memory cost of 1
+optimizer = "adamw"
+
+[env]
+# A published Qwen3.8-27B LoRA run needed graph compilation off on mlx-lm 0.32.
+MLX_DISABLE_COMPILE = "1"

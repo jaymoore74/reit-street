@@ -23,6 +23,11 @@ dependencies = [
 # Headless rendering for IR pages built by JavaScript (most Q4 Inc sites). Opt-in:
 #   pip install -e .[headless] && python -m playwright install chromium
 headless = ["playwright>=1.45,<2"]
+# Local model on Apple silicon (reitstreet-ai: serve, train, fuse). macOS arm64 only.
+#   pip install -c constraints.txt -e .[mac]
+mac = [
+  "mlx-lm[train]>=0.32.2; sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
 dev = [
   "pytest>=8",
   "ruff>=0.6",
@@ -33,12 +38,13 @@ dev = [
 
 [project.scripts]
 reitstreet = "reitstreet.cli:main"
+reitstreet-ai = "reitstreet.ai.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-reitstreet = ["reference/data/*.csv", "py.typed", "migrations/*.py", "migrations/*.mako", "migrations/versions/*.py"]
+reitstreet = ["reference/data/*.csv", "ai/recipes/*.toml", "py.typed", "migrations/*.py", "migrations/*.mako", "migrations/versions/*.py"]
 
 [tool.ruff]
 line-length = 120
