@@ -176,14 +176,16 @@ def cmd_migrate(app: App) -> int:
 
 
 def cmd_seed(app: App) -> int:
+    from .properties.sources import apply_sources
     from .reference.seed import seed_reference
     from .sources.ir.profiles import apply_profiles
 
-    print(json.dumps({**seed_reference(app.db), **apply_profiles(app.db)}))
+    print(json.dumps({**seed_reference(app.db), **apply_profiles(app.db), **apply_sources(app.db)}))
     return EXIT_OK
 
 
 def cmd_universe(app: App) -> int:
+    from .properties.sources import apply_sources
     from .reference.universe import import_universe
     from .sources.ir.profiles import apply_profiles
 
@@ -196,6 +198,7 @@ def cmd_universe(app: App) -> int:
             fetcher = app.sec_fetcher(run.run_id) if app.a.resolve_ciks else None
             res = import_universe(app.db, app.store, Path(path), run_id=run.run_id, fetcher=fetcher, prune=app.a.prune)
             res.update(apply_profiles(app.db))
+            res.update(apply_sources(app.db))
             it.rows = int(str(res["companies"]))
             it.detail = json.dumps(res, default=str)
             if res["unresolved"]:
@@ -599,6 +602,189 @@ def cmd_db_docs(app: App) -> int:
     return EXIT_OK
 
 
+# --------------------------------------------------------------------------- property master
+def cmd_load_properties(app: App) -> int:
+    from .properties import lists, schedule_iii
+    from .sources.ir.robots import RobotsCache
+
+    a = app.a
+    comps = app.companies(_list(a.tickers))
+    kinds = set(_list(a.sources) or ["SEC_SCHEDULE_III", "CORPORATE_WEBSITE", "PUBLIC_DATASET"])
+
+    def body(run: JobRun) -> None:
+        sec = app.sec_fetcher(run.run_id) if "SEC_SCHEDULE_III" in kinds else None
+        web = app.web_fetcher(run.run_id) if kinds & {"CORPORATE_WEBSITE", "PUBLIC_DATASET"} else None
+        robots = (
+            RobotsCache(
+                web, app.db, agent_token=web.user_agent.split("/")[0].split()[0], ttl_hours=app.s.ir_robots_ttl_hours
+            )
+            if web
+            else None
+        )
+        for c in comps:
+            if (c.get("reit_type") or "").lower() == "mortgage":
+                continue
+            if sec is not None:
+                key = f"sched3:{c['cik']}"
+                if not run.skip_if_resumed(key):
+                    with run.item(key, stage="properties.schedule_iii", company_id=c["company_id"]) as it:
+                        r = schedule_iii.load_company(app.db, sec, c, run.run_id, years=a.years, force=a.force)
+                        it.rows = r["records"]
+                        it.skipped = r["filings"] == 0
+                        it.detail = json.dumps(r)
+            if web is not None:
+                for src in app.db.query(
+                    """SELECT * FROM ref_property_source WHERE company_id = :c AND status = 'active'
+                       AND list_url IS NOT NULL AND source_kind IN ('corporate_website','public_dataset')""",
+                    {"c": c["company_id"]},
+                ):
+                    if src["source_kind"].upper() not in kinds:
+                        continue
+                    key = f"plist:{src['source_row_id']}"
+                    if run.skip_if_resumed(key):
+                        continue
+                    with run.item(key, stage="properties.list", company_id=c["company_id"]) as it:
+                        r2 = lists.load_source(app.db, web, robots, src, c, run.run_id)
+                        it.rows = int(r2.get("records") or 0)
+                        it.skipped = "skipped" in r2 or bool(r2.get("unchanged"))
+                        it.detail = json.dumps(r2, default=str)
+            run.http_requests = (sec.request_count if sec else 0) + (web.request_count if web else 0)
+        if not a.no_build:
+            from .properties.build import build_properties
+
+            with run.item("build", stage="properties.build") as it:
+                st = build_properties(app.db, run.run_id)
+                it.rows = st.get("records_to_place", 0)
+                it.detail = json.dumps(st)
+
+    return _job(app, "load-properties", body)
+
+
+def cmd_import_properties(app: App) -> int:
+    from .properties.lists import import_file
+
+    a = app.a
+    path = Path(a.file)
+    if not path.exists():
+        raise ConfigError(f"file not found: {path}")
+    if not a.ticker and not a.ticker_column:
+        raise ConfigError("give --ticker (one company) or --ticker-column (a column with tickers)")
+    fmt = a.format or {
+        ".csv": "csv",
+        ".xlsx": "xlsx",
+        ".json": "json",
+        ".htm": "html_table",
+        ".html": "html_table",
+    }.get(path.suffix.lower(), "")
+    if not fmt:
+        raise ConfigError("cannot tell the format from the file name: pass --format")
+
+    def body(run: JobRun) -> None:
+        with run.item(f"file:{path.name}", stage="properties.import") as it:
+            r = import_file(
+                app.db, app.store, path, fmt=fmt, as_of=date.fromisoformat(a.as_of),
+                known_from=date.fromisoformat(a.known_from) if a.known_from else None, source_kind=a.source_kind,
+                ticker=a.ticker, ticker_column=a.ticker_column,
+                field_map=json.loads(a.field_map) if a.field_map else None, records_path=a.records_path,
+                run_id=run.run_id,
+            )  # fmt: skip
+            it.rows = int(r["records"])
+            it.detail = json.dumps(r, default=str)
+            print(json.dumps(r, default=str))
+            if not a.no_build:
+                from .properties.build import build_properties
+
+                print(json.dumps(build_properties(app.db, run.run_id)))
+
+    return _job(app, "import-properties", body)
+
+
+def cmd_build_properties(app: App) -> int:
+    from .properties.build import build_properties
+
+    def body(run: JobRun) -> None:
+        with run.item("build", stage="properties.build") as it:
+            cids = [c["company_id"] for c in app.companies(_list(app.a.tickers))] if app.a.tickers else None
+            st = build_properties(app.db, run.run_id, rematch=app.a.rematch, companies=cids)
+            it.rows = st.get("records_to_place", 0)
+            it.detail = json.dumps(st)
+            print(json.dumps(st))
+
+    return _job(app, "build-properties", body)
+
+
+def cmd_geocode_properties(app: App) -> int:
+    from .properties.geocode import geocode_pending
+
+    def body(run: JobRun) -> None:
+        offline = getattr(app.a, "offline_fixtures", None)
+        f = Fetcher(
+            source="census_geocoder",
+            user_agent=app.s.web_user_agent(__version__),
+            rps=1000.0 if offline else 2.0,
+            store=app.store,
+            db=app.db,
+            run_id=run.run_id,
+            transport=fixture_transport(Path(offline)) if offline else None,
+            max_retries=3,
+        )
+        with run.item("geocode", stage="properties.geocode") as it:
+            r = geocode_pending(app.db, f, limit=app.a.limit, run_id=run.run_id)
+            run.http_requests = f.request_count
+            it.rows = r["match"]
+            it.detail = json.dumps(r)
+
+    return _job(app, "geocode-properties", body)
+
+
+def cmd_property_coverage(app: App) -> int:
+    import csv as _csv
+
+    from .properties.coverage import coverage, summary
+
+    rows = coverage(app.db)
+    if app.a.out:
+        with open(app.a.out, "w", newline="", encoding="utf-8") as fh:
+            w = _csv.DictWriter(fh, fieldnames=list(rows[0].keys()) if rows else ["ticker"])
+            w.writeheader()
+            w.writerows(rows)
+    print(json.dumps(summary(rows), default=str))
+    if app.a.verbose_rows:
+        for r in rows:
+            cov = f"{r['coverage_pct']}%" if r["coverage_pct"] is not None else "n/a"
+            print(
+                f"{r['ticker']:<6} props={r['properties']:<6} stated={r['stated_count'] or '':<6} {cov:<7} "
+                f"{r['sources'] or ''}"
+            )
+    return EXIT_OK
+
+
+def cmd_property_review(app: App) -> int:
+    from .properties import review
+
+    a = app.a
+    if a.action == "list":
+        for r in review.queue(app.db, limit=a.limit, ticker=a.ticker):
+            cands = ", ".join(f"{c['property_id']} ({c['score']})" for c in r["candidates"] or [])
+            print(
+                f"record {r['record_id']:<8} {r['ticker']:<6} {r['name'] or ''} | {r['city'] or ''} {r['state'] or ''}"
+                f" -> now {r['property_id']}; candidates: {cands}"
+            )
+        return EXIT_OK
+    try:
+        if a.action == "confirm":
+            print(json.dumps(review.confirm(app.db, a.record, a.property)))
+        elif a.action == "reject":
+            print(json.dumps(review.reject(app.db, a.record)))
+        elif a.action == "merge":
+            print(json.dumps(review.merge(app.db, a.property_from, a.property)))
+    except ValueError as e:
+        app.db.rollback()
+        print(f"property-review: {e}", file=sys.stderr)
+        return EXIT_CONFIG
+    return EXIT_OK
+
+
 # --------------------------------------------------------------------------- parser
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -678,6 +864,57 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--as-of", help="use captures made on or before this UTC time (YYYY-MM-DDTHH:MM)")
     r.add_argument("--reindex", action="store_true", help="also re-parse stored filing index pages")
     r.add_argument("--no-build", action="store_true")
+    lp = cmd(
+        "load-properties",
+        cmd_load_properties,
+        "load property lists (10-K Schedule III, active website and dataset sources) and rebuild the property master",
+    )
+    tickers(lp)
+    resume(lp)
+    offline(lp)
+    lp.add_argument(
+        "--sources", help="comma-separated: sec_schedule_iii,corporate_website,public_dataset (default all)"
+    )
+    lp.add_argument("--years", type=int, default=1, help="annual reports per company for Schedule III (default 1)")
+    lp.add_argument("--force", action="store_true", help="reload filings already loaded")
+    lp.add_argument("--no-build", action="store_true", help="stage records only")
+    ip = cmd(
+        "import-properties", cmd_import_properties, "stage a property list file (CSV, XLSX, JSON, HTML) and rebuild"
+    )
+    ip.add_argument("file")
+    ip.add_argument("--as-of", required=True, help="YYYY-MM-DD the list describes")
+    ip.add_argument("--known-from", help="YYYY-MM-DD it became public (default: as-of)")
+    ip.add_argument(
+        "--source-kind", default="manual", choices=["manual", "public_dataset", "corporate_website", "supplemental"]
+    )
+    ip.add_argument("--ticker", help="the company, when the file is one company's list")
+    ip.add_argument("--ticker-column", help="column holding the ticker, for files covering several companies")
+    ip.add_argument("--format", choices=["csv", "xlsx", "json", "html_table"])
+    ip.add_argument("--field-map", help='JSON {"name": "Property", "city": "City", ...}; default: guess from headers')
+    ip.add_argument("--records-path", help="JSON path, HTML table index or XLSX sheet name")
+    ip.add_argument("--no-build", action="store_true")
+    bp = cmd(
+        "build-properties",
+        cmd_build_properties,
+        "match staged property records to stable ids and rebuild ownership (no network)",
+    )
+    tickers(bp)
+    bp.add_argument("--rematch", action="store_true", help="re-link every automatic link (after a matcher change)")
+    gp = cmd(
+        "geocode-properties", cmd_geocode_properties, "geocode new property addresses (US Census geocoder, cached)"
+    )
+    gp.add_argument("--limit", type=int)
+    offline(gp)
+    pc = cmd("property-coverage", cmd_property_coverage, "properties per REIT against the source map")
+    pc.add_argument("--out", help="write the table as CSV")
+    pc.add_argument("--rows", dest="verbose_rows", action="store_true", help="print one line per company")
+    pr = cmd("property-review", cmd_property_review, "list and settle close property matches; merge duplicates")
+    pr.add_argument("action", choices=["list", "confirm", "reject", "merge"])
+    pr.add_argument("--record", type=int, help="record id (confirm, reject)")
+    pr.add_argument("--property", type=int, help="property id it belongs to (confirm) or the survivor (merge)")
+    pr.add_argument("--from", dest="property_from", type=int, help="duplicate property id to merge away (merge)")
+    pr.add_argument("--ticker")
+    pr.add_argument("--limit", type=int, default=50)
     d = cmd("dq", cmd_dq, "run data quality checks")
     d.add_argument("--only", help="comma-separated check code prefixes, e.g. contract,recon")
     cmd("monitor", cmd_monitor, "check run health and send alerts")
@@ -707,6 +944,16 @@ def main(argv: list[str] | None = None) -> int:
     a = build_parser().parse_args(argv)
     if a.cmd == "dead-letter" and a.action != "list" and a.id is None:
         print("dead-letter show/resolve/ignore needs an id", file=sys.stderr)
+        return EXIT_CONFIG
+    if a.cmd == "property-review" and (
+        (a.action == "confirm" and (a.record is None or a.property is None))
+        or (a.action == "reject" and a.record is None)
+        or (a.action == "merge" and (a.property is None or a.property_from is None))
+    ):
+        print(
+            "property-review: confirm needs --record and --property, reject --record, merge --from and --property",
+            file=sys.stderr,
+        )
         return EXIT_CONFIG
     if a.cmd == "dead-letter" and a.action in ("resolve", "ignore") and not a.note:
         print("--note is required: say what was done", file=sys.stderr)
