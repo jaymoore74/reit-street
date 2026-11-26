@@ -39,6 +39,7 @@ jobs:
           role: loader
           aws-region: ${{ vars.AWS_REGION }}
           sec-user-agent: ${{ vars.REITSTREET_SEC_USER_AGENT }}
+          extras: headless
       - id: ready
         run: python deploy/aws/ready.py
       - name: IR fetch
@@ -47,7 +48,8 @@ jobs:
           TICKERS: ${{ inputs.tickers }}
           BACKFILL: ${{ inputs.backfill }}
         run: |
-          args=()
+          # --headless: render the script-built (Q4 and similar) results pages in Chromium
+          args=(--headless)
           if [ -n "$TICKERS" ]; then args+=(--tickers "$TICKERS"); fi
           if [ "$BACKFILL" = "true" ]; then args+=(--backfill); fi
           rc=0

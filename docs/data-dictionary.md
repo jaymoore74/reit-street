@@ -1,6 +1,6 @@
 # Data dictionary
 
-Generated from the database schema at Alembic revision `0005` by `reitstreet db-docs`. Do not edit by hand: change the COMMENT in a migration and regenerate.
+Generated from the database schema at Alembic revision `0006` by `reitstreet db-docs`. Do not edit by hand: change the COMMENT in a migration and regenerate.
 
 ## ops_* Operations: runs, checkpoints, dead letters, data quality, alerts
 
@@ -108,7 +108,7 @@ View.
 | `strategy` | varchar(11) | NO |  |  |
 | `platform` | varchar(32) | YES |  | IR site vendor or layout family, e.g. q4cdn, static-files, cloudfront, wordpress |
 | `expects_supplemental` | int | NO |  |  |
-| `probe_status` | varchar(10) | NO |  |  |
+| `probe_status` | varchar(14) | NO |  |  |
 | `probe_supp_links` | smallint unsigned | YES |  | Supplemental links the probe saw on the results page |
 | `probe_latest_period` | varchar(16) | YES |  | Latest supplemental period the probe saw, e.g. Q3 2026 |
 | `probe_date` | date | YES |  | When the probe ran |
@@ -327,7 +327,7 @@ Table. How each company IR site is fetched. Seeded from reference/data/ir_profil
 | `strategy` | enum('static_html','q4_feed','headless','sec_8k','none') | NO |  | First fetch strategy to try for the results page; fallbacks follow in code |
 | `platform` | varchar(32) | YES |  | IR site vendor or layout family, e.g. q4cdn, static-files, cloudfront, wordpress |
 | `expects_supplemental` | tinyint(1) | NO |  | 1 if the company publishes a quarterly supplemental; drives the overdue check |
-| `probe_status` | enum('works','js_only','no_supp','error','not_probed') | NO |  | Result of the last manual coverage probe (from the seed file) |
+| `probe_status` | enum('works','works_headless','js_only','no_supp','error','not_probed') | NO |  | Result of the last manual coverage probe (from the seed file) |
 | `probe_supp_links` | smallint unsigned | YES |  | Supplemental links the probe saw on the results page |
 | `probe_latest_period` | varchar(16) | YES |  | Latest supplemental period the probe saw, e.g. Q3 2026 |
 | `probe_date` | date | YES |  | When the probe ran |

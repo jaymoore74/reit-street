@@ -5,6 +5,27 @@ format are the public interface.
 
 ## [Unreleased]
 
+### Changed
+- IR fetcher headless mode: one shared Chromium per run instead of one per page; waits for a
+  document link to appear instead of network idle (Q4 sites never go idle); skips images,
+  media and fonts; an HTTP 4xx/5xx render is reported as an error, not "no documents".
+- `ops-ir-fetch` on the AWS runner now installs the `headless` extra and Chromium and runs
+  with `--headless`, so the script-built (mostly Q4) results pages are rendered.
+  `runner-setup.sh` installs Chromium's system libraries. Playwright pinned at 1.65.2.
+
+- IR coverage: the 91 results pages that needed scripts or failed were opened in a real
+  browser. 67 now profile as `works_headless`, 15 more publish no supplemental, 5 need a
+  check by hand. Universe results page URLs corrected for 10 companies (HST, CPT, BNL, INN,
+  JBGS, FPI, SUI and three http or fragment fixes). Migration 0006 adds `works_headless` to
+  `ref_ir_profile.probe_status`.
+- Link classifier: a file name that says supplemental wins over link text that only says
+  presentation or release; "Quarterly Information Package" and "Investor Package" count as
+  supplementals; when one file is linked twice, the supplemental label wins.
+
+### Added
+- Tests for the headless path with a recorded Q4 rendered-page shape (summary table plus
+  yearly archive), a render failure, an HTTP 403 render and robots.txt.
+
 ## [0.4.0] - 2026-11-26
 
 ### Added

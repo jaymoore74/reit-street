@@ -18,7 +18,7 @@ from ...core.db import Db
 
 FILE = "ir_profiles.csv"
 STRATEGIES = {"static_html", "q4_feed", "headless", "sec_8k", "none"}
-PROBE_STATUSES = {"works", "js_only", "no_supp", "error", "not_probed"}
+PROBE_STATUSES = {"works", "works_headless", "js_only", "no_supp", "error", "not_probed"}
 
 
 def read_profiles(text: str | None = None) -> list[dict[str, Any]]:
