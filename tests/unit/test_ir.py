@@ -49,6 +49,14 @@ TODAY = date(2026, 11, 26)
         ("2025 Sustainability Report", "https://x.com/supplemental.pdf", "", "exhibit_other"),
         ("Proxy Statement", "https://x.com/a.pdf", "", "exhibit_other"),
         ("Q3 2026", "https://x.com/a.pdf", "", "unknown"),
+        # Seen on Q4 sites 2026-11-26: generic link text, supplemental file name
+        ("Presentation", "https://x.com/files/2026-Q3-CMTG-Supplemental-Information-vF.pdf", "", "supplemental"),
+        ("Q3 2026 Earnings Presentation", "https://x.com/q3/presentation/Q3-2026-Supplemental.pdf", "", "supplemental"),
+        ("Earnings Release & Quarterly Information Package", "https://x.com/a.pdf", "", "supplemental"),
+        ("Investor Presentation", "https://x.com/files/Investor-Presentation.pdf", "", "presentation"),
+        ("3Q26 Investor Package (2026)", "https://x.com/files/JBGS-3Q-2026-Investor-Pkg-FINAL.pdf", "", "supplemental"),
+        ("Third Quarter 2026", "https://x.com/q3/9-30-26-KRC-Ex-99-1-Supplemental_KK-FINAL.pdf", "", "supplemental"),
+        ("Q3 2026 Press Release", "https://x.com/files/Q3-2026-Earnings-Release.pdf", "", "earnings_release"),
     ],
 )
 def test_classify_link(text: str, url: str, ctx: str, kind: str) -> None:
@@ -413,3 +421,87 @@ def test_expect_company_q4_gets_extra_time() -> None:
     e = expect_company(c, supp, [], TODAY)
     assert e.next_period == date(2026, 12, 31)
     assert e.lag_days == 41 and e.due_date == date(2027, 3, 4)  # 41 day lag + 15 for fiscal Q4 + 7 grace
+
+
+# ---------------------------------------------------------------- headless (no browser needed)
+Q4_RENDERED = (Path(__file__).parent.parent / "fixtures" / "ir" / "q4_rendered_results.html").read_text()
+Q4_SHELL = '<div id="q4-module"><script src="https://s.q4cdn.com/w.js"></script></div>'
+
+
+def test_extract_links_q4_rendered_page() -> None:
+    links = extract_links(Q4_RENDERED, "https://ir.x.com/financials/quarterly-results/default.aspx")
+    supp = {lk.url: lk for lk in links if lk.kind == "supplemental"}
+    # Protocol-relative q4cdn links resolve to https; the table and the archive list share one URL.
+    assert all(u.startswith("https://s99.q4cdn.com/") for u in supp)
+    assert len(supp) == 4
+    periods = sorted(f"{lk.period.fiscal_year}Q{lk.period.fiscal_quarter}" for lk in supp.values() if lk.period)
+    assert periods == ["2025Q4", "2026Q1", "2026Q2", "2026Q3"]
+    kinds = {lk.url.rsplit("/", 1)[-1]: lk.kind for lk in links}
+    assert kinds["EX-Q3-2026-Earnings-Release.pdf"] == "earnings_release"
+    assert kinds["842f3938.pdf"] in ("10q", "10k", "sec_filing", "unknown")
+
+
+def _renderer(html: str, status: int = 200, calls: list[str] | None = None) -> Any:
+    def render(url: str, ua: str, timeout_ms: int, link_wait_ms: int) -> tuple[int, str]:
+        if calls is not None:
+            calls.append(url)
+        return status, html
+
+    return render
+
+
+def test_headless_renders_script_built_page(tmp_path: Path) -> None:
+    f = _web_fetcher(tmp_path, fixture_transport(_site(tmp_path, Q4_SHELL)))
+    calls: list[str] = []
+    env = StrategyEnv(None, f, RobotsCache(f, None, agent_token="ReitStreetBot"), headless_enabled=True,
+                      renderer=_renderer(Q4_RENDERED, calls=calls))  # fmt: skip
+    d = run_chain(env, Page(1, "X", 1, "https://ir.x.com/results/", "1231"), ["static_html", "headless"])
+    assert d.strategy == "headless" and d.outcome == M.OK
+    assert calls == ["https://ir.x.com/results/"]
+    assert len(d.supplemental_links) == 4 and d.page_sha256
+
+
+def test_headless_profile_runs_first(tmp_path: Path) -> None:
+    f = _web_fetcher(tmp_path, fixture_transport(_site(tmp_path, Q4_SHELL)))
+    env = StrategyEnv(None, f, RobotsCache(f, None, agent_token="ReitStreetBot"), headless_enabled=True,
+                      renderer=_renderer(Q4_RENDERED))  # fmt: skip
+    d = run_chain(env, Page(1, "X", 1, "https://ir.x.com/results/", "1231"), chain("headless", q4_key=None))
+    assert d.strategy == "headless" and len(d.supplemental_links) == 4
+
+
+def test_headless_render_failure_and_http_error(tmp_path: Path) -> None:
+    f = _web_fetcher(tmp_path, fixture_transport(_site(tmp_path, Q4_SHELL)))
+
+    def boom(url: str, ua: str, timeout_ms: int, link_wait_ms: int) -> tuple[int, str]:
+        raise TimeoutError("page did not load")
+
+    robots = RobotsCache(f, None, agent_token="ReitStreetBot")
+    page = Page(1, "X", 1, "https://ir.x.com/results/", "1231")
+    d = run_chain(StrategyEnv(None, f, robots, headless_enabled=True, renderer=boom), page, ["headless"])
+    assert d.outcome == M.HTTP_ERROR and "TimeoutError" in d.note
+    env = StrategyEnv(None, f, robots, headless_enabled=True, renderer=_renderer("<h1>Forbidden</h1>", 403))
+    d = run_chain(env, page, ["headless"])
+    assert d.outcome == M.HTTP_ERROR and d.http_status == 403
+
+
+def test_headless_respects_robots(tmp_path: Path) -> None:
+    root = _site(tmp_path, Q4_SHELL)
+    (root / "ir.x.com" / "robots.txt").write_text("User-agent: *\nDisallow: /results/\n")
+    f = _web_fetcher(tmp_path, fixture_transport(root))
+    calls: list[str] = []
+    env = StrategyEnv(None, f, RobotsCache(f, None, agent_token="ReitStreetBot"), headless_enabled=True,
+                      renderer=_renderer(Q4_RENDERED, calls=calls))  # fmt: skip
+    d = run_chain(env, Page(1, "X", 1, "https://ir.x.com/results/", "1231"), ["headless"])
+    assert d.outcome == M.ROBOTS_BLOCKED and calls == []
+
+
+def test_extract_links_same_file_supplemental_label_wins() -> None:
+    url = "//s27.q4cdn.com/1/files/content_files/X-3Q-2026-Earnings-Supplement.pdf"
+    html = (
+        f'<div><h3>Q3 2026</h3><a href="{url}">Presentation</a></div>'
+        f'<table><tr><th>Financial Supplement</th><td><a href="{url}" aria-label="Q3 2026 Financial Supplement">Q3</a>'
+        "</td></tr></table>"
+    )
+    (lk,) = extract_links(html, "https://ir.x.com/results/")
+    assert lk.kind == "supplemental" and lk.url.startswith("https://s27.q4cdn.com/")
+    assert lk.period and (lk.period.fiscal_year, lk.period.fiscal_quarter) == (2026, 3)

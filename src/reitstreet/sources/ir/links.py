@@ -101,8 +101,18 @@ def extract_links(html: str, page_url: str, fye_mmdd: str | None = "1231") -> li
         lk = Link(url=url, text=text[:512], context=ctx[:512], kind=kind, kind_reason=reason)
         lk.period = link_period(text, url, ctx, fye_mmdd)
         prev = seen.get(url)
-        # The same file often appears twice (icon + title); keep the better-labelled one.
-        if prev is None or (prev.kind == "unknown" and kind != "unknown") or (prev.period is None and lk.period):
+        # The same file often appears more than once (icon + title, summary table + archive).
+        # Keep the better-labelled one: a supplemental label anywhere wins (a Q4 "Latest
+        # Quarters" tab may call the file "Presentation" while the table row says "Financial
+        # Supplement"), then any label over none, then one that carries a period.
+        if (
+            prev is None
+            or (kind == "supplemental" and prev.kind != "supplemental")
+            or (prev.kind == "unknown" and kind != "unknown")
+            or (prev.kind == kind and prev.period is None and lk.period)
+        ):
+            if prev is not None and lk.period is None:
+                lk.period = prev.period
             seen[url] = lk
     return list(seen.values())
 

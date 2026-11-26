@@ -3,8 +3,6 @@
 All notable changes. Versions follow semantic versioning; the `dl_*` views and export
 format are the public interface.
 
-## [Unreleased]
-
 ## [0.5.0] - 2026-11-26
 
 ### Added
@@ -42,11 +40,13 @@ format are the public interface.
   `docs/runbooks/web-admin.md`. Links use `[web] base_url`; `--email-link` sends them
   through Amazon SES when `[web] email_provider = ses` (`src/reitstreet/web/mail.py`).
 - App schema revision `a0002`: index on the newsletter confirmation token.
-- View `dl_metric_definitions` (revision `0006`, after 0005).
+- View `dl_metric_definitions` (revision `0007`, after 0006).
 - `scripts/dev/seed_web.py`: development databases from the synthetic fixtures.
 - CI: website lint, types, tests, build, end-to-end run against MySQL with a file
   mailbox, image build.
 - Dev dependency PyYAML (template tests).
+- Tests for the headless path with a recorded Q4 rendered-page shape (summary table plus
+  yearly archive), a render failure, an HTTP 403 render and robots.txt.
 
 ### Changed
 - `deploy/aws/bootstrap_db.py` and ops-bootstrap-db create the second schema and a fourth
@@ -54,6 +54,20 @@ format are the public interface.
 - ops-migrate takes a `target` input (default `all`); ops-first-load migrates both schemas.
 - `runner-setup.sh` installs Docker and a 2 GB swap file so the runner can build the
   website image.
+- IR fetcher headless mode: one shared Chromium per run instead of one per page; waits for a
+  document link to appear instead of network idle (Q4 sites never go idle); skips images,
+  media and fonts; an HTTP 4xx/5xx render is reported as an error, not "no documents".
+- `ops-ir-fetch` on the AWS runner now installs the `headless` extra and Chromium and runs
+  with `--headless`, so the script-built (mostly Q4) results pages are rendered.
+  `runner-setup.sh` installs Chromium's system libraries. Playwright pinned at 1.65.2.
+- IR coverage: the 91 results pages that needed scripts or failed were opened in a real
+  browser. 67 now profile as `works_headless`, 15 more publish no supplemental, 5 need a
+  check by hand. Universe results page URLs corrected for 10 companies (HST, CPT, BNL, INN,
+  JBGS, FPI, SUI and three http or fragment fixes). Migration 0006 adds `works_headless` to
+  `ref_ir_profile.probe_status`.
+- Link classifier: a file name that says supplemental wins over link text that only says
+  presentation or release; "Quarterly Information Package" and "Investor Package" count as
+  supplementals; when one file is linked twice, the supplemental label wins.
 
 ## [0.4.0] - 2026-11-26
 

@@ -30,7 +30,8 @@ RULES: list[tuple[str, str, re.Pattern[str]]] = [
         "supp_keyword",
         re.compile(
             r"supplement|\bsupp\b|_supp_|-supp-|financial (and operating |reporting )?package|"
-            r"operating (and|&) financial data|earnings package|financial package|supplemental disclosure",
+            r"operating (and|&) financial data|earnings package|financial package|supplemental disclosure|"
+            r"(quarterly|supplemental) information package|investor package|investor pkg",
             re.I,
         ),
     ),
@@ -55,17 +56,34 @@ def is_document_url(url: str) -> bool:
     return path.endswith(DOC_EXTENSIONS) or any(h in path for h in DOC_PATH_HINTS)
 
 
+def _first_rule(hay: str) -> tuple[str, str] | None:
+    if EXCLUDE.search(hay):
+        return "exhibit_other", "exclude"
+    for kind, rule, rx in RULES:
+        if rx.search(hay):
+            return kind, rule
+    return None
+
+
 def classify_link(text: str, url: str, context: str = "") -> tuple[str, str]:
-    """(doc_kind, rule) from link text, then URL file name, then nearby text."""
+    """(doc_kind, rule) from link text, then URL file name, then nearby text.
+
+    One exception to text-first: when the text only says presentation or release (Q4 sites
+    label the supplemental link "Presentation" or "Earnings Presentation") and the file name
+    says supplemental, the file name wins."""
     name = unquote(urlparse(url).path.rsplit("/", 1)[-1]).replace("+", " ")
     for label, hay in (("text", text), ("url", name), ("context", context)):
         if not hay:
             continue
-        if EXCLUDE.search(hay):
-            return "exhibit_other", f"exclude_{label}"
-        for kind, rule, rx in RULES:
-            if rx.search(hay):
-                return kind, f"{rule}_{label}"
+        hit = _first_rule(hay)
+        if hit is None:
+            continue
+        kind, rule = hit
+        if label == "text" and kind in ("presentation", "earnings_release"):
+            by_name = _first_rule(name) if name else None
+            if by_name and by_name[0] == "supplemental":
+                return "supplemental", "supp_keyword_url_over_generic_text"
+        return kind, f"{rule}_{label}"
     return "unknown", "no_rule"
 
 

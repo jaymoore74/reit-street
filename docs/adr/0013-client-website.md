@@ -38,7 +38,7 @@ one public interface). The site should read those views and nothing else of the 
 - **Accepted risk:** the download and audit logs are append-only in code and the web
   login cannot delete, but it could `UPDATE` them if the app were compromised. Copying
   the logs to S3 nightly (planned with hosting) closes this.
-- New view `dl_metric_definitions` (warehouse revision `0006`) so the site can show
+- New view `dl_metric_definitions` (warehouse revision `0007`) so the site can show
   metric definitions without reading `ref_*` tables.
 
 ### Sign-in

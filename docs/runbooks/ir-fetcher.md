@@ -26,8 +26,19 @@ Run `--backfill` a few companies at a time. Each company keeps its own host rate
 pip install -c constraints.txt -e .[headless]
 python -m playwright install chromium
 ```
-Set `[ir] headless = true` in `config.ini`. Only pages that static HTML found script-built
-are rendered.
+Set `[ir] headless = true` in `config.ini` (or pass `--headless`). Companies whose profile
+says `strategy=headless` are rendered first; any other page is rendered only when static HTML
+found it script-built. One Chromium serves the whole run, images and fonts are not loaded,
+and each page waits up to 20 seconds for a document link to appear.
+
+On the AWS runner this is on: `ops-ir-fetch` installs the `headless` extra, keeps Chromium in
+`/srv/reitstreet/pw-browsers`, and runs `fetch-ir --headless`. Chromium's system libraries
+come from `deploy/aws/runner-setup.sh`. A runner launched before that line existed needs it
+once, as root:
+```bash
+python3 -m venv /tmp/pw && /tmp/pw/bin/pip install "playwright==1.65.2" && /tmp/pw/bin/python -m playwright install-deps chromium
+mkdir -p /srv/reitstreet/pw-browsers && chown runner:runner /srv/reitstreet/pw-browsers
+```
 
 ## Alerts and what to do
 
