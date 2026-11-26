@@ -348,7 +348,7 @@ def _ir_kinds(s: str | None) -> frozenset[str]:
 def cmd_fetch_ir(app: App) -> int:
     from .sources.ir.fetch import IrOptions, fetch_company
     from .sources.ir.robots import RobotsCache
-    from .sources.ir.strategies import q4_key_for
+    from .sources.ir.strategies import q4_key_for, shutdown_headless
 
     a = app.a
     comps = app.companies(_list(a.tickers))
@@ -367,16 +367,20 @@ def cmd_fetch_ir(app: App) -> int:
         f = app.web_fetcher(run.run_id)
         ua = f.user_agent
         robots = RobotsCache(f, app.db, agent_token=ua.split("/")[0].split()[0], ttl_hours=app.s.ir_robots_ttl_hours)
-        for c in comps:
-            key = f"cik:{c['cik']}"
-            if run.skip_if_resumed(key):
-                continue
-            with run.item(key, stage="ir.fetch", company_id=c["company_id"]) as it:
-                r = fetch_company(app.db, f, robots, c, run.run_id, opts, q4_key=q4_key_for(c["ticker"], app.s.extra))
-                run.http_requests = f.request_count
-                it.rows = r.new_docs
-                it.skipped = r.pages == 0 and not r.direct.get("checked")
-                it.detail = json.dumps(r.as_dict())
+        try:
+            for c in comps:
+                key = f"cik:{c['cik']}"
+                if run.skip_if_resumed(key):
+                    continue
+                with run.item(key, stage="ir.fetch", company_id=c["company_id"]) as it:
+                    q4 = q4_key_for(c["ticker"], app.s.extra)
+                    r = fetch_company(app.db, f, robots, c, run.run_id, opts, q4_key=q4)
+                    run.http_requests = f.request_count
+                    it.rows = r.new_docs
+                    it.skipped = r.pages == 0 and not r.direct.get("checked")
+                    it.detail = json.dumps(r.as_dict())
+        finally:
+            shutdown_headless()
 
     return _job(app, "fetch-ir", body)
 

@@ -22,7 +22,7 @@ dependencies = [
 [project.optional-dependencies]
 # Headless rendering for IR pages built by JavaScript (most Q4 Inc sites). Opt-in:
 #   pip install -e .[headless] && python -m playwright install chromium
-headless = ["playwright>=1.45,<2"]
+headless = ["playwright>=1.65,<2"]
 dev = [
   "pytest>=8",
   "ruff>=0.6",

@@ -35,4 +35,10 @@ rm runner.tgz
 ./bin/installdependencies.sh
 chown -R runner:runner /opt/actions-runner
 
+# Shared libraries Chromium needs for the IR fetcher's headless mode. The browser itself is
+# downloaded by the workflow into /srv/reitstreet/pw-browsers (owned by runner).
+python3 -m venv /tmp/pw && /tmp/pw/bin/pip install -q "playwright==1.65.2" \
+  && /tmp/pw/bin/python -m playwright install-deps chromium && rm -rf /tmp/pw
+mkdir -p /srv/reitstreet/pw-browsers && chown runner:runner /srv/reitstreet/pw-browsers
+
 echo "reitstreet runner setup done: runner ${ver}" > /etc/reitstreet/setup-done
