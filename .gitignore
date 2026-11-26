@@ -5,8 +5,8 @@ config.ini
 !config/*.example.ini
 
 # data: raw objects, downloads, exports, logs live outside git
-data/
-exports/
+/data/
+/exports/
 *.log
 
 # python
