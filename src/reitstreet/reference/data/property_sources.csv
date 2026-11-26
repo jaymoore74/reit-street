@@ -1,0 +1,400 @@
+ticker,source_kind,lists_properties,status,list_url,list_format,records_path,field_map,detail,approx_property_count,count_unit,checked_date,notes
+AAT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,"properties (4.28M SF office, 2.4",2026-11-26,Detail level settles on first live load
+AAT,supplemental,yes,candidate,https://ir.americanassetstrust.com/static-files/187c8bab-a842-462d-ad19-f95131629524,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+ADC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,2888,properties,2026-11-26,Detail level settles on first live load
+ADC,corporate_website,unknown,candidate,https://agreerealty.com/properties,unknown,,,,2888,properties,2026-11-26,"About page links a Properties section but the page failed to load (client error); 2,888 properties in 50 states plus DC at 9/30/26"
+ADC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,tenant store locators; county assessor
+AHR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,258,SHOP+ senior housing properties,2026-11-26,Detail level settles on first live load
+AHR,corporate_website,partial,candidate,https://americanhealthcarereit.com/portfolio/,html_cards,,,,258,SHOP+ senior housing properties,2026-11-26,"Portfolio page shows 36 highlighted properties only (name, city); 258 SHOP+ properties stated, OM/NNN counts deferred to supplemental"
+AHR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Care Compare / skilled nursing provider data (for SNF and Trilogy campuses)
+AHRT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+AHRT,corporate_website,yes,candidate,https://ahrealtytrust.com/portfolio/,html_cards,,,,,properties,2026-11-26,Renamed site ahrealtytrust.com (armadahoffler.com/portfolio redirects) with portfolio page and per-property pages (/properties/<slug>/); portfolio page itself not fetched
+AHT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,59,hotels,2026-11-26,Detail level settles on first live load
+AHT,corporate_website,yes,candidate,https://www.ahtreit.com/files/5650/Ashford_Trust_Portfolio_June_2_2026.pdf,pdf,,,,59,hotels,2026-11-26,"Dated portfolio PDFs on ahtreit.com (hotel, city, state, brand, rooms), refreshed several times a year; 59 hotels 14,969 rooms at 6/2/26"
+AHT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,state/county hotel occupancy tax permit lists
+AIV,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+AIV,corporate_website,partial,candidate,https://www.aimco.com/portfolio/,html_cards,,,,,properties,2026-11-26,Portfolio page shows ~14 spotlight cards plus regional hub text (~21 named assets/projects); no complete list or count; company in liquidation/sale mode
+AIV,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,"County assessor records (Miami-Dade, Denver, DC area)"
+AKR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,201,properties listed on website sea,2026-11-26,Detail level settles on first live load
+AKR,corporate_website,yes,candidate,https://www.acadiarealty.com/properties/search/companyproperties/1-acadia-realty-trust?start=160,html_cards,,,,201,properties listed on website sea,2026-11-26,"Website property search lists each property with street address, SF and contacts, paged 20 per page (201 results); supplemental not checked"
+ALX,sec_schedule_iii,yes,active,,xbrl,,,individual,4,properties,2026-11-26,
+ALX,corporate_website,yes,candidate,https://alxinc.gcs-web.com/,html_table,,,,4,properties,2026-11-26,"Company profile names all assets (731 Lexington, Rego Center incl Rego Park II and The Alexander, Flushing); no supplemental published"
+ALX,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,NYC PLUTO / ACRIS
+AMH,sec_schedule_iii,partial,active,,xbrl,,,by_market,,homes,2026-11-26,
+AMH,corporate_website,partial,candidate,https://www.amh.com/homes-for-rent/texas,unknown,,,,,homes,2026-11-26,"Leasing site shows only homes currently available, via search widget not in static HTML; build-to-rent communities at communities.amh.com; supplemental and Schedule III by market per prior knowledge"
+AMH,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel records (owner name AMH entities)
+AMT,sec_schedule_iii,partial,active,,xbrl,,,by_market,149000,sites,2026-11-26,
+AMT,corporate_website,no,candidate,https://americantower.com/us/find-sites,map_only,,,,149000,sites,2026-11-26,"Site Locator map exists but requires an American Tower account; count from general knowledge, not page"
+AMT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,FCC Antenna Structure Registration (ASR)
+APLE,sec_schedule_iii,unknown,active,,xbrl,,,unknown,212,hotels,2026-11-26,Detail level settles on first live load
+APLE,corporate_website,yes,candidate,https://applehospitalityreit.com/hotel-map/,map_only,,,,212,hotels,2026-11-26,"Interactive state map with state/brand filters plus Download Full Listing buttons (file type not shown); 29,072 rooms, 36 states"
+APLE,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Marriott/Hilton brand hotel directories; state lodging tax lists
+ARE,sec_schedule_iii,unknown,active,,xbrl,,,unknown,328,properties (operating + under co,2026-11-26,Detail level settles on first live load
+ARE,corporate_website,partial,candidate,https://are.com/cluster-locations.html,html_cards,,,,328,properties (operating + under co,2026-11-26,Website shows clusters/markets only; supplemental has Property Listing section (p.29) and Summary of Properties; 36.5M RSF operating
+ARE,supplemental,yes,candidate,https://www.are.com/fs/2026q3.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+BDN,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+BDN,corporate_website,yes,candidate,https://www.brandywinerealty.com/our-properties,html_cards,,,,,properties,2026-11-26,Our Properties paginated (search results show ~31 pages) with name and full address per card; 24M+ SF footprint
+BDN,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,"County assessor records (Philadelphia OPA, Austin TCAD)"
+BFS,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+BFS,supplemental,yes,candidate,,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+BFS,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records (DC/MD/VA)
+BHM,sec_schedule_iii,unknown,active,,xbrl,,,unknown,5400,units,2026-11-26,Detail level settles on first live load
+BHM,corporate_website,partial,candidate,https://bluerock.com/bluerock-homes-trust/communities/,html_table,,,,5400,units,2026-11-26,"Communities page lists only 16 cities in 8 states, no names; portfolio page aggregates (5,400+ units incl 1,149 preferred equity)"
+BHM,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor
+BHR,sec_schedule_iii,yes,active,,xbrl,,,individual,6,hotels,2026-11-26,
+BNL,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+BNL,corporate_website,partial,candidate,https://broadstone.com/portfolio/,map_only,,,,,properties,2026-11-26,Portfolio dashboard with top-tenant map and state drill-downs; no full property list; property count placeholder did not render
+BNL,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records; tenant store locators (e.g. Dollar General)
+BRT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,28,"properties (7,707 units; combine",2026-11-26,Detail level settles on first live load
+BRT,supplemental,yes,candidate,https://investors.brtapartments.com/filesystem/investor-relations/Quartely%20Results/Financial%20Supplement/2026/Q3/Supplemental.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+BRT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel data
+BRX,sec_schedule_iii,unknown,active,,xbrl,,,unknown,345,shopping centers (62M SF),2026-11-26,Detail level settles on first live load
+BRX,corporate_website,yes,candidate,https://brixmor.com/leasing/,html_cards,,,,345,shopping centers (62M SF),2026-11-26,"Leasing site lists centers by state (name, city, availability); supplemental has Property List section (p.36)"
+BRX,supplemental,yes,candidate,https://investors.brixmor.com/_assets/_f7180a13341cc11caef08d975cd59fe7/brixmor/db/3482/33182/supplemental_disclosure/BRX+3Q26+Supplemental+Disclosure.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+BSRT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,communities,2026-11-26,Detail level settles on first live load
+BSRT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County appraisal district data (Texas CADs)
+BXP,sec_schedule_iii,unknown,active,,xbrl,,,unknown,162,properties (50.6M SF),2026-11-26,Detail level settles on first live load
+BXP,corporate_website,yes,candidate,https://www.bxp.com/properties,unknown,,,,162,properties (50.6M SF),2026-11-26,Property listing page linked from IR footer; 162 properties incl JVs at 9/30/2026
+CBL,sec_schedule_iii,unknown,active,,xbrl,,,unknown,52,properties (listed),2026-11-26,Detail level settles on first live load
+CBL,corporate_website,yes,candidate,https://www.cblproperties.com/findithere,html_table,,,,52,properties (listed),2026-11-26,"Find-it-here page lists property name, street address, city in HTML table; 52 rows"
+CBL,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Wikipedia list of CBL properties; county assessor
+CCI,sec_schedule_iii,partial,active,,xbrl,,,by_market,,towers,2026-11-26,
+CCI,corporate_website,no,candidate,https://www.crowncastle.com/ccisites/,unknown,,,,,towers,2026-11-26,"CCIsites tool shows site fact sheets but requires free registration/login, so not public; Schedule III aggregated per prior knowledge"
+CCI,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,FCC Antenna Structure Registration (owner name Crown Castle entities)
+CDP,sec_schedule_iii,yes,active,,xbrl,,,individual,208,properties,2026-11-26,
+CDP,corporate_website,yes,candidate,https://www.copt.com/,html_cards,,,,208,properties,2026-11-26,"Site has state archive pages (copt.com/locations/maryland etc.) and per-property pages by street address; supplemental groups by segment/sub-segment (208 props, 25.3M sf), addresses only for development; Schedule III per prior knowledge"
+CDP,supplemental,partial,candidate,https://d1io3yog0oux5.cloudfront.net/_9ba9edb1cc23cb5d59715a0c8bda997c/copt/db/2238/21418/financial_supplemental/CDP_3Q26_Supplemental_%28final%29.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+CDR,sec_schedule_iii,yes,active,,xbrl,,,individual,,,2026-11-26,
+CDR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor
+CHCT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,200,properties (4.56M SF; as of 9/30,2026-11-26,Detail level settles on first live load
+CHCT,supplemental,yes,candidate,https://www.chct.reit/image/2026_Q3_Supplemental_Info_Final.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+CHCT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS provider data (for hospital/clinic tenants)
+CLDT,sec_schedule_iii,yes,active,,xbrl,,,individual,39,hotels,2026-11-26,
+CLDT,corporate_website,yes,candidate,https://chathamlodgingtrust.com/properties/,html_table,,,,39,hotels,2026-11-26,"Hotel portfolio page lists hotel names with links (39 hotels by count, plus restaurants), no city/rooms; per-hotel pages under /portfolio/; summary counters load by script; Schedule III per prior knowledge"
+CLPR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,9,properties,2026-11-26,Detail level settles on first live load
+CLPR,supplemental,yes,candidate,https://clipperrealty.com/wp-content/uploads/2026/11/Q3-26-Supplemental-Financial-Information.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+CLPR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,NYC PLUTO / ACRIS; NYC HPD registration
+CMCT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,17,"properties (operating, incl hote",2026-11-26,Detail level settles on first live load
+CMCT,corporate_website,yes,candidate,http://creativemediacommunity.com/portfolio,html_cards,,,,17,"properties (operating, incl hote",2026-11-26,"Portfolio page lists 17 operating entries (city, neighborhood, street address) plus 4 development projects; 1 hotel (Sheraton Sacramento); no supplemental in input"
+COLD,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,warehouses,2026-11-26,Detail level settles on first live load
+COLD,corporate_website,yes,candidate,https://www.americold.com/?p=411,unknown,,,,,warehouses,2026-11-26,Per-facility pages exist (e.g. americold.com/atlanta-gateway seen in search) plus a Facilities Map page; Our Facilities page itself only features 4; no total count on page; includes leased and managed sites
+CPT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,communities,2026-11-26,Detail level settles on first live load
+CPT,corporate_website,yes,candidate,https://camdenliving.com/,html_cards,,,,,communities,2026-11-26,Consumer apartment search by city on camdenliving.com; supplemental has Community Table (TOC) plus development tables
+CPT,supplemental,yes,candidate,https://s28.q4cdn.com/425223795/files/content_files/3Q26-Supplement-CPT-FINAL.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+CPT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records
+CSR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,57,communities,2026-11-26,Detail level settles on first live load
+CSR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Apartments.com Centerspace PMC page; county assessor
+CTO,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+CTO,corporate_website,yes,candidate,https://www.ctoreit.com/property-portfolio,unknown,,,,,properties,2026-11-26,"Property portfolio page with per-property URLs (?propertyId=NNNN-lease), likely a third-party leasing widget; 7.1M SF"
+CTO,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records
+CTRE,sec_schedule_iii,unknown,active,,xbrl,,,unknown,467,properties,2026-11-26,Detail level settles on first live load
+CTRE,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS SNF ownership data; California HCAI ownership filings
+CUBE,sec_schedule_iii,yes,active,,xbrl,,,individual,1500,stores (owned plus managed),2026-11-26,
+CUBE,corporate_website,yes,candidate,https://www.cubesmart.com/storage-locations/,unknown,,,,1500,stores (owned plus managed),2026-11-26,"Store locator plus state/city store pages; site count of 1,500+ mixes owned and third-party managed, so filter to owned via 10-K; supplemental by MSA and Schedule III per prior knowledge"
+CURB,sec_schedule_iii,unknown,active,,xbrl,,,unknown,239,properties (5.6M SF owned GLA),2026-11-26,Detail level settles on first live load
+CURB,supplemental,partial,candidate,https://s205.q4cdn.com/417291320/files/content_files/Curbline_Supplement_3Q26.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+CURB,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel data
+CUZ,sec_schedule_iii,unknown,active,,xbrl,,,unknown,39,operating properties (22.1M RSF),2026-11-26,Detail level settles on first live load
+CUZ,supplemental,yes,candidate,https://s201.q4cdn.com/928444072/files/content_files/3Q26-Supplement.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+DEA,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+DEA,corporate_website,yes,candidate,https://easterlyreit.com/properties,html_cards,,,,,properties,2026-11-26,"Filterable property list, one entry per property named by agency-city (e.g. DEA - Albany) with descriptive text, SF inconsistent; GSA IOLP is a strong cross-check; no supplemental PDF in input"
+DEA,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,GSA Inventory of Owned and Leased Properties (IOLP) - lists leased federal buildings with lessor
+DEI,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,,2026-11-26,Detail level settles on first live load
+DEI,corporate_website,yes,candidate,https://www.douglasemmett.com/office-properties,unknown,,,,,,2026-11-26,"Site has office-properties page and submarket pages plus separate apartments site douglasemmettapartments.com; building lists not rendered in fetch; 18M+ RSF and 5,000+ units"
+DEI,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,"county assessor (LA County, Honolulu)"
+DHC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,298,properties (~25000 senior living,2026-11-26,Detail level settles on first live load
+DHC,corporate_website,yes,candidate,https://www.dhcreit.com,unknown,,,,298,properties (~25000 senior living,2026-11-26,"Supplemental is aggregated (by operator, state, top CBSAs) but says full property list incl JV properties is on DHC website; exact page URL not seen"
+DHC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Care Compare; state assisted living licensing lists
+DLR,sec_schedule_iii,yes,active,,xbrl,,,individual,,,2026-11-26,
+DLR,corporate_website,yes,candidate,https://www.digitalrealty.com/data-centers,html_table,,,,,,2026-11-26,"Metro pages list each facility with code, address, sq ft (Dallas page shows 12 sites); no global total on page; Schedule III per prior knowledge"
+DOC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+DOC,corporate_website,yes,candidate,https://healthpeak.com/properties,xlsx,,,,,properties,2026-11-26,Downloadable complete property list (.xlsx) on properties page; HTML page shows ~72 highlight cards with MSA/asset filters
+DOC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Provider of Services for CCRC/SNF; county assessor
+DRH,sec_schedule_iii,yes,active,,xbrl,,,individual,36,hotels,2026-11-26,
+DRH,corporate_website,yes,candidate,https://drhc.com/portfolio-properties.php,html_cards,,,,36,hotels,2026-11-26,"Portfolio page lists all 36 hotels with city, rooms, operator, year acquired (9,644 rooms); separate map page portfolio-map.php; no supplemental URL in input; Schedule III per prior knowledge"
+EGP,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+EGP,corporate_website,yes,candidate,https://eastgroup.net/properties/,html_cards,,,,,properties,2026-11-26,"Properties page links 26 market pages; each market page lists parks with address, SF, building count as cards"
+EGP,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records
+ELS,sec_schedule_iii,unknown,active,,xbrl,,,unknown,200,communities (MH only; RV resorts,2026-11-26,Detail level settles on first live load
+ELS,corporate_website,partial,candidate,https://equitylifestyleproperties.com/our-portfolio/mh-portfolio,map_only,,,,200,communities (MH only; RV resorts,2026-11-26,"Corporate MH page shows image map, 23 states, no names; RV portfolio page and Thousand Trails/Encore consumer sites linked"
+ELS,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Consumer sites Thousand Trails / Encore RV resort search; state MH park licensing lists; OpenStreetMap
+EPR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,,2026-11-26,Detail level settles on first live load
+EPR,corporate_website,yes,candidate,https://eprkc.com/portfolio/experiential/theatres/,html_cards,,,,,,2026-11-26,"Portfolio section has per-category property pages (theatres, eat & play, ski, attractions, fitness, gaming, lodging, education) plus a Property Map link"
+EPRT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,,2026-11-26,Detail level settles on first live load
+EPRT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor; tenant store locators
+EQIX,sec_schedule_iii,unknown,active,,xbrl,,,unknown,280,data centers,2026-11-26,Detail level settles on first live load
+EQIX,corporate_website,yes,candidate,https://equinix.com/Locations,html_cards,,,,280,data centers,2026-11-26,"280 data centers in 77 markets, 36 countries per FY2025 10-K; each IBX has own page (e.g. /sv6/); Schedule III not reached in fetch"
+EQIX,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,PeeringDB facility list (free); Baxtel/DataCenterMap
+ESRT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties (7.7M RSF commercial ,2026-11-26,Detail level settles on first live load
+ESRT,corporate_website,yes,candidate,https://investors.esrtreit.com/about-esrt/property-portfolio/default.aspx,unknown,,,,,properties (7.7M RSF commercial ,2026-11-26,"Property Portfolio page on IR site (not fetched); supplemental is an SEC htm exhibit, easy to parse; small portfolio (Manhattan/Greater NY office, retail, 3 multifamily)"
+ESRT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,NYC PLUTO / ACRIS
+ESS,sec_schedule_iii,yes,active,,xbrl,,,individual,240,communities,2026-11-26,
+ESS,corporate_website,yes,candidate,https://www.essexapartmenthomes.com/apartments,html_cards,,,,240,communities,2026-11-26,Consumer apartment search with map/list toggle (JS-loaded); 240+ communities per site; Sch III individual from prior knowledge
+EXR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,4411,facilities (owned or operated),2026-11-26,Detail level settles on first live load
+EXR,corporate_website,yes,candidate,https://www.extraspace.com/storage/,html_table,,,,4411,facilities (owned or operated),2026-11-26,"Consumer site lists all stores by state/city incl. managed 3rd-party stores (need to filter owned vs managed); 4,411 owned or operated per Q3 2026"
+EXR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,OpenStreetMap
+FCPT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,1456,properties,2026-11-26,Detail level settles on first live load
+FCPT,corporate_website,yes,candidate,https://fcpt.com/portfolio/,pdf,,,,1456,properties,2026-11-26,"Portfolio page has static map image and See Full Portfolio List PDF; 185 brands, 48 states, 9.9M SF"
+FCPT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,"Tenant restaurant locators (Olive Garden, LongHorn); county assessor"
+FPI,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,farms,2026-11-26,Detail level settles on first live load
+FPI,corporate_website,partial,candidate,https://farmlandpartners.com/,unknown,,,,,farms,2026-11-26,Individual farm pages exist under farmlandpartners.com/properties/ (e.g. Bristow Farm seen in search) but no index found; frm-location page is a news archive
+FPI,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcels (owner Farmland Partners entities); USDA FSA farm records not public
+FR,sec_schedule_iii,yes,active,,xbrl,,,individual,,,2026-11-26,
+FR,corporate_website,partial,candidate,https://firstindustrial.com/property-finder,unknown,,,,,,2026-11-26,"Property Finder searches by market/type, appears to be leasing availability; results load dynamically; supplemental/Sch III from prior knowledge"
+FR,supplemental,partial,candidate,https://investor.firstindustrial.com/static-files/2559eb4f-4190-4aba-ac2c-c6091bd950c8,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+FR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor
+FRMI,sec_schedule_iii,unknown,active,,xbrl,,,unknown,1,campus,2026-11-26,Detail level settles on first live load
+FRMI,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Datacentermap.com Project Matador entries; Texas Tech land lease records; ERCOT/FERC interconnection filings
+FRT,sec_schedule_iii,yes,active,,xbrl,,,individual,,properties,2026-11-26,
+FRT,corporate_website,yes,candidate,https://properties.federalrealty.com/,unknown,,,,,properties,2026-11-26,Separate properties subdomain with per-property pages (/property/Name/ID); listing renders client-side so format unverified; supplemental property-by-property status report and Schedule III per prior knowledge
+FRT,supplemental,yes,candidate,https://ir.federalrealty.com/static-files/8bd9d4b5-cb12-449c-bbc9-55681293570b,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+FSP,sec_schedule_iii,yes,active,,xbrl,,,individual,13,properties,2026-11-26,
+FSP,corporate_website,yes,candidate,https://fspreit.com/property/index.html,html_table,,,,13,properties,2026-11-26,"Property page lists 13 properties by state and city map pins (names only, no sf); Schedule III individual per prior knowledge"
+FVR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,327,properties,2026-11-26,Detail level settles on first live load
+FVR,corporate_website,yes,candidate,https://investor.frontviewreit.com/overview/default.aspx,unknown,,,,327,properties,2026-11-26,IR site has a Portfolio Leases section with 100% of properties and street addresses plus Google Maps links (per company release; exact page URL not seen); corporate portfolio page has search box only; 327 props 346 leases 36 states at 9/30/26; supplemental has map and aggregates only
+GIPR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,15,properties (listed),2026-11-26,Detail level settles on first live load
+GIPR,corporate_website,yes,candidate,https://gipreit.com/?p=141,html_cards,,,,15,properties (listed),2026-11-26,"Portfolio page has one block per property (city/state, type, price, SF, credit rating); tenant only via logo image; company exploring strategic alternatives"
+GIPR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records; tenant store locators
+GLPI,sec_schedule_iii,yes,active,,xbrl,,,individual,71,properties,2026-11-26,
+GLPI,corporate_website,yes,candidate,https://www.glpropinc.com/portfolio/,html_cards,,,,71,properties,2026-11-26,"Homepage has state-selector map with property listings (sq ft, acres, hotel rooms); 71 properties in 21 states; Sch III individual from prior knowledge"
+GLPI,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,state gaming commission licensee lists
+GNL,sec_schedule_iii,yes,active,,xbrl,,,individual,835,properties,2026-11-26,
+GNL,corporate_website,no,candidate,https://globalnetlease.com/portfolio/,unknown,,,,835,properties,2026-11-26,"Portfolio page only aggregates by region/country (835 props, 43.5M sf at 9/30/26); supplemental assumed aggregated by tenant/country; Schedule III individual per prior knowledge of AR Global filings, unverified"
+GNL,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,"County assessor records (US); national land registries (UK, Europe)"
+GOOD,sec_schedule_iii,unknown,active,,xbrl,,,unknown,124,properties,2026-11-26,Detail level settles on first live load
+GOOD,corporate_website,yes,candidate,https://www.gladstonecommercial.com/properties,html_cards,,,,124,properties,2026-11-26,"Properties page has cards by state with city, type, sq ft, tenant, closing date; about 124 properties in 27 states, all states in the HTML"
+GTY,sec_schedule_iii,unknown,active,,xbrl,,,unknown,1269,properties,2026-11-26,Detail level settles on first live load
+GTY,corporate_website,no,candidate,https://gettyrealty.com/portfolio/,unknown,,,,1269,properties,2026-11-26,"Portfolio page gives counts by category only (742 c-store/gas, 136 car wash, 156 auto service, 71 QSR); state UST registries list gas sites by owner"
+GTY,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,State UST (underground storage tank) facility registries; tenant station locators; county assessor
+HIW,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,buildings,2026-11-26,Detail level settles on first live load
+HIW,corporate_website,yes,candidate,https://www.highwoods.com/find-your-space/search,unknown,,,,,buildings,2026-11-26,"Find-your-space search filterable by market/type/size with per-building detail pages (seen in search results only, not fetched); supplemental partial = development pipeline per prior knowledge, unverified"
+HIW,supplemental,partial,candidate,https://s23.q4cdn.com/319093197/files/doc_earnings/2026/q3/earnings-result/Highwoods-3Q-2026-Supplemental-Operating-Statistics.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+HPP,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+HPP,supplemental,yes,candidate,https://s22.q4cdn.com/675150095/files/doc_financials/2026/q2/HPP-Q2-2026-Supplemental-compressed.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+HPP,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,LA County assessor; Wikipedia HPP article; loopnet company page
+HR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,,2026-11-26,Detail level settles on first live load
+HR,corporate_website,yes,candidate,https://leasing.healthcarerealty.com,pdf,,,,,,2026-11-26,IR posted quarterly Properties List PDFs (seen through 3Q 2022; newer not found); leasing site for MOB availability; count not confirmed
+HR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS provider data (for hospital-campus adjacency only)
+HST,sec_schedule_iii,yes,active,,xbrl,,,individual,75,hotels,2026-11-26,
+HST,corporate_website,yes,candidate,https://www.hosthotels.com/Our-Portfolio/Portfolio-Overview,html_cards,,,,75,hotels,2026-11-26,"Portfolio page has filterable hotel list plus map view (about 79 entries); supplemental groups by market, names hotels only in ground lease table; 75 hotels 41,327 rooms at 9/30/26; Schedule III per prior knowledge"
+HST,supplemental,partial,candidate,https://www.sec.gov/Archives/edgar/data/0001070750/000107075026000152/hst-supplementalfinanciali.htm,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+IHT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,2,hotels,2026-11-26,Detail level settles on first live load
+IHT,corporate_website,yes,candidate,https://www.innsuitestrust.com/,html_cards,,,,2,hotels,2026-11-26,"Homepage Our Hotels lists both hotels (Tucson Foothills AZ, Albuquerque Airport NM) as cards"
+IHT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Best Western hotel directory
+IIPR,sec_schedule_iii,yes,active,,xbrl,,,individual,108,properties,2026-11-26,
+IIPR,supplemental,yes,candidate,https://s21.q4cdn.com/804601526/files/doc_financials/2026/q3/NOV/IIPR-Financial-Supplement-Q3-2026.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+IIPR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,state cannabis license lists
+ILPT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,409,properties,2026-11-26,Detail level settles on first live load
+ILPT,corporate_website,partial,candidate,https://www.rmrgroup.com/portfolio/,map_only,,,,409,properties,2026-11-26,No list on ILPT site; manager RMR's portfolio page has state map and downloadable property file (.xlsx) for all RMR-managed REITs; 183 mainland + 226 Oahu
+ILPT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Honolulu County real property tax records (Oahu land); county assessor
+INN,sec_schedule_iii,unknown,active,,xbrl,,,unknown,92,hotels,2026-11-26,Detail level settles on first live load
+INN,corporate_website,unknown,candidate,https://www.shpreit.com//portfolio/properties/,unknown,,,,92,hotels,2026-11-26,"Site nav links a Properties page (not fetched); 92 assets (50 wholly owned), 14,027 rooms, 24 states"
+INN,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,state/county hotel occupancy tax permit lists
+INVH,sec_schedule_iii,partial,active,,xbrl,,,by_market,85970,homes,2026-11-26,
+INVH,corporate_website,partial,candidate,,unknown,,,,85970,homes,2026-11-26,"Supplemental aggregates by market (85,970 wholly owned homes 1Q26); consumer rental search shows only available homes, URL not verified"
+INVH,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor parcels (owner name search)
+IRM,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,,2026-11-26,Detail level settles on first live load
+IRM,corporate_website,partial,candidate,https://ironmountain.com/data-centers/locations,html_cards,,,,,,2026-11-26,"Data center campuses listed as cards (23 cards, 30+ locations), records storage facilities not listed on that page"
+IRM,supplemental,partial,candidate,,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+IRM,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,datacentermap.com; county assessor
+IRT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,116,communities,2026-11-26,Detail level settles on first live load
+IRT,corporate_website,yes,candidate,https://www.irtliving.com/Our-Places,html_cards,,,,116,communities,2026-11-26,Consumer site lists ~79 cities in 12 states with list/map tabs; ~116 community names in residents dropdown
+IVT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,78,properties,2026-11-26,Detail level settles on first live load
+IVT,corporate_website,yes,candidate,https://www.inventrustproperties.com/properties/,html_cards,,,,78,properties,2026-11-26,"Property search grid lists 78 centers with name and full street address, state/metro filters, map view toggle"
+JAN,sec_schedule_iii,unknown,active,,xbrl,,,unknown,40,communities,2026-11-26,Detail level settles on first live load
+JAN,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,state assisted-living license lists
+JBGS,sec_schedule_iii,unknown,active,,xbrl,,,unknown,37,operating assets (15 multifamily,2026-11-26,Detail level settles on first live load
+JBGS,supplemental,yes,candidate,,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+JBGS,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Arlington County / DC OTR property records
+KIM,sec_schedule_iii,unknown,active,,xbrl,,,unknown,561,properties,2026-11-26,Detail level settles on first live load
+KIM,corporate_website,yes,candidate,https://www.kimcorealty.com/properties,html_cards,,,,561,properties,2026-11-26,Property search on corporate site; 561 shown on homepage but unlabeled
+KIM,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records
+KRC,sec_schedule_iii,yes,active,,xbrl,,,individual,,,2026-11-26,
+KRC,corporate_website,partial,candidate,https://www.kilroyrealty.com/interactive,html_cards,,,,,,2026-11-26,Website shows only 5 buildings with virtual tours; 10-K Item 2 and Sch III list buildings individually (prior knowledge)
+KRC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor
+KRG,sec_schedule_iii,yes,active,,xbrl,,,individual,,properties,2026-11-26,
+KRG,corporate_website,yes,candidate,https://kiterealty.com/properties/operating-portfolio,html_table,,,,,properties,2026-11-26,"Property Quick Finder and property-manager dropdown list every center by name, each with its own page /properties/[name]; operating-portfolio page not read; Schedule III per prior knowledge"
+LAMR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,360000,displays,2026-11-26,Detail level settles on first live load
+LAMR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,State DOT outdoor advertising permit databases
+LAND,sec_schedule_iii,unknown,active,,xbrl,,,unknown,86,farms (by tally),2026-11-26,Detail level settles on first live load
+LAND,corporate_website,yes,candidate,https://www.gladstonefarms.com/farmland-portfolio,html_cards,,,,86,farms (by tally),2026-11-26,"Farm cards by state (name, city/state, gross and farmable acres, crops, water, acquisition date) loaded via state filter; ~86 farms in 14 states by tally"
+LAND,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,USDA FSA farm records not public; county assessor; state water rights databases
+LINE,sec_schedule_iii,unknown,active,,xbrl,,,unknown,480,warehouses,2026-11-26,Detail level settles on first live load
+LINE,corporate_website,yes,candidate,https://www.onelineage.com/find-facility?page=1,html_cards,,,,480,warehouses,2026-11-26,Paginated facility finder with address and type tags; XLSX export link on page; global portfolio
+LINE,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,USDA/FDA registered cold storage lists; Global Cold Chain Alliance directory
+LTC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,171,properties,2026-11-26,Detail level settles on first live load
+LTC,corporate_website,yes,candidate,https://www.ltcreit.com/portfolio,html_cards,,,,171,properties,2026-11-26,Portfolio page has state map and a Download a List of Properties Excel file (best source); 171 properties at 9/30/2026
+LTC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Care Compare / Provider Data Catalog (SNF and ALF licensing)
+MAA,sec_schedule_iii,yes,active,,xbrl,,,individual,,,2026-11-26,
+MAA,corporate_website,yes,candidate,https://www.maac.com/,html_cards,,,,,,2026-11-26,Each community has a consumer page under maac.com/state/city/name (seen in search); supplemental partial (development/lease-up) from prior knowledge; count not confirmed
+MAA,supplemental,partial,candidate,https://s1.q4cdn.com/498755859/files/content_files/MAA-EarningsRelease-Supplemental-3Q26.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+MAC,sec_schedule_iii,yes,active,,xbrl,,,individual,36,properties (leasing page),2026-11-26,
+MAC,corporate_website,yes,candidate,https://www.macerich.com/leasing/properties,html_cards,,,,36,properties (leasing page),2026-11-26,"Leasing page lists 36 centers (name, city, state) with type/state filters; meta says 38; Schedule III per prior knowledge"
+MDRR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,8,properties (as of mid-2023),2026-11-26,Detail level settles on first live load
+MDRR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel data
+MKZR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,14,"properties (9 commercial, 5 mult",2026-11-26,Detail level settles on first live load
+MKZR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,10-K Item 2 property table; county assessor (mostly SF Bay Area and Napa/Solano/Yolo counties)
+MPT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,388,properties,2026-11-26,Detail level settles on first live load
+MPT,corporate_website,yes,candidate,https://medicalpropertiestrust.com/locations,html_cards,,,,388,properties,2026-11-26,"Map plus paginated card listings (401 listings) with name, city, operator, type, coordinates; Download MPT Properties List spreadsheet; 9 countries"
+MPT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Provider of Services / Hospital General Information; AHA
+MRP,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,homesites,2026-11-26,Detail level settles on first live load
+MRP,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,"County assessor/plat records; builder community sites (Lennar, Rausch Coleman)"
+NHI,sec_schedule_iii,unknown,active,,xbrl,,,unknown,192,properties,2026-11-26,Detail level settles on first live load
+NHI,corporate_website,yes,candidate,https://www.nhireit.com/?p=27,pdf,,,,192,properties,2026-11-26,"Our Properties page links a Property List PDF (Property-List_October-2026.pdf); 36 operating partners, 31 states"
+NHI,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Provider of Services / Care Compare for SNFs; state assisted living licensing lists
+NHP,sec_schedule_iii,unknown,active,,xbrl,,,unknown,160,properties,2026-11-26,Detail level settles on first live load
+NHP,corporate_website,yes,candidate,https://nhpreit.com/portfolio/,xlsx,,,,160,properties,2026-11-26,"Portfolio page offers a Downloadable Property List spreadsheet (format pdf_list = downloadable file, not opened) plus per-state counts; 60 SH communities (5,045 units) + 100 OMF buildings; supplemental groups by operator/MSA (170 incl land at 6/30/26); OMF portfolio being sold"
+NHP,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Care Compare (for any licensed senior housing/SNF)
+NLOP,sec_schedule_iii,unknown,active,,xbrl,,,unknown,47,properties (as of Q2 2024),2026-11-26,Detail level settles on first live load
+NLOP,corporate_website,unknown,candidate,https://www.nloproperties.com,unknown,,,,47,properties (as of Q2 2024),2026-11-26,"Supplemental Property List section lists each property by primary tenant, city, state (47 at Q2 2024, shrinking as it liquidates); corporate site not checked"
+NLOP,supplemental,yes,candidate,https://s202.q4cdn.com/332621640/files/doc_financials/2026/q1/4f9f0c35-b35c-4379-a999-ff128c05600e.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+NLOP,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records
+NNN,sec_schedule_iii,unknown,active,,xbrl,,,unknown,3817,properties,2026-11-26,Detail level settles on first live load
+NNN,corporate_website,no,candidate,https://www.nnnreit.com/properties-leasing/our-portfolio/,map_only,,,,3817,properties,2026-11-26,"No property-level list anywhere public on site; portfolio page has state map (aggregate) and top 20 tenants/lines of trade; annual supplemental aggregated by tenant, line of trade, state, MSA (3,692 props at 12/31/25); site now says 3,817 properties, 50 states"
+NNN,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel records; tenant store locators (7-Eleven etc.) cross-matched
+NTST,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,,2026-11-26,Detail level settles on first live load
+NTST,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,tenant store locators; county assessor
+NXDT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,mixed (direct assets incl Citypl,2026-11-26,Detail level settles on first live load
+NXDT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel data
+NXRT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,37,properties,2026-11-26,Detail level settles on first live load
+NXRT,supplemental,yes,candidate,https://s26.q4cdn.com/937656400/files/doc_financials/2026/q3/NXRT_ESupp_8-K_Q3-2026-Final.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+NYC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,6,properties (Q3 2025),2026-11-26,Detail level settles on first live load
+NYC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,NYC PLUTO / ACRIS
+O,sec_schedule_iii,partial,active,,xbrl,,,by_market,15500,properties,2026-11-26,
+O,corporate_website,no,candidate,https://www.realtyincome.com/our-portfolio,map_only,,,,15500,properties,2026-11-26,"Portfolio page shows 15,500+ properties and a geographic map only, no property list; Sch III aggregated by industry (from prior knowledge)"
+O,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor parcels; tenant store locators
+OHI,sec_schedule_iii,partial,active,,xbrl,,,by_market,1127,facilities,2026-11-26,
+OHI,corporate_website,yes,candidate,https://www.omegahealthcare.com/portfolio,pdf,,,,1127,facilities,2026-11-26,Portfolio page links a downloadable PDF of core facility addresses; page shows state table; 96 operators 43 states plus UK
+OHI,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Provider of Services / Nursing Home Compare (SNF ownership)
+OLP,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties (79 industrial per 20,2026-11-26,Detail level settles on first live load
+OLP,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel data
+ONL,sec_schedule_iii,unknown,active,,xbrl,,,unknown,75,properties,2026-11-26,Detail level settles on first live load
+ONL,supplemental,yes,candidate,https://d1io3yog0oux5.cloudfront.net/_628e8cfeb34bc2c4e450353544fc11ee/onlreit/db/2161/20619/supplemental/1020.04b_-_Exhibit_99.2_Orion_Supplemental_-_09.30.2026_%28Draft_v6_-_11.5.2026%29.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+ONL,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor
+OPI,sec_schedule_iii,yes,active,,xbrl,,,individual,109,properties,2026-11-26,
+OPI,corporate_website,yes,candidate,http://www.opireit.com/properties/default.aspx,xlsx,,,,109,properties,2026-11-26,Properties page offers full property list as downloadable Excel file (as of latest quarter); 109 properties 15.6M sf; Schedule III individual per prior RMR 10-K knowledge
+OUT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,displays,2026-11-26,Detail level settles on first live load
+OUT,corporate_website,partial,candidate,https://www.outfront.com/markets/los-angeles,map_only,,,,,displays,2026-11-26,Market pages and a political location map PDF; MapWeb inventory tool (mapweb.outfront.com) appears to be for buyers; no supplemental PDF in input
+OUT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,State DOT outdoor advertising permit databases; city billboard maps
+PDM,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,office properties,2026-11-26,Detail level settles on first live load
+PDM,corporate_website,partial,candidate,https://www.piedmontreit.com/markets/atlanta,html_cards,,,,,office properties,2026-11-26,"Market pages (Atlanta, Boston, Dallas, Minneapolis, New York, Orlando, NoVA/DC) list building names only, no SF or full address; supplemental not checked"
+PEB,sec_schedule_iii,unknown,active,,xbrl,,,unknown,42,hotels,2026-11-26,Detail level settles on first live load
+PEB,corporate_website,yes,candidate,https://pebblebrookhotels.com/portfolio-map/,html_table,,,,42,hotels,2026-11-26,"Portfolio map page has a table of hotels with city/state, filters for state, classification, operator; ~10,762 rooms by count"
+PEB,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Brand/operator hotel directories; state lodging lists
+PECO,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,shopping centers,2026-11-26,Detail level settles on first live load
+PECO,corporate_website,yes,candidate,https://phillipsedison.com/properties,unknown,,,,,shopping centers,2026-11-26,"Property pages by state exist (e.g. /properties/Texas) with AI-powered search, but listings render client-side so fetch returned no rows; likely JS/API-driven"
+PECO,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,"County assessor records; grocer store locators (Kroger, Publix, Albertsons)"
+PINE,sec_schedule_iii,unknown,active,,xbrl,,,unknown,130,properties,2026-11-26,Detail level settles on first live load
+PINE,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,tenant store locators; county assessor
+PK,sec_schedule_iii,unknown,active,,xbrl,,,unknown,29,hotels,2026-11-26,Detail level settles on first live load
+PK,corporate_website,unknown,candidate,https://www.pkhotelsandresorts.com/portfolio,unknown,,,,29,hotels,2026-11-26,"Portfolio page exists but content did not render (JS); 29 hotels ~21,000 rooms per company page"
+PK,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,state/county hotel occupancy tax permit lists; STR census (paid)
+PLD,sec_schedule_iii,partial,active,,xbrl,,,by_market,,,2026-11-26,
+PLD,corporate_website,yes,candidate,https://www.prologis.com/property-search,unknown,,,,,,2026-11-26,"Property search and per-building pages exist (seen in search results); site returned client_error to fetch so format unverified; Schedule III by market per prior 10-K knowledge, not rechecked"
+PSA,sec_schedule_iii,unknown,active,,xbrl,,,unknown,4764,facilities,2026-11-26,Detail level settles on first live load
+PSA,corporate_website,yes,candidate,https://www.publicstorage.com/site-map,html_table,,,,4764,facilities,2026-11-26,"Consumer site has state/city sitemap and store pages; 4,764 facilities with interests incl. Canada; acquired NSA (1,100+ stores) in 2026; supplemental is market-aggregated"
+PSA,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,OpenStreetMap
+PSTL,sec_schedule_iii,unknown,active,,xbrl,,,unknown,2159,properties,2026-11-26,Detail level settles on first live load
+PSTL,corporate_website,partial,candidate,https://postalrealtytrust.com/portfolio/,map_only,,,,2159,properties,2026-11-26,"Portfolio page gives state-level cards (rent, count, sf) plus 6 featured properties, no addresses; 2,159 props 7.9M sf in 49 states + PR; USPS facility list is the obvious alt source"
+PSTL,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,USPS Owned/Leased Facilities Report (public USPS facility list with lessor)
+PW,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties (railroad lease; sola,2026-11-26,Detail level settles on first live load
+PW,corporate_website,partial,candidate,https://www.pwreit.com/our-portfolio,unknown,,,,,properties (railroad lease; sola,2026-11-26,Portfolio and CEA pages linked from IR overview (not fetched); tiny portfolio fully described in 10-K; no supplemental
+PW,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel data; state cannabis licensing lists for greenhouse tenants
+REG,sec_schedule_iii,unknown,active,,xbrl,,,unknown,481,properties,2026-11-26,Detail level settles on first live load
+REG,corporate_website,yes,candidate,https://www.regencycenters.com/properties,html_cards,,,,481,properties,2026-11-26,Find a Property search on corporate site; supplemental PDF has no list but Portfolio Summary Report moved to Selected Supplemental Pages Excel file on website; 481 properties at 3/31/2026
+REG,supplemental,yes,candidate,https://investors.regencycenters.com/static-files/ef82e63b-7702-4abb-b49f-07930632f7e5,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+REXR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,384,properties (44.5M RSF),2026-11-26,Detail level settles on first live load
+REXR,corporate_website,yes,candidate,https://www.rexfordindustrial.com/properties,html_cards,,,,384,properties (44.5M RSF),2026-11-26,"Leasing site has map/table/tile views with toggle for available units, appears to cover most properties; supplemental lists only repositioning/development and transactions"
+REXR,supplemental,partial,candidate,https://d1io3yog0oux5.cloudfront.net/_aedb72fc8626441a86045b167edcc762/rexfordindustrial/db/944/9733/supplemental_financial_reporting_package/REXR+Q3-2026+Supplemental+FINAL.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+REXR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,LA County Assessor parcel data
+RHP,sec_schedule_iii,unknown,active,,xbrl,,,unknown,8,hotels,2026-11-26,Detail level settles on first live load
+RHP,corporate_website,yes,candidate,https://www.rymanhp.com/?p=9,html_cards,,,,8,hotels,2026-11-26,"Hospitality portfolio page lists all 8 hotels as cards (6 Gaylord/JW resorts plus Inn at Opryland, AC National Harbor); entertainment assets separate"
+RHP,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Marriott/Gaylord brand site; state hotel lists
+RLJ,sec_schedule_iii,yes,active,,xbrl,,,individual,92,hotels,2026-11-26,
+RLJ,corporate_website,yes,candidate,https://rljlodgingtrust.com/portfolio/,html_table,,,,92,hotels,2026-11-26,"Portfolio page lists each hotel with city/state, brand, year acquired (about 90-91 entries), no per-hotel rooms; map sub-page; IR says 92 hotels ~21,000 rooms; Schedule III per prior knowledge"
+RYN,sec_schedule_iii,unknown,active,,xbrl,,,unknown,4000000,acres,2026-11-26,Detail level settles on first live load
+RYN,corporate_website,partial,candidate,https://www.rayonier.com:443/our-land-base/portfolio-map,map_only,,,,4000000,acres,2026-11-26,"Portfolio map page with infographic only, no tract list or GIS download; site says over 4 million acres in 11 states (post PotlatchDeltic merger); supplemental reports acres by region"
+RYN,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcels; state forestry GIS
+SAFE,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,ground leases,2026-11-26,Detail level settles on first live load
+SAFE,corporate_website,partial,candidate,https://www.safeholdinc.com/portfolio/,map_only,,,,,ground leases,2026-11-26,"Portfolio page: map graphic, city names by region, 3 case studies; no property count (about $7.0B GBV, 36.0M sf)"
+SAFE,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County recorder ground lease memoranda; assessor parcel owner (Safehold entities)
+SBAC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,39000,sites owned (plus 50000+ managed,2026-11-26,Detail level settles on first live load
+SBAC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,FCC Antenna Structure Registration (owner SBA entities)
+SBRA,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,,2026-11-26,Detail level settles on first live load
+SBRA,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS SNF ownership data; state licensing lists
+SELF,sec_schedule_iii,unknown,active,,xbrl,,,unknown,13,stores,2026-11-26,Detail level settles on first live load
+SELF,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor; storage aggregator sites
+SHO,sec_schedule_iii,yes,active,,xbrl,,,individual,,hotels,2026-11-26,
+SHO,corporate_website,yes,candidate,https://www.sunstonehotels.com/our-portfolio/default.aspx,unknown,,,,,hotels,2026-11-26,"Portfolio page with type/brand filters; All Properties list renders client-side, static HTML shows only 5-7 named hotels; no count on page; Schedule III per prior knowledge"
+SITC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,16,operating centers at 100% (6 who,2026-11-26,Detail level settles on first live load
+SITC,supplemental,yes,candidate,https://images.sitecenters.com/web/pdf/quarterly-results/3Q26-quarterly-supplement_cmd.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+SKT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,41,outlet centers (count of web lis,2026-11-26,Detail level settles on first live load
+SKT,corporate_website,yes,candidate,https://www.tanger.inc/our-properties/our-portfolio,html_cards,,,,41,outlet centers (count of web lis,2026-11-26,"Portfolio page lists each center by name and state with links to center pages, no GLA; leasing PDF map; total count not stated on page (41 counted, may include managed/JV and open-air centers)"
+SLG,sec_schedule_iii,unknown,active,,xbrl,,,unknown,53,buildings (30.7M SF; as of 6/30/,2026-11-26,Detail level settles on first live load
+SLG,supplemental,yes,candidate,https://slgreen.gcs-web.com/static-files/71efe6ac-b1f5-476f-83d7-3bcce7625081,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+SLG,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,NYC PLUTO / ACRIS
+SMA,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,stores,2026-11-26,Detail level settles on first live load
+SMA,corporate_website,yes,candidate,https://smartstopselfstorage.com/find-storage/ca,html_cards,,,,,stores,2026-11-26,"Consumer site has find-storage pages by state/province (US and Canada, e.g. /find-storage/on); includes managed stores; site says hundreds of locations, no count; no supplemental PDF in input"
+SMA,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,OpenStreetMap
+SPG,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,properties,2026-11-26,Detail level settles on first live load
+SPG,corporate_website,yes,candidate,https://www.simon.com/mall,html_cards,,,,,properties,2026-11-26,simon.com/mall directory by state plus /search with malls/mills/outlets/intl filters; each center has own page
+SPG,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,Wikipedia List of Simon Property Group properties
+SQFT,sec_schedule_iii,unknown,active,,xbrl,,,unknown,10,properties,2026-11-26,Detail level settles on first live load
+SQFT,supplemental,partial,candidate,https://presidiopt.com/wp-content/uploads/2026/04/Ex-99.2-Supplemental-Information-Q4-2025-version-4.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+SQFT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,county assessor
+SRG,sec_schedule_iii,unknown,active,,xbrl,,,unknown,8,properties (3 consolidated + 5 u,2026-11-26,Detail level settles on first live load
+SRG,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel data
+STAG,sec_schedule_iii,unknown,active,,xbrl,,,unknown,606,buildings,2026-11-26,Detail level settles on first live load
+STAG,corporate_website,yes,candidate,https://www.stagindustrial.com/properties/,html_table,,,,606,buildings,2026-11-26,"Property Portfolio HTML table: address, market, type, buildings, SF with state filter; 123.0M SF in 41 states"
+STAG,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records
+STRW,sec_schedule_iii,unknown,active,,xbrl,,,unknown,140,skilled nursing and acute care f,2026-11-26,Detail level settles on first live load
+STRW,corporate_website,yes,candidate,https://strawberryfieldsreit.com/portfolio.php,html_cards,,,,140,skilled nursing and acute care f,2026-11-26,"Portfolio page lists 135 facility names grouped by operator, each linking to a location page; no city/beds on index; homepage says 140 facilities, 15,300 licensed beds; no supplemental in input"
+STRW,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS Care Compare / Provider of Services file (SNF ownership data)
+SUI,sec_schedule_iii,yes,active,,xbrl,,,individual,,communities,2026-11-26,
+SUI,corporate_website,yes,candidate,https://www.suncommunities.com/community-search,unknown,,,,,communities,2026-11-26,Community search has list and map toggle but renders client-side (nothing in static HTML); also state/city browse via site map; RV sites on sunoutdoors.com; Schedule III per prior knowledge
+SVC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,,2026-11-26,Detail level settles on first live load
+SVC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,state/county hotel occupancy tax permit lists; TravelCenters of America locator for TA sites
+TRNO,sec_schedule_iii,yes,active,,xbrl,,,individual,,buildings,2026-11-26,
+TRNO,corporate_website,yes,candidate,https://terreno.com/,html_cards,,,,,buildings,2026-11-26,"Per-market portfolio pages list every building with address and sq ft (LA: 61 buildings, 2.56M sf); no portfolio total on page; supplemental link is a quarterly update deck; Schedule III per prior knowledge"
+UDR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,186,communities (60617 apartment hom,2026-11-26,Detail level settles on first live load
+UDR,corporate_website,yes,candidate,https://cflb.udr.com/search-apartments,html_cards,,,,186,communities (60617 apartment hom,2026-11-26,"Consumer search by metro with map pages; udr.com/llms.txt may index communities; supplemental names only non-mature, development and transaction communities"
+UDR,supplemental,partial,candidate,https://s206.q4cdn.com/293289095/files/doc_earnings/2026/q3/earnings-result/3Q-2026-Supplemental-Financial-Information.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+UE,sec_schedule_iii,yes,active,,xbrl,,,individual,71,properties,2026-11-26,
+UE,corporate_website,yes,candidate,https://uedge.com/sites/default/files/ue-portfolio-listing/2026-01/UE_PortfolioListing_1-15.pdf,pdf,,,,71,properties,2026-11-26,"Dated portfolio listing PDF (name, city/state, GLA) refreshed periodically on uedge.com; supplemental property status report and Sch III individual from prior knowledge"
+UE,supplemental,yes,candidate,https://s203.q4cdn.com/606204294/files/doc_financials/2026/q2/Exhibit-99-2-Supplemental-Disclosure-Package-2Q26-FINAL.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+UHT,sec_schedule_iii,yes,active,,xbrl,,,individual,,,2026-11-26,
+UHT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,CMS hospital/provider data; county assessor
+UMH,sec_schedule_iii,yes,active,,xbrl,,,individual,145,communities,2026-11-26,
+UMH,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,10-K Item 2 property table; state MH community licensing lists
+UNIT,sec_schedule_iii,partial,active,,xbrl,,,by_market,,,2026-11-26,
+UNIT,corporate_website,partial,candidate,https://www.unitiwholesale.com/network-map/,map_only,,,,,,2026-11-26,"Fiber route network map and map booklet on wholesale site, not a property list; assets are fiber route miles not buildings; Sch III treatment from prior knowledge"
+UNIT,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,FCC National Broadband Map (provider coverage); state PUC filings
+VICI,sec_schedule_iii,unknown,active,,xbrl,,,unknown,103,properties,2026-11-26,Detail level settles on first live load
+VICI,corporate_website,yes,candidate,https://viciproperties.com/wp-content/uploads/2026/07/VICI-Property-List.pdf,pdf,,,,103,properties,2026-11-26,"PDF property list with operator, property name, lease, city/state; separate gaming list PDF also posted"
+VICI,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,State gaming commission licensee lists
+VMRK,sec_schedule_iii,yes,active,,xbrl,,,individual,,,2026-11-26,
+VMRK,corporate_website,yes,candidate,https://equityapartments.com/,html_table,,,,,,2026-11-26,Legacy EQR leasing site lists communities per market with name and street address (Dallas page 14); Avalon legacy leasing site not checked; Vivmark corporate site not found; 10-Q gives no unit count; supplemental partial = development pipeline only per prior knowledge; Schedule III individual per prior EQR 10-K
+VMRK,supplemental,partial,candidate,https://d1io3yog0oux5.cloudfront.net/_0de812ea435137da113401b9344bed79/vivmarkresidential/db/3482/32996/presentation/VMRK_3Q26_vFINAL.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+VNO,sec_schedule_iii,unknown,active,,xbrl,,,unknown,30,office buildings (listed on page,2026-11-26,Detail level settles on first live load
+VNO,corporate_website,yes,candidate,https://www.vno.com/portfolio/office,html_cards,,,,30,office buildings (listed on page,2026-11-26,Office portfolio page lists ~30 buildings by name/address with list/map/grid toggle; retail and development on separate pages
+VNO,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,NYC PLUTO / ACRIS; SF and Chicago assessor
+VTR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,1500,properties,2026-11-26,Detail level settles on first live load
+VTR,corporate_website,yes,candidate,https://ventasreit.com/our-portfolio/properties-location,xlsx,,,,1500,properties,2026-11-26,"Downloadable Excel property list plus embedded ArcGIS map and featured cards (format is xlsx, not pdf)"
+VTR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,State assisted living licensing lists; CMS data for SNF/hospital
+WELL,sec_schedule_iii,unknown,active,,xbrl,,,unknown,3000,communities,2026-11-26,Detail level settles on first live load
+WELL,corporate_website,partial,candidate,https://welltower.com,html_cards,,,,3000,communities,2026-11-26,Homepage shows featured community cards only; no full list or search found; operator-brand sites are the practical route
+WELL,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,"State assisted living licensing lists; CMS Provider of Services (SNF/LTC); operator websites (Sunrise, Atria, etc.)"
+WHLR,sec_schedule_iii,yes,active,,xbrl,,,individual,67,shopping centers,2026-11-26,
+WHLR,corporate_website,yes,candidate,https://www.whlr.us/properties/,unknown,,,,67,shopping centers,2026-11-26,"Site properties section by region/state (some states link to external PropertyCapsule search), homepage says 67 centers; supplemental Property Summary lists each center with GLA, leased %, ABR (56 centers at 9/30/26: 44 WHLR + 12 Cedar); Schedule III per prior knowledge"
+WHLR,supplemental,yes,candidate,https://d1io3yog0oux5.cloudfront.net/_058f720dd1a01fb14c98f6ca488c1f3c/whlr/db/188/4153/pdf/Supplemental_Operating_and_Financial_Data_as_of_Q3_2026.pdf,pdf,,,,,,2026-11-26,Property table in the supplemental; parsed by the supplemental parser
+WPC,sec_schedule_iii,unknown,active,,xbrl,,,unknown,1755,properties,2026-11-26,Detail level settles on first live load
+WPC,corporate_website,partial,candidate,https://www.wpcarey.com/portfolio-map-data-tables,map_only,,,,1755,properties,2026-11-26,Portfolio map with tables aggregated by country/state only; no property names; 383 tenants; also Europe exposure
+WPC,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor records; tenant store/plant locators
+WY,sec_schedule_iii,unknown,active,,xbrl,,,unknown,,acres,2026-11-26,Detail level settles on first live load
+WY,corporate_website,partial,candidate,https://www.weyerhaeuser.com/recreation,map_only,,,,,acres,2026-11-26,Timberlands not listed as properties; recreation access permit maps show land blocks by area; acreage by state in 10-K
+WY,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,County assessor parcel data; state recreational access program maps (ODFW/WDFW)
+XHR,sec_schedule_iii,unknown,active,,xbrl,,,unknown,29,hotels,2026-11-26,Detail level settles on first live load
+XHR,corporate_website,yes,candidate,https://xeniareit.com/our-portfolio/,html_cards,,,,29,hotels,2026-11-26,"Portfolio page has map and listings views; 29 hotels, 8,783 rooms per homepage"
+XHR,public_dataset,unknown,candidate,,unknown,,,,,,2026-11-26,state/county hotel occupancy tax permit lists
+XRN,sec_schedule_iii,yes,active,,xbrl,,,individual,,properties,2026-11-26,
+XRN,corporate_website,yes,candidate,https://www.chironre.com/our-portfolio/default.aspx,pdf,,,,,properties,2026-11-26,Portfolio page has 'Download a List of All Properties' PDF (regional headings render empty in static HTML); no count on site; formerly Global Medical REIT; Schedule III individual per prior GMRE 10-K knowledge

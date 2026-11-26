@@ -549,6 +549,122 @@ def docs_review(db: Db, ctx: Ctx) -> list[Finding]:
     return [Finding(f"documents {r['status']}", str(r["n"]), "0") for r in rows]
 
 
+# ------------------------------------------------------------------ property master
+@check("recon.schedule_iii_total", "warn", "Schedule III rows do not add up to the reported total (more than 1%)")
+def schedule_iii_total(db: Db, ctx: Ctx) -> list[Finding]:
+    rows = db.query(
+        """SELECT c.ticker, r.company_id, r.accession_no, r.as_of_date,
+                  SUM(CASE WHEN r.source_property_ref = '__total__' THEN r.gross_total END) AS total,
+                  SUM(CASE WHEN r.source_property_ref <> '__total__' THEN r.gross_total END) AS rows_sum
+           FROM stg_property_record r JOIN ref_company c ON c.company_id = r.company_id
+           WHERE r.source_kind = 'sec_schedule_iii' AND r.retired_at IS NULL
+           GROUP BY c.ticker, r.company_id, r.accession_no, r.as_of_date
+           HAVING total > 0 AND rows_sum IS NOT NULL AND ABS(rows_sum - total) / total > 0.01"""
+    )
+    return [
+        Finding(
+            f"{r['ticker']} {r['accession_no']}",
+            str(r["rows_sum"]),
+            str(r["total"]),
+            r["company_id"],
+            {"as_of": str(r["as_of_date"])},
+        )
+        for r in rows
+    ]
+
+
+@check("contract.property_owner", "error", "Active property without a live open ownership spell")
+def property_owner(db: Db, ctx: Ctx) -> list[Finding]:
+    rows = db.query(
+        """SELECT p.property_id FROM wh_property p
+           LEFT JOIN wh_property_ownership o
+             ON o.property_id = p.property_id AND o.retired_at IS NULL AND o.disposed_date IS NULL
+           WHERE p.status = 'active' AND o.ownership_id IS NULL LIMIT 200"""
+    )
+    return [Finding(f"property {r['property_id']}", "no open spell", "one open spell") for r in rows]
+
+
+@check("anomaly.property_overowned", "warn", "Open ownership shares of a property add to more than 100.5%")
+def property_overowned(db: Db, ctx: Ctx) -> list[Finding]:
+    rows = db.query(
+        """SELECT property_id, SUM(COALESCE(ownership_pct, 100)) AS pct, COUNT(*) AS owners
+           FROM wh_property_ownership WHERE retired_at IS NULL AND disposed_date IS NULL
+           GROUP BY property_id HAVING pct > 100.5 LIMIT 200"""
+    )
+    return [
+        Finding(f"property {r['property_id']}", f"{r['pct']}% across {r['owners']} owners", "<= 100%") for r in rows
+    ]
+
+
+@check(
+    "anomaly.property_count_jump",
+    "warn",
+    "A company's property count moved more than 25% between two snapshots of one source",
+)
+def property_count_jump(db: Db, ctx: Ctx) -> list[Finding]:
+    rows = db.query(
+        """SELECT c.ticker, r.company_id, r.source_kind, r.as_of_date, COUNT(*) AS n
+           FROM stg_property_record r JOIN ref_company c ON c.company_id = r.company_id
+           WHERE r.retired_at IS NULL AND r.is_aggregate = 0
+           GROUP BY c.ticker, r.company_id, r.source_kind, r.as_of_date
+           ORDER BY r.company_id, r.source_kind, r.as_of_date"""
+    )
+    out: list[Finding] = []
+    prev: dict[tuple[int, str], dict[str, Any]] = {}
+    for r in rows:
+        k = (int(r["company_id"]), r["source_kind"])
+        p = prev.get(k)
+        if p and p["n"] >= 10 and abs(r["n"] - p["n"]) / p["n"] > 0.25:
+            out.append(
+                Finding(
+                    f"{r['ticker']} {r['source_kind']} {r['as_of_date']}",
+                    str(r["n"]),
+                    f"within 25% of {p['n']} ({p['as_of_date']})",
+                    r["company_id"],
+                )
+            )
+        prev[k] = r
+    return out
+
+
+@check("ops.property_review_queue", "info", "Close property matches waiting for a person")
+def property_review_queue(db: Db, ctx: Ctx) -> list[Finding]:
+    r = db.one(
+        """SELECT COUNT(*) AS n, MIN(matched_at) AS oldest FROM wh_property_xref
+           WHERE retired_at IS NULL AND review_status = 'needs_review'"""
+    )
+    if not r or not r["n"]:
+        return []
+    return [Finding("property review queue", str(r["n"]), "0", details={"oldest": str(r["oldest"])})]
+
+
+@check(
+    "contract.property_records_placed", "warn", "Live property records not linked to a property (run build-properties)"
+)
+def property_records_placed(db: Db, ctx: Ctx) -> list[Finding]:
+    n = db.scalar(
+        """SELECT COUNT(*) FROM stg_property_record r
+           LEFT JOIN wh_property_xref x ON x.record_id = r.record_id AND x.retired_at IS NULL
+           WHERE r.retired_at IS NULL AND r.is_aggregate = 0 AND x.xref_id IS NULL"""
+    )
+    return [Finding("unplaced property records", str(n), "0")] if n else []
+
+
+@check(
+    "anomaly.property_geocode_state",
+    "warn",
+    "Geocoded point is in a different state than the property's reported state",
+)
+def property_geocode_state(db: Db, ctx: Ctx) -> list[Finding]:
+    rows = db.query(
+        """SELECT p.property_id, p.state, g.matched_address FROM wh_property p
+           JOIN ref_geocode_cache g ON g.address_key = p.address_key AND g.status = 'match'
+           WHERE p.state IS NOT NULL AND g.matched_address IS NOT NULL
+             AND g.matched_address NOT LIKE CONCAT('%, ', p.state, ', %') LIMIT 200"""
+    )
+    return [Finding(f"property {r['property_id']}", r["matched_address"], f"in {r['state']}") for r in rows]
+
+
 # ------------------------------------------------------------------ runner
 def _s(v: Any) -> str | None:
     if v is None:

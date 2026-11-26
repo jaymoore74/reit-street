@@ -153,6 +153,25 @@ def _fact(
     return f
 
 
+SCHED3 = Path(__file__).resolve().parent / "fixtures" / "schedule_iii"
+
+
+def schedule_iii_files(ticker: str, report: date | None) -> tuple[bytes, bytes] | None:
+    """10-K Schedule III XBRL for PLD (FY2023 and FY2024) and O (FY2024). The FY2023 PLD
+    filing lists Lakeview Plaza where FY2024 lists Riverside Apartments: one sale, one buy."""
+    if report is None or (ticker, report.year) not in (("PLD", 2023), ("PLD", 2024), ("O", 2024)):
+        return None
+    inst = (SCHED3 / "acme_2024_htm.xml").read_text(encoding="utf-8")
+    lab = (SCHED3 / "acme_2024_lab.xml").read_bytes()
+    if report.year == 2023:
+        inst = (
+            inst.replace("2023-12-31", "2022-12-31")
+            .replace("2024-", "2023-")
+            .replace("RiversideApartmentsMember", "LakeviewPlazaMember")
+        )
+    return inst.encode("utf-8"), lab
+
+
 def build(root: Path) -> Path:
     root = Path(root)
     tick = {"fields": ["cik", "name", "ticker", "exchange"], "data": [[c, n, t, "NYSE"] for t, (c, n) in REITS.items()]}
@@ -248,11 +267,18 @@ def build(root: Path) -> Path:
                 )
                 write(root, "www.sec.gov", f"/Archives/edgar/data/{cik}/{nd}/{ex2}", tiny_pdf(f"synthetic {a}"))
             elif form in ("10-K", "10-Q"):
+                inst = f"{lower}-{report:%Y%m%d}_htm.xml"
                 docs = [
                     (form, doc, form, 2000000),
                     ("EXHIBIT 31.1", "ex311.htm", "EX-31.1", 9000),
-                    ("XBRL INSTANCE", f"{lower}-{report:%Y%m%d}_htm.xml", "XML", 500000),
+                    ("XBRL INSTANCE", inst, "XML", 500000),
                 ]
+                sched = schedule_iii_files(t, report) if form == "10-K" else None
+                if sched:
+                    lab = f"{lower}-{report:%Y%m%d}_lab.xml"
+                    docs.append(("XBRL TAXONOMY EXTENSION LABEL LINKBASE", lab, "EX-101.LAB", 90000))
+                    write(root, "www.sec.gov", f"/Archives/edgar/data/{cik}/{nd}/{inst}", sched[0])
+                    write(root, "www.sec.gov", f"/Archives/edgar/data/{cik}/{nd}/{lab}", sched[1])
             else:
                 continue
             write(root, "www.sec.gov", f"/Archives/edgar/data/{cik}/{nd}/{a}-index.htm", index_html(cik, a, docs))

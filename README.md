@@ -23,6 +23,9 @@ with lineage from every number back to the page it came from.
 - Crawls each REIT's IR results page politely (robots.txt, per-host limits, conditional
   requests), records every document link, and downloads new supplementals; alerts on
   layout breaks and overdue supplementals. Coverage: [docs/ir-coverage.md](docs/ir-coverage.md).
+- Builds a property master: every property each REIT owns, with a stable id across REITs
+  and years, ownership history and lineage, from 10-K Schedule III, company websites,
+  supplementals and files. Coverage: [docs/property-coverage.md](docs/property-coverage.md).
 - Runs data quality checks (contracts, accounting identities, anomalies, reconciliation of
   supplementals against XBRL) and a monitor that alerts by email or webhook.
 - Exports client CSVs with a manifest, as current, as known on a date, or as recorded
@@ -68,6 +71,12 @@ until `[sec] user_agent` in `config.ini` is set.
 | `import-archive` | import a folder of older supplementals |
 | `fetch-ir` | find and download new supplementals on IR websites |
 | `ir-coverage` | IR coverage by company, overdue supplementals |
+| `load-properties` | 10-K Schedule III and active website lists into the property master |
+| `import-properties` | stage a property list file (CSV, XLSX, JSON, HTML) |
+| `build-properties` | match property rows to stable ids, rebuild ownership |
+| `geocode-properties` | geocode new addresses (US Census, cached) |
+| `property-coverage` | properties per REIT against the source map |
+| `property-review` | settle close matches, merge duplicates |
 | `replay` | re-parse staging from the raw store, no network |
 | `dq` | data quality checks |
 | `monitor` | run health checks and alerts |
@@ -88,7 +97,8 @@ until `[sec] user_agent` in `config.ini` is set.
 - [Architecture](docs/architecture.md)
 - [Data dictionary](docs/data-dictionary.md) (generated)
 - [IR website coverage](docs/ir-coverage.md)
-- [Runbooks](docs/runbooks/): cloud setup (AWS), first run, daily operations, IR fetcher, SEC 403, dead letters, replay,
+- [Property coverage](docs/property-coverage.md)
+- [Runbooks](docs/runbooks/): cloud setup (AWS), first run, daily operations, IR fetcher, property master, SEC 403, dead letters, replay,
   metric mappings, archive import, backup and restore, schema changes
 - [Architecture decision records](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)

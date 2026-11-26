@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:xbrldi="http://xbrl.org/2006/xbrldi"
+  xmlns:srt="http://fasb.org/srt/2024" xmlns:us-gaap="http://fasb.org/us-gaap/2024" xmlns:stpr="http://xbrl.sec.gov/stpr/2024"
+  xmlns:acme="http://acme.example/2024" xmlns:iso4217="http://www.xbrl.org/2003/iso4217"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <xbrli:context id="c_end"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000000001</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:instant>2024-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:context id="c_prev"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000000001</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:instant>2023-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:context id="c_fy"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000000001</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:startDate>2024-01-01</xbrli:startDate><xbrli:endDate>2024-12-31</xbrli:endDate></xbrli:period></xbrli:context>
+  <xbrli:context id="c_p1"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000000001</xbrli:identifier><xbrli:segment>
+    <xbrldi:explicitMember dimension="srt:RealEstateAndAccumulatedDepreciationDescriptionOfPropertyAxis">acme:OakParkCenterDallasTXMember</xbrldi:explicitMember>
+    <xbrldi:explicitMember dimension="srt:StatementGeographicalAxis">stpr:TX</xbrldi:explicitMember>
+  </xbrli:segment></xbrli:entity><xbrli:period><xbrli:instant>2024-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:context id="c_p1_only"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000000001</xbrli:identifier><xbrli:segment>
+    <xbrldi:explicitMember dimension="srt:RealEstateAndAccumulatedDepreciationDescriptionOfPropertyAxis">acme:OakParkCenterDallasTXMember</xbrldi:explicitMember>
+  </xbrli:segment></xbrli:entity><xbrli:period><xbrli:instant>2024-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:context id="c_p2"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000000001</xbrli:identifier><xbrli:segment>
+    <xbrldi:explicitMember dimension="srt:RealEstateAndAccumulatedDepreciationDescriptionOfPropertyAxis">acme:RiversideApartmentsMember</xbrldi:explicitMember>
+    <xbrldi:explicitMember dimension="srt:StatementGeographicalAxis">stpr:GA</xbrldi:explicitMember>
+  </xbrli:segment></xbrli:entity><xbrli:period><xbrli:instant>2024-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:context id="c_p3"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000000001</xbrli:identifier><xbrli:segment>
+    <xbrldi:typedMember dimension="srt:RealEstateAndAccumulatedDepreciationDescriptionOfPropertyAxis"><acme:PropertyName>Other properties (12 properties)</acme:PropertyName></xbrldi:typedMember>
+  </xbrli:segment></xbrli:entity><xbrli:period><xbrli:instant>2024-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:context id="c_geo_tx"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0000000001</xbrli:identifier><xbrli:segment>
+    <xbrldi:explicitMember dimension="srt:StatementGeographicalAxis">stpr:TX</xbrldi:explicitMember>
+  </xbrli:segment></xbrli:entity><xbrli:period><xbrli:instant>2024-12-31</xbrli:instant></xbrli:period></xbrli:context>
+  <xbrli:unit id="usd"><xbrli:measure>iso4217:USD</xbrli:measure></xbrli:unit>
+
+  <srt:RealEstateAndAccumulatedDepreciationAmountOfEncumbrances contextRef="c_p1" unitRef="usd" decimals="-3">12000000</srt:RealEstateAndAccumulatedDepreciationAmountOfEncumbrances>
+  <srt:RealEstateAndAccumulatedDepreciationInitialCostOfLand contextRef="c_p1" unitRef="usd" decimals="-3">5000000</srt:RealEstateAndAccumulatedDepreciationInitialCostOfLand>
+  <srt:RealEstateAndAccumulatedDepreciationInitialCostOfBuildingsAndImprovements contextRef="c_p1" unitRef="usd" decimals="-3">20000000</srt:RealEstateAndAccumulatedDepreciationInitialCostOfBuildingsAndImprovements>
+  <srt:RealEstateAndAccumulatedDepreciationCostsCapitalizedSubsequentToAcquisition contextRef="c_p1" unitRef="usd" decimals="-3">1000000</srt:RealEstateAndAccumulatedDepreciationCostsCapitalizedSubsequentToAcquisition>
+  <srt:RealEstateAndAccumulatedDepreciationCarryingAmountOfLand contextRef="c_p1" unitRef="usd" decimals="-3">5000000</srt:RealEstateAndAccumulatedDepreciationCarryingAmountOfLand>
+  <srt:RealEstateAndAccumulatedDepreciationCarryingAmountOfBuildingsAndImprovements contextRef="c_p1" unitRef="usd" decimals="-3">21000000</srt:RealEstateAndAccumulatedDepreciationCarryingAmountOfBuildingsAndImprovements>
+  <us-gaap:RealEstateGrossAtCarryingValue contextRef="c_p1" unitRef="usd" decimals="-3">26000000</us-gaap:RealEstateGrossAtCarryingValue>
+  <srt:RealEstateAndAccumulatedDepreciationAccumulatedDepreciation contextRef="c_p1" unitRef="usd" decimals="-3">4000000</srt:RealEstateAndAccumulatedDepreciationAccumulatedDepreciation>
+  <srt:RealEstateAndAccumulatedDepreciationDateOfConstruction contextRef="c_p1">1998/2015</srt:RealEstateAndAccumulatedDepreciationDateOfConstruction>
+  <srt:RealEstateAndAccumulatedDepreciationDateAcquired contextRef="c_p1">2016-03-15</srt:RealEstateAndAccumulatedDepreciationDateAcquired>
+  <us-gaap:RealEstateGrossAtCarryingValue contextRef="c_p1_only" unitRef="usd" decimals="-3">26000000</us-gaap:RealEstateGrossAtCarryingValue>
+
+  <srt:RealEstateAndAccumulatedDepreciationInitialCostOfLand contextRef="c_p2" unitRef="usd" decimals="-3">3000000</srt:RealEstateAndAccumulatedDepreciationInitialCostOfLand>
+  <us-gaap:RealEstateGrossAtCarryingValue contextRef="c_p2" unitRef="usd" decimals="-3">44000000</us-gaap:RealEstateGrossAtCarryingValue>
+  <srt:RealEstateAndAccumulatedDepreciationDateOfConstruction contextRef="c_p2">2005</srt:RealEstateAndAccumulatedDepreciationDateOfConstruction>
+  <srt:RealEstateAndAccumulatedDepreciationDateAcquired contextRef="c_p2">2019</srt:RealEstateAndAccumulatedDepreciationDateAcquired>
+
+  <us-gaap:RealEstateGrossAtCarryingValue contextRef="c_p3" unitRef="usd" decimals="-3">30000000</us-gaap:RealEstateGrossAtCarryingValue>
+  <us-gaap:RealEstateGrossAtCarryingValue contextRef="c_geo_tx" unitRef="usd" decimals="-3">26000000</us-gaap:RealEstateGrossAtCarryingValue>
+
+  <us-gaap:RealEstateGrossAtCarryingValue contextRef="c_end" unitRef="usd" decimals="-3">100000000</us-gaap:RealEstateGrossAtCarryingValue>
+  <us-gaap:RealEstateGrossAtCarryingValue contextRef="c_prev" unitRef="usd" decimals="-3">90000000</us-gaap:RealEstateGrossAtCarryingValue>
+  <srt:RealEstateAndAccumulatedDepreciationAmountOfEncumbrances contextRef="c_end" unitRef="usd" decimals="-3">12000000</srt:RealEstateAndAccumulatedDepreciationAmountOfEncumbrances>
+  <us-gaap:SECScheduleIIIRealEstateOtherAdditions contextRef="c_fy" unitRef="usd" decimals="-3">10000000</us-gaap:SECScheduleIIIRealEstateOtherAdditions>
+</xbrli:xbrl>
