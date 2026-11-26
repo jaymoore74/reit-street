@@ -1,0 +1,19 @@
+kind,orientation,title_regex,body_regex,weight,notes
+debt_maturity,records,debt maturit|maturity schedule|maturity ladder|scheduled (principal|debt)|principal (payments|amortization) and maturit|future (principal|debt) (payments|maturities)|debt (repayment|expiration) schedule,secured|unsecured|thereafter|line of credit|term loan|senior notes,1.0,Maturities by year; years as rows or as columns
+lease_expiration,records,lease expiration|expiring leases|lease maturit|lease roll|expiration schedule|lease expirations|rent roll|leases expiring,thereafter|month[- ]to[- ]month|vacant|expiring,1.0,Leases rolling by year
+tenant,records,top \d+ (tenants|customers|clients|operators|lessees)|largest (tenants|customers|clients|operators)|tenant concentration|major tenants|top tenants|top customers|top clients|tenant diversification|top \d+ tenants,,1.0,Tenant or operator concentration
+development,records,development (pipeline|projects|summary|portfolio|activity|starts|stabilizations|schedule)|under construction|redevelopment (pipeline|projects|summary)|construction in progress|active development|developments? (completed|placed in service),,0.9,Projects with cost and yield
+property,records,property (listing|list|detail|schedule|summary)|properties (listing|list|detail)|portfolio (detail|listing)|hotel portfolio|(hotel|community|communities|asset|building|campus|facility) (list|listing|detail|summary)|schedule of (real estate|properties)|in-service property|property table|portfolio overview by property|owned (hotels|properties|communities),,0.9,One row per property
+debt_detail,records,debt (summary|detail|schedule|outstanding|components|analysis|structure)|(summary|schedule) of (indebtedness|debt)|indebtedness|notes payable|fixed and variable rate debt|unsecured (notes|debt) (detail|summary),stated rate|coupon|effective rate|maturity date,0.8,One row per loan or note
+segment,segments,\bby (market|region|state|msa|geography|segment|property type|sector|metro)|top \d+ (markets|states|msas|metropolitan|lines of trade)|portfolio by|lines of trade|operating portfolio|geographic|market (summary|diversification)|concentration by,,0.6,Markets or segments as rows; metrics as columns
+guidance,series,guidance|outlook|earnings expectations|forecast,low|high|midpoint,0.8,Ranges for the year
+income_statement,series,statements? of (operations|income|earnings)|income statement|operating results,total revenues?|net income|depreciation,0.7,
+balance_sheet,series,balance sheets?|statements? of financial (position|condition),total assets|total liabilities,0.7,
+ffo,series,funds from operations|\bffo\b|\baffo\b|funds available for distribution|\bfad\b|reconciliation of net (income|earnings),funds from operations|\bffo\b,0.8,
+noi,series,net operating income|\bnoi\b,net operating income|\bnoi\b,0.6,
+same_store,series,same[- ](store|property|capital|center|community)|comparable (hotel|property|portfolio),same[- ](store|property),0.8,
+leasing,series,leasing (activity|statistics|summary|spreads|data)|rent (change|spreads?)|releasing|re-leasing,new leases|renewals?|spread,0.7,
+operating,series,operating (metrics|statistics|data|trends|highlights)|portfolio (statistics|highlights|summary|data)|key (metrics|statistics|quarterly)|financial (highlights|summary)|selected financial|results summary|financial ratios,occupancy|leased|revpar|adr,0.5,
+capex,series,capital expenditures|capex|recurring capital,tenant improvements|leasing commissions,0.6,
+investment,series,acquisitions|dispositions|investment (activity|summary)|transactions|capital (recycling|deployment),cap rate|yield|purchase price,0.5,
+ebitda,series,ebitda|leverage|credit metrics|coverage|covenants?,ebitda|coverage|net debt,0.5,

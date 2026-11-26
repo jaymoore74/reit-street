@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reitstreet"
-version = "0.3.0"
+version = "0.4.0"
 description = "REIT data platform: SEC EDGAR and supplemental ingestion, lineage-tracked MySQL warehouse, client delivery."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -17,6 +17,7 @@ dependencies = [
   "requests>=2.31,<3",
   "pypdf>=6.9,<8",           # first-page title and period of downloaded PDFs
   "openpyxl>=3.1,<4",        # NAV / AFFO model workbooks
+  "pdfplumber>=0.11.11,<0.12",  # positioned words for the supplemental table parser (MIT)
 ]
 
 [project.optional-dependencies]

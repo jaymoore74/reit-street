@@ -1,0 +1,37 @@
+sector_code,name,parent_code,sort_order,description
+all,All REITs,all,1,Group covering every company
+equity,Equity REITs,all,2,Group covering every property-owning sector
+mortgage,Mortgage REITs,all,3,Group covering every lending sector
+apartments,Apartments,equity,10,Multifamily rental communities
+single_family_rental,Single-family rental,equity,11,Detached homes for rent
+manufactured_housing,Manufactured housing and RV,equity,12,Manufactured home communities and RV resorts
+student_housing,Student housing,equity,13,Purpose-built student housing
+office,Office,equity,20,Office buildings
+life_science,Life science,equity,21,Lab and life science campuses
+government_office,Government office,equity,22,Office leased to government tenants
+industrial,Industrial,equity,30,Warehouses and logistics
+cold_storage,Cold storage,equity,31,Temperature-controlled warehouses
+shopping_center,Shopping centers,equity,40,Open-air and grocery-anchored centers
+mall,Malls,equity,41,Enclosed regional malls
+outlet,Outlets,equity,42,Outlet centers
+net_lease,Net lease,equity,50,Single-tenant properties on long net leases
+lodging,Lodging,equity,60,Hotels and resorts
+healthcare,Healthcare,equity,70,Diversified healthcare real estate
+senior_housing,Senior housing,equity,71,Senior housing (triple-net and operating)
+medical_office,Medical office,equity,72,Medical office buildings
+hospital,Hospitals,equity,73,Acute care and specialty hospitals
+self_storage,Self storage,equity,80,Self storage facilities
+data_center,Data centers,equity,90,Data centers
+tower,Towers,equity,91,Wireless towers
+fiber,Fiber and communications,equity,92,Fiber and communications infrastructure
+gaming,Gaming,equity,100,Casinos on net leases
+experiential,Experiential,equity,101,Entertainment and experiential properties
+billboard,Billboards,equity,102,Outdoor advertising structures
+timber,Timberland,equity,110,Timberlands
+farmland,Farmland,equity,111,Farmland
+land,Land,equity,112,Land banking and ground leases
+cannabis,Cannabis industrial,equity,113,Industrial leased to cannabis operators
+energy,Energy and infrastructure,equity,114,Energy and infrastructure assets
+diversified,Diversified,equity,120,Several property types
+mortgage_commercial,Commercial mortgage,mortgage,200,Commercial real estate loans
+mortgage_residential,Residential mortgage,mortgage,201,Residential mortgage loans and securities

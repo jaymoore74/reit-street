@@ -15,8 +15,8 @@ document at that parse. Failures go to the dead-letter queue; a parse with no va
 puts the document in needs_review. Old parses are kept, so a new parser version can be
 compared against the previous one before it is trusted.
 
-The real PDF parser is a separate piece of work (see docs/adr/0006); `manual_csv`
-below lets an analyst key in values from any document today, and is the template.
+Parsers: `supplemental_pdf` (parsers/pdf, see docs/adr/0011) for PDFs, and
+`manual_csv` below for values an analyst keys in from any document.
 """
 
 from __future__ import annotations
@@ -27,9 +27,28 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from typing import Protocol
+from typing import Any, Protocol
 
 from ..core.errors import ParseError
+
+
+@dataclass(frozen=True)
+class Override:
+    """A per-company parsing rule from ref_parse_override (see parsers/pdf/parser.py)."""
+
+    override_id: int
+    action: str  # skip | force_kind | scale | min_confidence
+    title_regex: str | None = None
+    page_from: int | None = None
+    page_to: int | None = None
+    params: dict[str, Any] = field(default_factory=dict)
+
+    def applies(self, page_no: int, title: str) -> bool:
+        if self.page_from is not None and page_no < self.page_from:
+            return False
+        if self.page_to is not None and page_no > self.page_to:
+            return False
+        return not self.title_regex or bool(re.search(self.title_regex, title or "", re.I))
 
 
 @dataclass(frozen=True)
@@ -41,6 +60,8 @@ class DocMeta:
     mime_type: str | None
     original_filename: str | None
     period_end_date: date | None
+    fiscal_year_end_month: int = 12
+    overrides: tuple[Override, ...] = ()
 
 
 @dataclass
@@ -50,6 +71,17 @@ class ParsedTable:
     title: str | None = None
     section: str | None = None
     bbox: list[float] | None = None
+    table_kind: str | None = None  # see reference/data/table_kinds.csv
+    orientation: str | None = None  # series | segments | records
+    kind_score: Decimal | None = None
+    scale_text: str | None = None
+    scale_factor: Decimal | None = None  # applied to money values
+    scale_source: str | None = None  # table | page | override | none
+    headers: list[str] | None = None  # column headers as read
+    n_rows: int | None = None
+    n_cols: int | None = None
+    total_check: str | None = None  # pass | fail | mixed | NULL when the table has no totals
+    as_of: date | None = None  # date the table describes when its columns are not periods
 
 
 @dataclass
@@ -68,12 +100,38 @@ class ParsedItem:
     period_end: date | None = None
     segment_label: str | None = None
     confidence: Decimal | None = None
+    metric_label: str | None = None  # label naming the metric: row label (series) or column header (segments)
+    group_label: str | None = None  # sub-heading the row sits under
+    col_role: str = "value"  # value | change | share
+    period_type: str | None = None  # Q | YTD | FY | TTM | INSTANT as read from the header
+    bbox: list[float] | None = None
+    quarantined: bool = False
+    quarantine_reason: str | None = None
+
+
+@dataclass
+class ParsedRecord:
+    """One row of a property, tenant, development, debt or lease-expiration table."""
+
+    page_no: int
+    table_index: int
+    row_index: int
+    record_kind: str
+    label: str
+    fields: dict[str, Any]
+    as_of: date | None = None
+    bbox: list[float] | None = None
+    confidence: Decimal | None = None
+    quarantined: bool = False
+    quarantine_reason: str | None = None
 
 
 @dataclass
 class ParseResult:
     tables: list[ParsedTable] = field(default_factory=list)
     items: list[ParsedItem] = field(default_factory=list)
+    records: list[ParsedRecord] = field(default_factory=list)
+    config_hash: str | None = None  # hash of overrides and settings the parse ran with
 
 
 class DocumentParser(Protocol):

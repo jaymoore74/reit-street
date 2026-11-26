@@ -161,6 +161,12 @@ def import_universe(
     if prune and seen:
         clause, params = in_clause("k", seen)
         pruned = db.execute(f"UPDATE ref_company SET in_universe=0 WHERE in_universe=1 AND cik NOT IN {clause}", params)
+    # sector catalog and per-company parse rules follow the universe (both need ref_company rows)
+    from .seed import seed_company_sectors, seed_parse_overrides
+
+    if db.scalar("SELECT COUNT(*) FROM ref_sector"):
+        seed_company_sectors(db)
+        seed_parse_overrides(db)
     db.commit()
     if unresolved:
         log.warning("tickers without CIK", extra={"tickers": ",".join(unresolved)})

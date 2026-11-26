@@ -5,6 +5,8 @@ format are the public interface.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-26
+
 ### Added
 - Property master (ADR 0010): one stable id per real property across REITs and years.
   `stg_property_record` keeps every row each source gives, with lineage;
@@ -21,9 +23,39 @@ format are the public interface.
 - Commands `load-properties`, `import-properties`, `build-properties`,
   `geocode-properties`, `property-coverage`, `property-review`; seven data quality checks.
 - `docs/property-coverage.md`, runbook `docs/runbooks/properties.md`.
+- Supplemental PDF parser (`parsers/pdf/`, ADR 0011): tables rebuilt from positioned words,
+  stacked period headers, scale from the table, page or a document-wide statement,
+  per-share and percentage units, change and share columns, parentheses as negatives.
+- Table kinds and record fields as data (`table_kinds.csv`, `record_fields.csv`):
+  FFO, NOI, same-store, leasing, operating, segment, debt maturity, debt detail, lease
+  expiration, top tenants, development and property tables.
+- Lineage on every parsed value: file hash, page, table, row, column, bounding box, raw text.
+  Confidence scores; anything under 0.80 or with a hard problem is quarantined, never loaded,
+  and listed in `ops_parse_quarantine`.
+- Per-company parse overrides (`parse_overrides.csv`, `ref_parse_override`): skip, force kind,
+  scale, confidence bar, by title pattern, page range and validity dates.
+- Record tables, bitemporal with full lineage: `wh_property_metric` (keyed to the property
+  master's staged records, property id through `wh_property_xref`), `wh_debt_instrument`,
+  `wh_lease_expiration`, `wh_tenant_exposure`, `wh_development_project`; `wh_debt_maturity`
+  extended (Thereafter and Total buckets, debt type, share of total).
+- Sector metric catalog: `ref_sector` (37 sectors), `ref_company_sector`, `ref_metric_sector`;
+  55 new supplemental metrics (110 in total) with a grain of company, segment or property.
+- Delivery views `dl_metric_catalog`, `dl_company_profile`, `dl_property_metrics`,
+  `dl_debt_maturities`, `dl_debt_instruments`, `dl_lease_expirations`, `dl_top_tenants`,
+  `dl_development_pipeline`, all exportable.
+- Commands `company-profile --ticker X [--json]`, `parse-coverage`, and `parse-eval FOLDER`
+  (parser quality on a folder of PDFs, no database needed).
+- DQ checks: `contract.record_lineage`, `contract.record_single_current`,
+  `contract.company_sectors`, `anomaly.record_pct_range`, `anomaly.schedule_shares`,
+  `anomaly.property_count_swing`, `recon.debt_ladder_vs_total_debt`, `ops.parse_quarantine_rate`.
 
 ### Changed
 - XML from outside sources is parsed through `core/xmlsafe.py`, which refuses DTDs.
+- Mapping rules gained `col_role` (value, change, share) and `table_kind_regex`;
+  quarantined items are excluded from the metric build.
+- New dependency: pdfplumber 0.11.11 (MIT) with pdfminer.six, pypdfium2, Pillow pinned in
+  `constraints.txt`.
+- Migration 0005 (after 0004). Supplemental property rows are staged in `stg_property_record`.
 
 ## [0.3.0] - 2026-11-26
 

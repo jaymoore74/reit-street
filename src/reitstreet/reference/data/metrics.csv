@@ -1,54 +1,111 @@
-metric_code,name,category,unit_type,period_nature,is_non_gaap,is_nareit_defined,definition
-TOTAL_REVENUE,Total revenues,Income Statement,USD,duration,0,0,Total revenues as reported.
-RENTAL_REVENUE,Rental / lease revenue,Income Statement,USD,duration,0,0,Operating lease income.
-NET_INCOME,Net income attributable to the company,Income Statement,USD,duration,0,0,
-NET_INCOME_COMMON,Net income to common shareholders,Income Statement,USD,duration,0,0,
-RE_DEPRECIATION,Depreciation and amortization,Income Statement,USD,duration,0,0,
-INTEREST_EXPENSE,Interest expense,Income Statement,USD,duration,0,0,
-GAIN_ON_SALE_RE,Gains on sales of real estate,Income Statement,USD,duration,0,0,
-IMPAIRMENT_RE,Real estate impairments,Income Statement,USD,duration,0,0,
-DILUTED_SHARES_WAVG,Weighted avg diluted shares,Per Share,SHARES,duration,0,0,
-DIVIDENDS_PER_SHARE,Dividends declared per common share,Per Share,USD_PER_SHARE,duration,0,0,
-EPS_DILUTED,Diluted EPS,Per Share,USD_PER_SHARE,duration,0,0,
-TOTAL_ASSETS,Total assets,Balance Sheet,USD,instant,0,0,
-TOTAL_LIABILITIES,Total liabilities,Balance Sheet,USD,instant,0,0,
-TOTAL_EQUITY,Total equity incl. noncontrolling,Balance Sheet,USD,instant,0,0,
-REAL_ESTATE_GROSS,Real estate at cost,Balance Sheet,USD,instant,0,0,
-ACCUM_DEPRECIATION,Accumulated depreciation,Balance Sheet,USD,instant,0,0,
-REAL_ESTATE_NET,"Real estate, net",Balance Sheet,USD,instant,0,0,
-CASH,Cash and equivalents,Balance Sheet,USD,instant,0,0,
-TOTAL_DEBT,Total debt (carrying),Balance Sheet,USD,instant,0,0,
-SECURED_DEBT,Secured debt,Balance Sheet,USD,instant,0,0,
-UNSECURED_DEBT,Unsecured debt,Balance Sheet,USD,instant,0,0,
-SHARES_OUTSTANDING,Common shares outstanding,Per Share,SHARES,instant,0,0,
-NOI,Net operating income,Operations,USD,duration,1,0,
-CASH_NOI,Cash NOI,Operations,USD,duration,1,0,
-SS_NOI,Same-store NOI,Operations,USD,duration,1,0,
-SS_NOI_GROWTH,Same-store NOI growth y/y,Operations,PCT,duration,1,0,
-SS_CASH_NOI_GROWTH,Same-store cash NOI growth y/y,Operations,PCT,duration,1,0,
-FFO_NAREIT,FFO (Nareit defined),Earnings,USD,duration,1,1,"Net income excl. RE depreciation, gains/losses on sale and impairments of depreciable RE."
-FFO_PER_SHARE,FFO per diluted share,Earnings,USD_PER_SHARE,duration,1,1,
-CORE_FFO,Core / normalized FFO,Earnings,USD,duration,1,0,Company-defined; definitions differ by REIT.
-CORE_FFO_PER_SHARE,Core FFO per diluted share,Earnings,USD_PER_SHARE,duration,1,0,
-AFFO,AFFO,Earnings,USD,duration,1,0,Company-defined; definitions differ by REIT.
-AFFO_PER_SHARE,AFFO per diluted share,Earnings,USD_PER_SHARE,duration,1,0,
-ADJ_EBITDARE,Adjusted EBITDAre,Earnings,USD,duration,1,1,
-RECURRING_CAPEX,Recurring capex,Operations,USD,duration,1,0,
-OCCUPANCY,Occupancy,Operations,PCT,instant,1,0,
-LEASED_PCT,Percent leased,Operations,PCT,instant,1,0,
-LEASING_SPREAD_CASH,Cash leasing spread,Operations,PCT,duration,1,0,
-LEASING_SPREAD_GAAP,GAAP (straight-line) leasing spread,Operations,PCT,duration,1,0,
-RETENTION,Tenant retention,Operations,PCT,duration,1,0,
-WALT,Weighted average lease term,Operations,YEARS,instant,1,0,
-ANNUALIZED_BASE_RENT,Annualized base rent,Operations,USD,instant,1,0,
-NET_DEBT_TO_EBITDA,Net debt / EBITDA,Leverage,RATIO,instant,1,0,
-DEBT_TO_GROSS_ASSETS,Debt / gross assets,Leverage,PCT,instant,1,0,
-FIXED_CHARGE_COVER,Fixed charge coverage,Leverage,RATIO,duration,1,0,
-WTD_AVG_RATE,Weighted avg interest rate,Leverage,PCT,instant,1,0,
-WTD_AVG_MATURITY,Weighted avg debt maturity,Leverage,YEARS,instant,1,0,
-ACQUISITIONS,Acquisition volume,Investments,USD,duration,1,0,
-DISPOSITIONS,Disposition volume,Investments,USD,duration,1,0,
-DEV_PIPELINE_COST,Development pipeline total cost,Investments,USD,instant,1,0,
-DEV_STABILIZED_YIELD,Development expected stabilized yield,Investments,PCT,instant,1,0,
-GUIDANCE_FFO_PS_LOW,"FFO/share guidance, low",Guidance,USD_PER_SHARE,duration,1,0,
-GUIDANCE_FFO_PS_HIGH,"FFO/share guidance, high",Guidance,USD_PER_SHARE,duration,1,0,
+metric_code,name,category,unit_type,period_nature,is_non_gaap,is_nareit_defined,grain,definition
+TOTAL_REVENUE,Total revenues,Income Statement,USD,duration,0,0,company,Total revenues as reported.
+RENTAL_REVENUE,Rental / lease revenue,Income Statement,USD,duration,0,0,company,Operating lease income.
+NET_INCOME,Net income attributable to the company,Income Statement,USD,duration,0,0,company,
+NET_INCOME_COMMON,Net income to common shareholders,Income Statement,USD,duration,0,0,company,
+RE_DEPRECIATION,Depreciation and amortization,Income Statement,USD,duration,0,0,company,
+INTEREST_EXPENSE,Interest expense,Income Statement,USD,duration,0,0,company,
+GAIN_ON_SALE_RE,Gains on sales of real estate,Income Statement,USD,duration,0,0,company,
+IMPAIRMENT_RE,Real estate impairments,Income Statement,USD,duration,0,0,company,
+DILUTED_SHARES_WAVG,Weighted avg diluted shares,Per Share,SHARES,duration,0,0,company,
+DIVIDENDS_PER_SHARE,Dividends declared per common share,Per Share,USD_PER_SHARE,duration,0,0,company,
+EPS_DILUTED,Diluted EPS,Per Share,USD_PER_SHARE,duration,0,0,company,
+TOTAL_ASSETS,Total assets,Balance Sheet,USD,instant,0,0,company,
+TOTAL_LIABILITIES,Total liabilities,Balance Sheet,USD,instant,0,0,company,
+TOTAL_EQUITY,Total equity incl. noncontrolling,Balance Sheet,USD,instant,0,0,company,
+REAL_ESTATE_GROSS,Real estate at cost,Balance Sheet,USD,instant,0,0,company,
+ACCUM_DEPRECIATION,Accumulated depreciation,Balance Sheet,USD,instant,0,0,company,
+REAL_ESTATE_NET,"Real estate, net",Balance Sheet,USD,instant,0,0,company,
+CASH,Cash and equivalents,Balance Sheet,USD,instant,0,0,company,
+TOTAL_DEBT,Total debt (carrying),Balance Sheet,USD,instant,0,0,company,
+SECURED_DEBT,Secured debt,Balance Sheet,USD,instant,0,0,company,
+UNSECURED_DEBT,Unsecured debt,Balance Sheet,USD,instant,0,0,company,
+SHARES_OUTSTANDING,Common shares outstanding,Per Share,SHARES,instant,0,0,company,
+NOI,Net operating income,Operations,USD,duration,1,0,company,
+CASH_NOI,Cash NOI,Operations,USD,duration,1,0,company,
+SS_NOI,Same-store NOI,Operations,USD,duration,1,0,company,
+SS_NOI_GROWTH,Same-store NOI growth y/y,Operations,PCT,duration,1,0,company,
+SS_CASH_NOI_GROWTH,Same-store cash NOI growth y/y,Operations,PCT,duration,1,0,company,
+FFO_NAREIT,FFO (Nareit defined),Earnings,USD,duration,1,1,company,"Net income excl. RE depreciation, gains/losses on sale and impairments of depreciable RE."
+FFO_PER_SHARE,FFO per diluted share,Earnings,USD_PER_SHARE,duration,1,1,company,
+CORE_FFO,Core / normalized FFO,Earnings,USD,duration,1,0,company,Company-defined; definitions differ by REIT.
+CORE_FFO_PER_SHARE,Core FFO per diluted share,Earnings,USD_PER_SHARE,duration,1,0,company,
+AFFO,AFFO,Earnings,USD,duration,1,0,company,Company-defined; definitions differ by REIT.
+AFFO_PER_SHARE,AFFO per diluted share,Earnings,USD_PER_SHARE,duration,1,0,company,
+ADJ_EBITDARE,Adjusted EBITDAre,Earnings,USD,duration,1,1,company,
+RECURRING_CAPEX,Recurring capex,Operations,USD,duration,1,0,company,
+OCCUPANCY,Occupancy,Operations,PCT,instant,1,0,company,
+LEASED_PCT,Percent leased,Operations,PCT,instant,1,0,company,
+LEASING_SPREAD_CASH,Cash leasing spread,Operations,PCT,duration,1,0,company,
+LEASING_SPREAD_GAAP,GAAP (straight-line) leasing spread,Operations,PCT,duration,1,0,company,
+RETENTION,Tenant retention,Operations,PCT,duration,1,0,company,
+WALT,Weighted average lease term,Operations,YEARS,instant,1,0,company,
+ANNUALIZED_BASE_RENT,Annualized base rent,Operations,USD,instant,1,0,company,
+NET_DEBT_TO_EBITDA,Net debt / EBITDA,Leverage,RATIO,instant,1,0,company,
+DEBT_TO_GROSS_ASSETS,Debt / gross assets,Leverage,PCT,instant,1,0,company,
+FIXED_CHARGE_COVER,Fixed charge coverage,Leverage,RATIO,duration,1,0,company,
+WTD_AVG_RATE,Weighted avg interest rate,Leverage,PCT,instant,1,0,company,
+WTD_AVG_MATURITY,Weighted avg debt maturity,Leverage,YEARS,instant,1,0,company,
+ACQUISITIONS,Acquisition volume,Investments,USD,duration,1,0,company,
+DISPOSITIONS,Disposition volume,Investments,USD,duration,1,0,company,
+DEV_PIPELINE_COST,Development pipeline total cost,Investments,USD,instant,1,0,company,
+DEV_STABILIZED_YIELD,Development expected stabilized yield,Investments,PCT,instant,1,0,company,
+GUIDANCE_FFO_PS_LOW,"FFO/share guidance, low",Guidance,USD_PER_SHARE,duration,1,0,company,
+GUIDANCE_FFO_PS_HIGH,"FFO/share guidance, high",Guidance,USD_PER_SHARE,duration,1,0,company,
+PROPERTY_COUNT,Number of properties,Portfolio,COUNT,instant,0,0,company,"Properties owned (consolidated plus share of unconsolidated, as reported)."
+TOTAL_SF,Total rentable square feet,Portfolio,SF,instant,0,0,company,Rentable or gross leasable square feet of the portfolio.
+UNITS_OWNED,"Units, homes or sites",Portfolio,COUNT,instant,0,0,company,"Apartment units, homes, sites, beds or keys owned, as the sector counts them."
+ABR_PSF,Annualized base rent per square foot,Operations,USD_PER_SF,instant,0,0,company,Annualized base rent divided by leased square feet.
+SS_REVENUE_GROWTH,Same-store revenue growth,Operations,PCT,duration,1,0,company,Change in same-store revenue versus the prior-year period.
+SS_EXPENSE_GROWTH,Same-store expense growth,Operations,PCT,duration,1,0,company,Change in same-store operating expenses versus the prior-year period.
+AVG_OCCUPANCY,Average occupancy,Operations,PCT,duration,0,0,company,Average physical or economic occupancy over the period.
+SF_LEASED,Square feet leased in the period,Leasing,SF,duration,0,0,company,"New and renewal leases signed during the period, square feet."
+TI_LC_PSF,Tenant improvements and leasing commissions per square foot,Leasing,USD_PER_SF,duration,0,0,company,Leasing capital committed per square foot of leases signed.
+AVG_MONTHLY_RENT,Average monthly rent per unit,Residential,USD_PER_UNIT,duration,0,0,company,Average effective monthly rent per occupied unit or home.
+BLENDED_LEASE_GROWTH,Blended lease rate growth,Residential,PCT,duration,0,0,company,Change in rent on new and renewal leases combined.
+NEW_LEASE_GROWTH,New lease rate growth,Residential,PCT,duration,0,0,company,Change in rent on new leases versus the prior lease on the unit.
+RENEWAL_LEASE_GROWTH,Renewal lease rate growth,Residential,PCT,duration,0,0,company,Change in rent on renewals.
+TURNOVER,Resident turnover,Residential,PCT,duration,0,0,company,Annualized share of units turning over.
+REVPAR,RevPAR,Lodging,USD_PER_UNIT,duration,0,0,company,Room revenue per available room night.
+ADR,Average daily rate,Lodging,USD_PER_UNIT,duration,0,0,company,Room revenue per occupied room night.
+HOTEL_EBITDA_MARGIN,Hotel EBITDA margin,Lodging,PCT,duration,1,0,company,Hotel-level EBITDA divided by total hotel revenue.
+TOTAL_REVPAR,Total RevPAR,Lodging,USD_PER_UNIT,duration,0,0,company,Total hotel revenue per available room night.
+REVPOR,Revenue per occupied room or unit,Healthcare,USD_PER_UNIT,duration,0,0,company,Senior housing revenue per occupied unit per month.
+SHOP_NOI_MARGIN,Operating portfolio NOI margin,Healthcare,PCT,duration,1,0,company,NOI margin of operated (SHOP / RIDEA) senior housing.
+RENT_COVERAGE,Rent coverage,Credit,RATIO,duration,0,0,company,Tenant or operator EBITDAR divided by rent (EBITDARM where stated).
+INVESTMENT_GRADE_PCT,Investment-grade rent share,Credit,PCT,instant,0,0,company,Share of annualized rent from investment-grade tenants.
+TOP10_TENANT_PCT,Top 10 tenant rent share,Credit,PCT,instant,0,0,company,Share of annualized rent from the ten largest tenants.
+CASH_CAP_RATE,Cash cap rate on investments,Investments,PCT,duration,0,0,company,Initial cash yield on acquisitions in the period.
+TENANT_SALES_PSF,Tenant sales per square foot,Retail,USD_PER_SF,duration,0,0,company,Trailing twelve-month sales of reporting tenants per square foot.
+OCCUPANCY_COST,Occupancy cost ratio,Retail,PCT,duration,0,0,company,Tenant occupancy cost as a share of tenant sales.
+REV_PER_OCC_SF,Realized rent per occupied square foot,Self Storage,USD_PER_SF,duration,0,0,company,Annualized rental revenue per occupied square foot.
+MOVE_IN_RATE,Move-in rent per square foot,Self Storage,USD_PER_SF,duration,0,0,company,Rent achieved on new move-ins per square foot.
+BOOKINGS_ANNUALIZED_RENT,"Leases signed, annualized rent",Data Center,USD,duration,0,0,company,Annualized rent of leases signed in the period.
+CAPACITY_MW,Critical IT capacity,Data Center,MW,instant,0,0,company,"Critical IT load in operation, megawatts."
+SITE_LEASING_REVENUE,Site leasing revenue,Towers,USD,duration,0,0,company,Revenue from leasing tower and site space.
+ORGANIC_BILLINGS_GROWTH,Organic tenant billings growth,Towers,PCT,duration,0,0,company,Growth in tenant billings excluding acquisitions and straight-line.
+TENANCY_RATIO,Tenants per tower,Towers,RATIO,instant,0,0,company,Average tenants per site.
+ACRES_OWNED,Acres owned,Land,COUNT,instant,0,0,company,Acres of timberland or farmland owned.
+HARVEST_VOLUME,Harvest volume,Land,COUNT,duration,0,0,company,Timber harvested (tons) in the period.
+BOOK_VALUE_PER_SHARE,Book value per share,Per Share,USD_PER_SHARE,instant,0,0,company,Common equity divided by common shares outstanding.
+DISTRIBUTABLE_EARNINGS,Distributable earnings,Earnings,USD,duration,1,0,company,Mortgage REIT non-GAAP earnings measure as defined by the company.
+DISTRIBUTABLE_EPS,Distributable earnings per share,Earnings,USD_PER_SHARE,duration,1,0,company,Distributable earnings per diluted share.
+LOAN_PORTFOLIO,Loan portfolio,Credit,USD,instant,0,0,company,Carrying value or principal of loans held for investment.
+CECL_RESERVE,Credit loss reserve,Credit,USD,instant,0,0,company,Allowance for credit losses.
+WTD_AVG_RISK_RATING,Weighted average risk rating,Credit,RATIO,instant,0,0,company,Portfolio risk rating as defined by the lender.
+NET_INTEREST_MARGIN,Net interest margin,Credit,PCT,duration,0,0,company,Interest income yield less cost of funds.
+DEBT_TO_EQUITY,Debt to equity,Leverage,RATIO,instant,0,0,company,"Recourse or total debt divided by equity, as the company reports."
+NAV_PER_SHARE_COMPANY,Company-reported NAV per share,Per Share,USD_PER_SHARE,instant,1,0,company,Net asset value per share where the company publishes one.
+PROP_SF,Property square feet,Property,SF,instant,0,0,property,Rentable square feet of one property.
+PROP_UNITS,Property units,Property,COUNT,instant,0,0,property,"Units, homes, sites or beds at one property."
+PROP_ROOMS,Property rooms,Property,COUNT,instant,0,0,property,Hotel rooms (keys) at one property.
+PROP_OCCUPANCY,Property occupancy,Property,PCT,instant,0,0,property,Occupancy of one property.
+PROP_LEASED_PCT,Property percent leased,Property,PCT,instant,0,0,property,Percent leased of one property.
+PROP_ABR,Property annualized base rent,Property,USD,instant,0,0,property,Annualized base rent of one property.
+PROP_ABR_PSF,Property rent per square foot,Property,USD_PER_SF,instant,0,0,property,Annualized base rent per leased square foot of one property.
+PROP_NOI,Property NOI,Property,USD,duration,1,0,property,NOI of one property for the period the table states.
+PROP_EBITDA,Property EBITDA,Property,USD,duration,1,0,property,Hotel or property EBITDA for the period the table states.
+PROP_ADR,Property average daily rate,Property,USD_PER_UNIT,duration,0,0,property,Average daily rate at one hotel.
+PROP_REVPAR,Property RevPAR,Property,USD_PER_UNIT,duration,0,0,property,RevPAR at one hotel.
+PROP_OWNERSHIP_PCT,Property ownership share,Property,PCT,instant,0,0,property,Company share of one property.
+PROP_DEBT,Property debt,Property,USD,instant,0,0,property,Debt secured by one property.
