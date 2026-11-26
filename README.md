@@ -21,6 +21,9 @@ with lineage from every number back to the page it came from.
   supplementals against XBRL) and a monitor that alerts by email or webhook.
 - Exports client CSVs with a manifest, as current, as known on a date, or as recorded
   at a time.
+- Builds NAV and AFFO models as Excel workbooks with live formulas from a cited inputs
+  file per company and quarter (Essex 3Q26 first). See
+  [docs/adr/0012-nav-affo-models.md](docs/adr/0012-nav-affo-models.md).
 
 Next: the supplemental PDF table parser, the IR email inbox and a client API. See
 [docs/architecture.md](docs/architecture.md).
@@ -70,6 +73,7 @@ until `[sec] user_agent` in `config.ini` is set.
 | `status` | row counts and recent runs |
 | `dead-letter` | list, show, resolve or ignore failed items |
 | `db-docs` | regenerate the data dictionary |
+| `model` | `check` or `build` a NAV and AFFO workbook from an inputs file, no database |
 
 `reitstreet <command> --help` for options. Exit codes: 0 ok, 1 failed or partial,
 2 configuration error, 3 already running, 4 source blocked us.
