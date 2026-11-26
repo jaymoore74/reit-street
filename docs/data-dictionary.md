@@ -1,6 +1,6 @@
 # Data dictionary
 
-Generated from the database schema at Alembic revision `0005` by `reitstreet db-docs`. Do not edit by hand: change the COMMENT in a migration and regenerate.
+Generated from the database schema at Alembic revision `0006` by `reitstreet db-docs`. Do not edit by hand: change the COMMENT in a migration and regenerate.
 
 ## ops_* Operations: runs, checkpoints, dead letters, data quality, alerts
 
@@ -1271,6 +1271,7 @@ Table. Top tenant, customer and operator concentration from supplementals.
 - [`dl_filings`](#dl_filings) (view): VIEW
 - [`dl_lease_expirations`](#dl_lease_expirations) (view): VIEW
 - [`dl_metric_catalog`](#dl_metric_catalog) (view): VIEW
+- [`dl_metric_definitions`](#dl_metric_definitions) (view): VIEW
 - [`dl_metrics`](#dl_metrics) (view): VIEW
 - [`dl_metrics_history`](#dl_metrics_history) (view): VIEW
 - [`dl_properties`](#dl_properties) (view): VIEW
@@ -1459,6 +1460,21 @@ View.
 | `is_nareit_defined` | tinyint(1) | NO |  | 1 if Nareit publishes the definition |
 | `relevance` | enum('core','common','optional') | NO |  | core: every company in the sector reports it; common: most do; optional: some do |
 | `defined_for` | varchar(32) | NO |  | Sector, or a group (equity, mortgage, all) covering its children |
+| `definition` | text | YES |  | Definition shown to clients |
+
+### dl_metric_definitions
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `metric_code` | varchar(48) | NO |  | Stable public code used in client files, e.g. FFO_PER_SHARE |
+| `metric_name` | varchar(128) | NO |  | Display name |
+| `category` | varchar(48) | NO |  | Grouping, e.g. Earnings, Balance Sheet |
+| `unit_type` | enum('USD','USD_PER_SHARE','PCT','SF','COUNT','SHARES','RATIO','YEARS','USD_PER_SF','USD_PER_UNIT','MW') | NO |  | Unit family (USD_PER_UNIT: per room, unit, bed or occupied room per night or month) |
+| `period_nature` | enum('duration','instant') | NO |  | Flow over a period or balance at a date |
+| `is_non_gaap` | tinyint(1) | NO |  | 1 for non-GAAP measures |
+| `is_nareit_defined` | tinyint(1) | NO |  | 1 if Nareit publishes the definition |
 | `definition` | text | YES |  | Definition shown to clients |
 
 ### dl_metrics

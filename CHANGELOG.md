@@ -5,6 +5,38 @@ format are the public interface.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-26
+
+### Added
+- Client website in `apps/web` (Next.js 16, TypeScript), ADR 0013. Not deployed.
+  - Sign-in for client firms: invitation and reset links from staff, scrypt passwords,
+    database sessions, lockout and per-IP limits, sign out other sessions.
+  - Entitlements as dated rows on plans and firms: datasets, formats, coverage (all,
+    sector, ticker), research codes, history years, row caps. Enforced in SQL on every
+    page and file; companies outside coverage return 404.
+  - Pages: dashboard, research notes (Markdown, versioned), company pages with metric
+    charts and a table view, filings, data downloads, account.
+  - Downloads in CSV, Excel and Parquet from `companies`, `metrics`, `metrics_history` and
+    `filings`, with filters and an as-of date. Every attempt is logged with rows, bytes and
+    SHA-256; Excel and Parquet files carry the download id.
+  - Newsletter lists and subscriptions (public sign-up stays pending until confirmed).
+  - Content-Security-Policy with a per-request nonce, security headers, Origin checks.
+  - Dockerfile (standalone server, non-root), unit tests, 30-check end-to-end run.
+- Website schema `reitstreet_app` with its own Alembic history (`migrations_app`,
+  revision `a0001`), `[db] app_name` setting, `migrate --target warehouse|app|all`,
+  `db-docs --target app`, generated `docs/data-dictionary-app.md`.
+- `reitstreet web` admin commands: plan-create, grant, revoke, org-create, org-set,
+  user-invite, user-reset, user-disable, user-enable, article, list. Runbook
+  `docs/runbooks/web-admin.md`.
+- View `dl_metric_definitions` (revision `0006`, after 0005).
+- `scripts/dev/seed_web.py`: development databases from the synthetic fixtures.
+- CI: website lint, types, tests, build, end-to-end run against MySQL, image build.
+
+### Changed
+- `deploy/aws/bootstrap_db.py` and ops-bootstrap-db create the second schema and a fourth
+  login, `rs_web`; `rs_loader` can write the website schema; `rs_reader` cannot see it.
+- ops-migrate takes a `target` input (default `all`); ops-first-load migrates both schemas.
+
 ## [0.4.0] - 2026-11-26
 
 ### Added
@@ -56,7 +88,6 @@ format are the public interface.
 - New dependency: pdfplumber 0.11.11 (MIT) with pdfminer.six, pypdfium2, Pillow pinned in
   `constraints.txt`.
 - Migration 0005 (after 0004). Supplemental property rows are staged in `stg_property_record`.
-
 ## [0.3.0] - 2026-11-26
 
 ### Added

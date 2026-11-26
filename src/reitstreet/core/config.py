@@ -38,6 +38,8 @@ class Settings:
     db_user: str = "reit"
     db_password: str = ""
     db_name: str = "reitstreet"
+    # schema of the client web application (accounts, sessions, audit), ADR 0013
+    db_app_name: str = "reitstreet_app"
     # CA bundle for TLS to the server (e.g. AWS RDS global-bundle.pem). When set, the
     # connection is encrypted and the server certificate and host name are verified.
     db_ssl_ca: Path | None = None
@@ -88,6 +90,12 @@ class Settings:
         if self.db_ssl_ca:
             url += f"&ssl_ca={quote_plus(str(self.db_ssl_ca))}&ssl_check_hostname=true"
         return url
+
+    def app_sqlalchemy_url(self) -> str:
+        """Same server and login as the warehouse, database `db_app_name`."""
+        from sqlalchemy.engine import make_url
+
+        return make_url(self.sqlalchemy_url()).set(database=self.db_app_name).render_as_string(hide_password=False)
 
     def require_sec_user_agent(self) -> str:
         ua = (self.sec_user_agent or "").strip()

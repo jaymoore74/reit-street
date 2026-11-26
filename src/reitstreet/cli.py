@@ -38,6 +38,7 @@ class App:
         self.s = settings
         self.a = args
         self._db: Db | None = None
+        self._app_db: Db | None = None
         self._store: RawStore | None = None
 
     @property
@@ -45,6 +46,13 @@ class App:
         if self._db is None:
             self._db = Db.from_url(self.s.sqlalchemy_url())
         return self._db
+
+    @property
+    def app_db(self) -> Db:
+        """Client web application schema (ADR 0013)."""
+        if self._app_db is None:
+            self._app_db = Db.from_url(self.s.app_sqlalchemy_url())
+        return self._app_db
 
     @property
     def store(self) -> RawStore:
@@ -100,6 +108,8 @@ class App:
     def close(self) -> None:
         if self._db is not None:
             self._db.close()
+        if self._app_db is not None:
+            self._app_db.close()
 
 
 def _list(s: str | None) -> list[str] | None:
@@ -162,6 +172,16 @@ def cmd_config(app: App) -> int:
 
 
 def cmd_migrate(app: App) -> int:
+    target = app.a.target
+    if target == "all":
+        if app.a.downgrade:
+            raise ConfigError("--downgrade needs --target warehouse or --target app")
+        app.a.target = "warehouse"
+        rc = cmd_migrate(app)
+        app.a.target = "app"
+        return rc or cmd_migrate(app)
+    if target == "app":
+        return _migrate_app(app)
     url = app.s.sqlalchemy_url()
     before = migrate.current_revision(url)
     if app.a.downgrade:
@@ -172,6 +192,18 @@ def cmd_migrate(app: App) -> int:
     print(json.dumps({"from": before, "to": after, "head": migrate.head_revision()}))
     if not app.a.downgrade and not app.a.no_seed and after == migrate.head_revision():
         return cmd_seed(app)
+    return EXIT_OK
+
+
+def _migrate_app(app: App) -> int:
+    url = app.s.app_sqlalchemy_url()
+    before = migrate.current_revision(url)
+    if app.a.downgrade:
+        migrate.downgrade(url, app.a.downgrade, target="app")
+    else:
+        migrate.upgrade(url, app.a.revision, target="app")
+    after = migrate.current_revision(url)
+    print(json.dumps({"target": "app", "from": before, "to": after, "head": migrate.head_revision("app")}))
     return EXIT_OK
 
 
@@ -648,7 +680,8 @@ def cmd_company_profile(app: App) -> int:
 def cmd_db_docs(app: App) -> int:
     from .core.dbdocs import data_dictionary
 
-    text = data_dictionary(app.db)
+    target = app.a.target
+    text = data_dictionary(app.app_db if target == "app" else app.db, target)
     Path(app.a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(app.a.out).write_text(text + "\n", encoding="utf-8")
     print(f"wrote {app.a.out} ({text.count(chr(10)) + 1} lines)")
@@ -838,6 +871,76 @@ def cmd_property_review(app: App) -> int:
     return EXIT_OK
 
 
+# --------------------------------------------------------------------------- web
+def _date(s: str | None) -> date | None:
+    return date.fromisoformat(s) if s else None
+
+
+def cmd_web(app: App) -> int:
+    """Client web application administration (ADR 0013). Prints JSON."""
+    from .web import admin
+
+    a = app.a
+    db = app.app_db
+    by = a.by
+    act = a.web_action
+    out: dict[str, Any]
+    if act == "plan-create":
+        out = {"plan_id": admin.plan_create(db, a.code, a.name, a.description)}
+    elif act == "grant":
+        out = {
+            "entitlement_id": admin.grant(
+                db,
+                kind=a.kind,
+                value=a.value or "",
+                plan=a.plan,
+                org=a.org,
+                valid_from=_date(a.valid_from),
+                valid_to=_date(a.valid_to),
+                by=by,
+                note=a.note,
+            )
+        }
+    elif act == "revoke":
+        out = {"updated": admin.revoke(db, a.id, _date(a.last_day))}
+    elif act == "org-create":
+        out = {
+            "org_id": admin.org_create(
+                db,
+                a.slug,
+                a.name,
+                plan=a.plan,
+                seats=a.seats,
+                internal=a.internal,
+                contract_start=_date(a.contract_start),
+                contract_end=_date(a.contract_end),
+            )
+        }
+    elif act == "org-set":
+        out = {
+            "updated": admin.org_set(
+                db, a.slug, plan=a.plan, status=a.status, seats=a.seats, contract_end=_date(a.contract_end)
+            )
+        }
+    elif act in ("user-invite", "user-reset"):
+        if act == "user-invite":
+            link = admin.user_invite(
+                db, a.org, a.email, name=a.name, role=a.role, days=a.days, base_url=a.base_url, by=by
+            )
+        else:
+            link = admin.user_reset(db, a.email, days=a.days, base_url=a.base_url, by=by)
+        # the link is a credential: it goes to the operator's terminal only, never to logs
+        out = {"email": link.email, "purpose": link.purpose, "expires_at": str(link.expires_at), "link": link.url}
+    elif act in ("user-disable", "user-enable"):
+        out = {"updated": admin.user_set_status(db, a.email, "disabled" if act == "user-disable" else "active")}
+    elif act == "article":
+        out = admin.article_save(db, Path(a.file), by=by, status=a.status)
+    else:  # list
+        out = admin.summary(db)
+    print(json.dumps(out, indent=2, default=str))
+    return EXIT_OK
+
+
 # --------------------------------------------------------------------------- parser
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -869,6 +972,12 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--revision", default="head")
     m.add_argument("--downgrade", metavar="REVISION", help="downgrade to REVISION instead (destructive)")
     m.add_argument("--no-seed", action="store_true")
+    m.add_argument(
+        "--target",
+        choices=["warehouse", "app", "all"],
+        default="warehouse",
+        help="warehouse schema (default), client web app schema ([db] app_name), or both",
+    )
     cmd("seed", cmd_seed, "load the metric dictionary and mapping rules from reference/data")
     u = cmd("universe", cmd_universe, "import the REIT universe CSV into ref_company and ref_ir_source")
     u.add_argument("--csv", help="path to reits.csv (default: [paths] universe_csv)")
@@ -1003,6 +1112,59 @@ def build_parser() -> argparse.ArgumentParser:
     cp = cmd("company-profile", cmd_company_profile, "all relevant data for one company, picked by its sectors")
     cp.add_argument("--ticker", required=True)
     cp.add_argument("--json", action="store_true", help="print JSON instead of text")
+    dd.add_argument("--target", choices=["warehouse", "app"], default="warehouse")
+
+    w = cmd("web", cmd_web, "administer the client website: plans, grants, organizations, users, research")
+    w.add_argument("--by", help="your name, recorded on grants, tokens and article versions")
+    wsp = w.add_subparsers(dest="web_action", required=True, metavar="action")
+    pc = wsp.add_parser("plan-create", help="add a plan")
+    pc.add_argument("--code", required=True)
+    pc.add_argument("--name", required=True)
+    pc.add_argument("--description")
+    g = wsp.add_parser("grant", help="grant a plan or organization an entitlement")
+    owner = g.add_mutually_exclusive_group(required=True)
+    owner.add_argument("--plan")
+    owner.add_argument("--org")
+    g.add_argument("--kind", required=True)
+    g.add_argument("--value", default="")
+    g.add_argument("--valid-from")
+    g.add_argument("--valid-to")
+    g.add_argument("--note")
+    rv = wsp.add_parser("revoke", help="end a grant (it is never deleted)")
+    rv.add_argument("--id", type=int, required=True)
+    rv.add_argument("--last-day", help="last day the grant applies (default yesterday)")
+    oc = wsp.add_parser("org-create", help="add a client organization")
+    oc.add_argument("--slug", required=True)
+    oc.add_argument("--name", required=True)
+    oc.add_argument("--plan")
+    oc.add_argument("--seats", type=int)
+    oc.add_argument("--internal", action="store_true", help="our own firm (staff accounts)")
+    oc.add_argument("--contract-start")
+    oc.add_argument("--contract-end")
+    os_ = wsp.add_parser("org-set", help="change an organization's plan, status, seats or contract end")
+    os_.add_argument("--slug", required=True)
+    os_.add_argument("--plan")
+    os_.add_argument("--status", choices=["active", "suspended", "closed"])
+    os_.add_argument("--seats", type=int)
+    os_.add_argument("--contract-end")
+    ui = wsp.add_parser("user-invite", help="create a user and print a single-use invitation link")
+    ui.add_argument("--org", required=True)
+    ui.add_argument("--email", required=True)
+    ui.add_argument("--name")
+    ui.add_argument("--role", default="member", choices=["member", "org_admin", "staff", "staff_admin"])
+    ui.add_argument("--days", type=float, default=7)
+    ui.add_argument("--base-url", default="http://localhost:3000")
+    ur = wsp.add_parser("user-reset", help="print a single-use password reset link")
+    ur.add_argument("--email", required=True)
+    ur.add_argument("--days", type=float, default=1)
+    ur.add_argument("--base-url", default="http://localhost:3000")
+    for name_ in ("user-disable", "user-enable"):
+        ud = wsp.add_parser(name_, help=f"{name_.split('-')[1]} a user (disable also signs them out)")
+        ud.add_argument("--email", required=True)
+    ar = wsp.add_parser("article", help="save a research note from a Markdown file with front matter")
+    ar.add_argument("file")
+    ar.add_argument("--status", choices=["draft", "published", "withdrawn"], help="overrides the front matter")
+    wsp.add_parser("list", help="organizations and grants")
     return p
 
 

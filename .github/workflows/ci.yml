@@ -53,6 +53,85 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: pip
       - run: pip install -c constraints.txt -e ".[dev]"
-      # the test user drops and recreates rs_test, so it needs rights on that database name
-      - run: mysql -h 127.0.0.1 -uroot -proot -e "GRANT ALL ON rs_test.* TO 'tester'@'%'; FLUSH PRIVILEGES;"
+      # the test user drops and recreates rs_test and rs_test_app (the website schema), so it
+      # needs rights on those two database names
+      - run: >-
+          mysql -h 127.0.0.1 -uroot -proot -e
+          "GRANT ALL ON rs_test.* TO 'tester'@'%'; GRANT ALL ON rs_test_app.* TO 'tester'@'%'; FLUSH PRIVILEGES;"
       - run: python -m pytest -q -p no:logging
+
+  # client website (apps/web): lint, types, unit tests, production build, then an end-to-end
+  # run of the built server against a database seeded from the synthetic test fixtures
+  web:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_USER: tester
+          MYSQL_PASSWORD: testpw
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    defaults:
+      run:
+        working-directory: apps/web
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - working-directory: .
+        run: pip install -c constraints.txt -e ".[dev]"
+      - working-directory: .
+        run: >-
+          mysql -h 127.0.0.1 -uroot -proot -e
+          "GRANT ALL ON rs_web_dev.* TO 'tester'@'%'; GRANT ALL ON rs_web_app_dev.* TO 'tester'@'%'; FLUSH PRIVILEGES;"
+      - name: Seed the development database (synthetic data only)
+        working-directory: .
+        env:
+          REITSTREET_DB_URL: mysql+pymysql://tester:testpw@127.0.0.1:3306/rs_web_dev
+          REITSTREET_DB_APP_NAME: rs_web_app_dev
+        run: python scripts/dev/seed_web.py --links-file "$RUNNER_TEMP/links.json"
+      - name: Start the built site
+        env:
+          NODE_ENV: production
+          PORT: "3000"
+          HOSTNAME: "0.0.0.0"
+          RS_DB_HOST: 127.0.0.1
+          RS_DB_PORT: "3306"
+          RS_DB_USER: tester
+          RS_DB_PASSWORD: testpw
+          RS_DB_WAREHOUSE: rs_web_dev
+          RS_DB_APP: rs_web_app_dev
+          RS_PUBLIC_BASE_URL: http://localhost:3000
+          RS_SAMPLE_DATA: "1"
+        run: |
+          nohup node .next/standalone/server.js > "$RUNNER_TEMP/web.log" 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/api/health && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/web.log"; exit 1
+      - run: node tests/e2e/smoke.mjs http://localhost:3000 "$RUNNER_TEMP/links.json"
+      - if: failure()
+        run: cat "$RUNNER_TEMP/web.log" || true
+
+  # the container image the site would run in (ADR 0013); built only, never pushed
+  web-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f apps/web/Dockerfile -t reitstreet-web:ci apps/web

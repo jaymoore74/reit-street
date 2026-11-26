@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reitstreet"
-version = "0.4.0"
+version = "0.5.0"
 description = "REIT data platform: SEC EDGAR and supplemental ingestion, lineage-tracked MySQL warehouse, client delivery."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -38,7 +38,7 @@ reitstreet = "reitstreet.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-reitstreet = ["reference/data/*.csv", "py.typed", "migrations/*.py", "migrations/*.mako", "migrations/versions/*.py"]
+reitstreet = ["reference/data/*.csv", "py.typed", "migrations/*.py", "migrations/*.mako", "migrations/versions/*.py", "migrations_app/*.py", "migrations_app/*.mako", "migrations_app/versions/*.py"]
 
 [tool.ruff]
 line-length = 120
@@ -58,12 +58,13 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "src/reitstreet/migrations/**" = ["E501"]
+"src/reitstreet/migrations_app/**" = ["E501"]
 "tests/**" = ["S101", "S105", "S106", "S311", "S608"]
 
 [tool.mypy]
 python_version = "3.11"
 files = ["src/reitstreet"]
-exclude = ["src/reitstreet/migrations/"]
+exclude = ["src/reitstreet/migrations/", "src/reitstreet/migrations_app/"]
 check_untyped_defs = true
 warn_unused_ignores = true
 warn_redundant_casts = true

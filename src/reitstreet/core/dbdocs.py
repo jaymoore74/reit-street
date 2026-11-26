@@ -13,6 +13,7 @@ LAYERS = [
     ("stg_", "Staging: parsed source records, one row per source fact, re-derivable from raw"),
     ("wh_", "Warehouse: curated, bitemporal, lineage on every value"),
     ("dl_", "Delivery: client contract views (changing them is a breaking change)"),
+    ("app_", "Client web application: organizations, entitlements, users, sessions, research, audit (ADR 0013)"),
 ]
 
 
@@ -20,7 +21,7 @@ def _md(s: str | None) -> str:
     return (s or "").replace("|", "\\|").replace("\n", " ")
 
 
-def data_dictionary(db: Db) -> str:
+def data_dictionary(db: Db, target: str = "warehouse") -> str:
     rev = db.scalar("SELECT version_num FROM alembic_version")
     tables = db.query(
         """SELECT table_name AS name, table_type AS type, table_comment AS comment, table_rows AS approx_rows
@@ -39,7 +40,8 @@ def data_dictionary(db: Db) -> str:
     out = [
         "# Data dictionary",
         "",
-        f"Generated from the database schema at Alembic revision `{rev}` by `reitstreet db-docs`. "
+        f"Generated from the database schema at Alembic revision `{rev}` by "
+        f"`reitstreet db-docs{' --target app' if target == 'app' else ''}`. "
         "Do not edit by hand: change the COMMENT in a migration and regenerate.",
         "",
     ]
