@@ -34,7 +34,7 @@ jobs:
         with:
           role: migrator
           aws-region: ${{ vars.AWS_REGION }}
-      - run: reitstreet migrate
+      - run: reitstreet migrate --target all
       - if: failure()
         uses: ./.github/actions/ops-issue
         with:

@@ -138,17 +138,24 @@ pauses all scheduled runs (the kill switch); delete it or set `on` to resume.
 ## 8. Create the schema and logins
 
 GitHub > Actions > **ops-bootstrap-db** > Run workflow. Paste the master secret ARN and the
-writer endpoint > Run. In about a minute the log shows three logins created and
-"login checked over TLS". It creates:
+writer endpoint > Run. In about a minute the log shows four logins created and
+"login checked over TLS". It creates the `reitstreet` schema, the `reitstreet_app` schema
+for the client website (ADR 0013), and:
 
 | Login | Secret | Can |
 |---|---|---|
 | `rs_migrator` | `reitstreet/db/migrator` | change the `reitstreet` schema (migrations) |
 | `rs_loader` | `reitstreet/db/loader` | read and write data, no schema changes |
-| `rs_reader` | `reitstreet/db/reader` | read only, for analysis tools and clients |
+| `rs_reader` | `reitstreet/db/reader` | read only on `reitstreet`, for analysis tools; no access to client accounts |
+| `rs_web` | `reitstreet/db/web` | the client website: read `reitstreet`, read and write `reitstreet_app`, never delete |
 
 Passwords are random, generated on the runner, stored only in Secrets Manager and never
-shown. All three require TLS and can only touch the `reitstreet` schema.
+shown. All four require TLS and can only touch the two schemas. `rs_migrator` changes both;
+`rs_loader` also writes `reitstreet_app` for the `reitstreet web` admin commands.
+
+Already ran this before the website existed? Run it again (it only adds what is missing:
+the second schema, `rs_web` and the new grants), with the temporary policy attached as in
+step 3.4, then run **ops-migrate** with target `all`, and remove the policy again.
 
 Then **delete the temporary policy**: IAM > Roles > `reitstreet-runner` > tick
 `reitstreet-bootstrap-temp` > Remove. The runner can no longer read the master password.

@@ -25,6 +25,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import urlencode, urljoin, urlparse
@@ -60,6 +61,8 @@ class StrategyEnv:
     headless_enabled: bool = False
     q4_key: str | None = None
     conditional: bool = True
+    # (url, user_agent, timeout_ms, link_wait_ms) -> (status, html). None = shared Chromium.
+    renderer: Callable[[str, str, int, int], tuple[int, str]] | None = None
 
 
 class Strategy(Protocol):
@@ -181,44 +184,104 @@ class Q4Feed:
 
 
 # ------------------------------------------------------------------ headless
+# Links on Q4-style pages appear once their scripts run. Wait for a document link rather
+# than for network idle: these sites keep analytics and stock-quote requests going, so
+# "networkidle" often never arrives inside the timeout.
+DOC_LINK_SELECTOR = 'a[href*=".pdf" i], a[href*="q4cdn.com" i], a[href*="/files/doc_" i], a[href*="/static-files/" i]'
+BLOCKED_RESOURCES = frozenset({"image", "media", "font"})
+
+
+class HeadlessBrowser:
+    """One Chromium for the whole run, started on first use; one fresh context per page.
+    Images, media and fonts are not downloaded (lighter on the sites, faster here)."""
+
+    def __init__(self) -> None:
+        self._pw: Any = None
+        self._browser: Any = None
+
+    def _start(self) -> Any:
+        if self._browser is None:
+            from playwright.sync_api import sync_playwright
+
+            self._pw = sync_playwright().start()
+            self._browser = self._pw.chromium.launch(headless=True)
+        return self._browser
+
+    def render(self, url: str, user_agent: str, timeout_ms: int, link_wait_ms: int) -> tuple[int, str]:
+        browser = self._start()
+        ctx = browser.new_context(user_agent=user_agent, java_script_enabled=True)
+        try:
+            ctx.route(
+                "**/*",
+                lambda route: route.abort() if route.request.resource_type in BLOCKED_RESOURCES else route.continue_(),
+            )
+            pg = ctx.new_page()
+            resp = pg.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+            try:
+                pg.wait_for_selector(DOC_LINK_SELECTOR, state="attached", timeout=link_wait_ms)
+            except Exception:  # noqa: S110  no document link appeared: parse what is there
+                pass
+            try:
+                pg.wait_for_load_state("networkidle", timeout=3_000)
+            except Exception:  # noqa: S110  best effort only
+                pass
+            return (resp.status if resp else 200), pg.content()
+        finally:
+            ctx.close()
+
+    def close(self) -> None:
+        try:
+            if self._browser is not None:
+                self._browser.close()
+        finally:
+            if self._pw is not None:
+                self._pw.stop()
+            self._browser = self._pw = None
+
+
+BROWSER = HeadlessBrowser()
+
+
+def shutdown_headless() -> None:
+    """Close the shared browser (end of a fetch-ir run). Safe to call when none started."""
+    BROWSER.close()
+
+
 class Headless:
     """Playwright Chromium render. Network: one page load plus the page's own scripts;
     the host rate limit and robots.txt apply to the page URL."""
 
     name = "headless"
     timeout_ms = 45_000
+    link_wait_ms = 20_000
 
     def discover(self, env: StrategyEnv, page: Page) -> Discovery:
         if not env.headless_enabled:
             return Discovery(self.name, M.NEEDS_HEADLESS, note="page needs a browser; set [ir] headless = true")
-        try:
-            from playwright.sync_api import sync_playwright
-        except ImportError:
-            return Discovery(
-                self.name,
-                M.NEEDS_HEADLESS,
-                note="Playwright not installed: pip install playwright, then python -m playwright install chromium",
-            )
+        render = env.renderer
+        if render is None:
+            try:
+                import playwright.sync_api  # noqa: F401
+            except ImportError:
+                return Discovery(
+                    self.name,
+                    M.NEEDS_HEADLESS,
+                    note="Playwright not installed: pip install playwright, then python -m playwright install chromium",
+                )
+            render = BROWSER.render
         if not env.robots.allowed(page.url):
             return Discovery(self.name, M.ROBOTS_BLOCKED, note="robots.txt disallows the results page")
         env.fetcher.limiter.wait(page.url)
         t0 = time.monotonic()
         try:
-            with sync_playwright() as pw:
-                browser = pw.chromium.launch(headless=True)
-                try:
-                    ctx = browser.new_context(user_agent=env.fetcher.user_agent)
-                    pg = ctx.new_page()
-                    resp = pg.goto(page.url, wait_until="networkidle", timeout=self.timeout_ms)
-                    html = pg.content()
-                    status = resp.status if resp else 200
-                finally:
-                    browser.close()
+            status, html = render(page.url, env.fetcher.user_agent, self.timeout_ms, self.link_wait_ms)
         except Exception as e:  # Playwright raises its own error types; all mean "this render failed"
             return Discovery(self.name, M.HTTP_ERROR, note=f"headless render failed: {type(e).__name__}: {e}"[:500])
         body = html.encode("utf-8")
         f = env.fetcher.capture(page.url, status, {"content-type": "text/html; rendered=headless"}, body,
                                 int((time.monotonic() - t0) * 1000))  # fmt: skip
+        if status >= 400:
+            return Discovery(self.name, M.HTTP_ERROR, status, note=f"HTTP {status} on render", page_sha256=f.sha256)
         links = extract_links(html, page.url, page.fye_mmdd)
         return Discovery(self.name, M.OK if links else M.NO_DOCUMENTS, status, links, page_sha256=f.sha256)
 

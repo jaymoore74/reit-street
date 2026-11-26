@@ -14,15 +14,29 @@ inputs:
     description: SEC User-Agent, a real name and email
     required: false
     default: ""
+  extras:
+    description: optional package extras to install, e.g. headless
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
     - name: Install reitstreet
       shell: bash
+      env:
+        EXTRAS: ${{ inputs.extras }}
       run: |
         python3 -m venv "$RUNNER_TEMP/venv"
-        "$RUNNER_TEMP/venv/bin/pip" install -q --disable-pip-version-check -c constraints.txt .
+        spec="."
+        if [ -n "$EXTRAS" ]; then spec=".[$EXTRAS]"; fi
+        "$RUNNER_TEMP/venv/bin/pip" install -q --disable-pip-version-check -c constraints.txt "$spec"
         echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+        if [[ ",$EXTRAS," == *",headless,"* ]]; then
+          # Browser binaries persist on the runner disk; a no-op when already present.
+          export PLAYWRIGHT_BROWSERS_PATH=/srv/reitstreet/pw-browsers
+          echo "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/venv/bin/python" -m playwright install chromium
+        fi
     - name: Settings and ${{ inputs.role }} database login
       shell: bash
       env:

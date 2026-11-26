@@ -1,0 +1,271 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  REIT Street client website, hosting option B (ADR 0013): one t4g.small EC2 instance in
+  the Aurora VPC running the site's container behind Caddy, which gets and renews a free
+  Let's Encrypt certificate by itself once DNS points at the instance. Creates nothing
+  until someone deploys this stack. Shell access is through Session Manager; no SSH.
+
+Parameters:
+  EnvName:
+    Type: String
+    AllowedValues: [staging, production]
+    Default: staging
+  DomainName:
+    Type: String
+    Default: research.jwalteranalytics.com
+    AllowedPattern: "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
+    Description: The site's address, the one place the domain is set.
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: The Aurora cluster's VPC.
+  PublicSubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: A public subnet (route to an igw-) in that VPC.
+  DbSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: The Aurora cluster's security group. The stack adds one inbound rule (3306 from the site only).
+  DbSecretArn:
+    Type: String
+    AllowedPattern: "^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:reitstreet/db/web-[A-Za-z0-9]{6}$"
+    Description: Full ARN of the reitstreet/db/web secret made by ops-bootstrap-db (ends in -xxxxxx).
+  WarehouseSchema:
+    Type: String
+    Default: reitstreet
+  AppSchema:
+    Type: String
+    Default: reitstreet_app
+  ImageTag:
+    Type: String
+    Default: none
+    AllowedPattern: "^[A-Za-z0-9._-]{1,128}$"
+    Description: >-
+      Tag to start with. Later deploys run /opt/reitstreet-web/deploy.sh TAG on the
+      instance (docs/runbooks/web-hosting.md); changing this parameter does not redeploy.
+  InstanceType:
+    Type: String
+    AllowedValues: [t4g.small, t4g.medium]
+    Default: t4g.small
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id
+  CaddyImage:
+    Type: String
+    Default: caddy:2.10.2
+  EmailProvider:
+    Type: String
+    AllowedValues: [none, ses]
+    Default: none
+  EmailFrom:
+    Type: String
+    Default: ""
+    Description: Sender address on an SES-verified domain. Required for ses.
+  SiteName:
+    Type: String
+    Default: REIT Street
+  SampleData:
+    Type: String
+    AllowedValues: ["0", "1"]
+    Default: "1"
+
+Conditions:
+  UseSes: !Equals [!Ref EmailProvider, ses]
+
+Rules:
+  SesNeedsSender:
+    RuleCondition: !Equals [!Ref EmailProvider, ses]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref EmailFrom, ""]]
+        AssertDescription: EmailFrom is required when EmailProvider is ses.
+
+Resources:
+  Repository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      RepositoryName: !Sub reitstreet-web-${EnvName}
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"keep the last 30 images",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":30},
+          "action":{"type":"expire"}}]}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /reitstreet/web/${EnvName}
+      RetentionInDays: 90
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: run-the-site
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Effect: Allow
+                Action: [ecr:BatchGetImage, ecr:GetDownloadUrlForLayer, ecr:BatchCheckLayerAvailability]
+                Resource: !GetAtt Repository.Arn
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref DbSecretArn
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub ${LogGroup.Arn}:*
+              - !If
+                - UseSes
+                - Effect: Allow
+                  Action: ses:SendEmail
+                  Resource: !Sub arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/*
+                  Condition:
+                    StringEquals:
+                      ses:FromAddress: !Ref EmailFrom
+                - !Ref AWS::NoValue
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref InstanceRole]
+
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: REIT Street website, HTTP and HTTPS from anywhere
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0, Description: HTTPS }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0, Description: "HTTP, certificate checks and redirect" }
+
+  DbIngressFromSite:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DbSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      SourceSecurityGroupId: !Ref WebSecurityGroup
+      Description: !Sub REIT Street website ${EnvName}
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      NetworkInterfaces:
+        # a public IP at boot so setup can download; the Elastic IP below replaces it
+        - DeviceIndex: "0"
+          SubnetId: !Ref PublicSubnetId
+          GroupSet: [!Ref WebSecurityGroup]
+          AssociatePublicIpAddress: true
+      # hop limit 2 so the site's container can use the instance role (SES); tokens required
+      MetadataOptions: { HttpTokens: required, HttpEndpoint: enabled, HttpPutResponseHopLimit: 2 }
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs: { VolumeSize: 20, VolumeType: gp3, Encrypted: true }
+      Tags:
+        - { Key: Name, Value: !Sub "reitstreet-web-${EnvName}" }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y
+          apt-get install -y docker.io jq curl unzip ca-certificates unattended-upgrades
+          systemctl enable --now docker
+          curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o /tmp/awscliv2.zip
+          unzip -q -o /tmp/awscliv2.zip -d /tmp && /tmp/aws/install --update && rm -rf /tmp/aws /tmp/awscliv2.zip
+
+          mkdir -p /opt/reitstreet-web /etc/reitstreet-web
+          chmod 700 /etc/reitstreet-web
+          cat > /etc/reitstreet-web/Caddyfile <<'CADDY'
+          ${DomainName} {
+            encode gzip
+            reverse_proxy web:3000
+          }
+          CADDY
+
+          # settings that are not secret; the database login is read from Secrets Manager
+          # at each start and written to a root-only file, never to the user data
+          cat > /etc/reitstreet-web/site.env <<'SITE'
+          RS_DB_WAREHOUSE=${WarehouseSchema}
+          RS_DB_APP=${AppSchema}
+          RS_DB_SSL_CA=/app/certs/rds-global-bundle.pem
+          RS_PUBLIC_BASE_URL=https://${DomainName}
+          RS_TRUSTED_PROXY_HOPS=1
+          RS_SAMPLE_DATA=${SampleData}
+          RS_SITE_NAME=${SiteName}
+          RS_EMAIL_PROVIDER=${EmailProvider}
+          RS_EMAIL_FROM=${EmailFrom}
+          RS_AWS_REGION=${AWS::Region}
+          SITE
+
+          cat > /opt/reitstreet-web/deploy.sh <<'DEPLOY'
+          #!/bin/bash
+          # usage: sudo /opt/reitstreet-web/deploy.sh IMAGE_TAG
+          set -euo pipefail
+          tag="$1"
+          region="${AWS::Region}"
+          repo="${Repository.RepositoryUri}"
+          aws ecr get-login-password --region "$region" | docker login --username AWS --password-stdin "${!repo%%/*}"
+          docker pull "$repo:$tag"
+          secret=$(aws secretsmanager get-secret-value --region "$region" --secret-id "${DbSecretArn}" --query SecretString --output text)
+          umask 077
+          jq -r '"RS_DB_HOST=\(.host)\nRS_DB_PORT=\(.port)\nRS_DB_USER=\(.username)\nRS_DB_PASSWORD=\(.password)"' <<<"$secret" > /etc/reitstreet-web/db.env
+          docker network inspect rsweb >/dev/null 2>&1 || docker network create rsweb
+          docker rm -f web >/dev/null 2>&1 || true
+          docker run -d --name web --network rsweb --restart unless-stopped \
+            --env-file /etc/reitstreet-web/site.env --env-file /etc/reitstreet-web/db.env \
+            --log-driver awslogs --log-opt awslogs-region="$region" \
+            --log-opt awslogs-group=${LogGroup} --log-opt awslogs-stream=web \
+            "$repo:$tag"
+          if ! docker inspect caddy >/dev/null 2>&1; then
+            docker run -d --name caddy --network rsweb --restart unless-stopped -p 80:80 -p 443:443 \
+              -v /etc/reitstreet-web/Caddyfile:/etc/caddy/Caddyfile:ro -v caddy_data:/data -v caddy_config:/config \
+              --log-driver awslogs --log-opt awslogs-region="$region" \
+              --log-opt awslogs-group=${LogGroup} --log-opt awslogs-stream=caddy \
+              ${CaddyImage}
+          fi
+          echo "$tag" > /etc/reitstreet-web/current-tag
+          echo "deployed $tag"
+          DEPLOY
+          chmod 700 /opt/reitstreet-web/deploy.sh
+
+          if [ "${ImageTag}" != "none" ]; then /opt/reitstreet-web/deploy.sh "${ImageTag}"; fi
+          echo "reitstreet web setup done" > /etc/reitstreet-web/setup-done
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref Instance
+      Tags:
+        - { Key: Name, Value: !Sub "reitstreet-web-${EnvName}" }
+
+Outputs:
+  SiteUrl:
+    Value: !Sub https://${DomainName}
+  DnsRecord:
+    Description: Add this record at the domain's DNS host. Caddy gets the certificate once it resolves.
+    Value: !Sub "A  ${DomainName}  ->  ${ElasticIp.PublicIp}"
+  RepositoryUri:
+    Value: !GetAtt Repository.RepositoryUri
+  InstanceId:
+    Value: !Ref Instance
+  LogGroup:
+    Value: !Ref LogGroup

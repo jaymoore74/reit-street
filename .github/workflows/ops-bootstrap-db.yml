@@ -1,5 +1,5 @@
 name: ops-bootstrap-db
-# One time: create the reitstreet schema and its three logins on Aurora, with passwords
+# Create the reitstreet and reitstreet_app schemas and the four logins on Aurora, with passwords
 # generated on the runner and stored only in AWS Secrets Manager. Safe to re-run.
 on:
   workflow_dispatch:

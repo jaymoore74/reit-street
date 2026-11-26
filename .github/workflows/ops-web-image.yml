@@ -1,0 +1,58 @@
+name: ops-web-image
+# Build the client website image on the AWS runner and push it to ECR, tagged with the
+# commit SHA (ADR 0013). Manual only. It deploys nothing: point the stack at the printed
+# tag (docs/runbooks/web-hosting.md). Needs the website stack created first (it makes
+# the ECR repository) and the web-image policy on the runner role.
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Which site's repository
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-web-image-${{ inputs.env }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and push
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          ENV_NAME: ${{ inputs.env }}
+          TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$AWS_REGION" ]; then echo "::error::Set the repository variable AWS_REGION"; exit 2; fi
+          account=$(aws sts get-caller-identity --query Account --output text)
+          registry="$account.dkr.ecr.$AWS_REGION.amazonaws.com"
+          repo="$registry/reitstreet-web-$ENV_NAME"
+          if aws ecr describe-images --region "$AWS_REGION" --repository-name "reitstreet-web-$ENV_NAME" \
+               --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            echo "image $TAG already in $repo"
+          else
+            aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$registry"
+            docker build --pull -f apps/web/Dockerfile -t "$repo:$TAG" apps/web
+            docker push "$repo:$TAG"
+            docker logout "$registry"
+            docker image rm "$repo:$TAG" || true
+            docker builder prune -f --filter until=168h || true
+          fi
+          {
+            echo "### Website image ready ($ENV_NAME)"
+            echo
+            echo "Tag: \`$TAG\`"
+            echo
+            echo "Deploy it: run \`sudo /opt/reitstreet-web/deploy.sh $TAG\` on the site's instance"
+            echo "(option B), or set the stack parameter ImageTag to this tag (option A)."
+          } >> "$GITHUB_STEP_SUMMARY"
