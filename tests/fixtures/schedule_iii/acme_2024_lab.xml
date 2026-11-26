@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <link:labelLink xlink:type="extended" xlink:role="http://www.xbrl.org/2003/role/link">
+    <link:loc xlink:type="locator" xlink:href="acme-20241231.xsd#acme_OakParkCenterDallasTXMember" xlink:label="loc_oak"/>
+    <link:label xlink:type="resource" xlink:label="lab_oak" xlink:role="http://www.xbrl.org/2003/role/label" xml:lang="en-US">Oak Park Center, Dallas, TX [Member]</link:label>
+    <link:labelArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/concept-label" xlink:from="loc_oak" xlink:to="lab_oak"/>
+  </link:labelLink>
+</link:linkbase>

@@ -40,8 +40,8 @@ One MySQL schema, tables prefixed by layer. The full column list is in
   ref_metric, ref_metric_map ────────────────────┤ build-metrics (rules as data)
                                  ┌───────────────▼───────────────────────┐
                                  │ wh_metric_value (bitemporal)          │   dl_* views ──> export CSV
-                                 │ wh_property, wh_property_snapshot,    │   + manifest ──> client feed
-                                 │ wh_debt_maturity                      │                  (API: planned)
+                                 │ wh_property (+ _xref, _alias,         │   + manifest ──> client feed
+                                 │ _ownership), wh_debt_maturity         │                  (API: planned)
                                  └───────────────────────────────────────┘
   ops_job_run, ops_job_item, ops_dead_letter, ops_dq_result, ops_alert  (operations)
 ```
@@ -69,6 +69,17 @@ retires rows that changed and inserts the new ones. An unchanged rebuild touches
 
 Discrete quarters: 10-Ks do not report Q4 and cash flow items are year-to-date, so USD
 metrics derive Q2 to Q4 by subtraction, flagged `is_derived`, with their own versions.
+
+## Property master
+
+Every row a source gives about a property is a `stg_property_record` (source, as-of date,
+page or row, raw object). `build-properties` links each one to a stable
+`wh_property.property_id` through `wh_property_xref`, strongest rule first: the source's own
+reference, street address, name within the same owner and city, then distance. Close calls
+wait in a review queue. Ownership is a history of spells in `wh_property_ownership`, so a
+property sold from one REIT to another keeps its id. Property-level metrics from the
+supplemental parser key to the record, never to the property, so a re-match never rewrites
+them. Design: [ADR 0010](adr/0010-property-master.md).
 
 ## Jobs
 
@@ -110,6 +121,7 @@ optionally email and a webhook, de-duplicated over 6 hours.
 | `parsers/` | pure functions from bytes to records; document parser registry (`documents.py`) |
 | `reference/` | universe import, seed of metric dictionary and mapping rules from CSV |
 | `warehouse/` | period typing, versioning, metric build |
+| `properties/` | property master: records and staging, normalization, matching, ownership spells, Schedule III and list loaders, geocoding, review, coverage |
 | `quality/` | DQ checks, monitor |
 | `delivery/` | client exports with manifest |
 | `migrations/` | Alembic revisions (raw SQL DDL, every table and column commented) |

@@ -11,3 +11,4 @@ One file per decision. To change a decision, add a new ADR that supersedes the o
 - [0007](0007-mysql.md): MySQL 8 as the warehouse
 - [0008](0008-aws-aurora-self-hosted-runner.md): Production on AWS Aurora, jobs on a self-hosted GitHub Actions runner
 - [0009](0009-ir-fetcher.md): IR website fetcher: strategy chain, profiles as data, polite crawling
+- [0010](0010-property-master.md): Property master: source records, stable property ids, matching, ownership history
