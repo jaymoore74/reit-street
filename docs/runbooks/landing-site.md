@@ -11,7 +11,7 @@ loads nothing (checked 2026-11-26: no web server answers for `jwalteranalytics.c
 | Cost | $0 extra; same Netlify account as sci.help | $0 only if you already pay for a DreamHost hosting plan; otherwise a paid plan | $0 extra once the ~$16/month server exists |
 | Works today | yes | if a plan exists | no, waits on AWS setup |
 | HTTPS | automatic (Let's Encrypt, renews itself) | automatic if enabled in the panel | automatic through Caddy |
-| Updating | redeploy from the repo (Claude can do it) | upload files by SFTP | rebuild the server config |
+| Updating | automatic on merge to `main` | upload files by SFTP | rebuild the server config |
 | DNS records changed | root `@` A, `www` CNAME | none if DreamHost hosts it | root `@` A, `www` |
 
 Mail is not affected by any option: MX, SPF/DKIM/DMARC and Google verification TXT
@@ -19,19 +19,20 @@ records stay exactly as they are. Only the web records for `@` and `www` change.
 
 ## Netlify steps (Windows, browser only)
 
-### 1. Create the site in Netlify
+### 1. Link the Netlify project to the repo (one time)
 
-Either let Claude create and deploy it through the Netlify connector (say yes in the chat),
-or do it by hand:
+The project already exists: **jwalteranalytics** in your Netlify team (made 2026-11-26),
+address `jwalteranalytics.netlify.app`. It has no files yet; linking it to GitHub fills it
+and redeploys it on every merge that touches `apps/landing`.
 
-1. Sign in at app.netlify.com (same account as sci.help).
-2. **Add new project** > **Import an existing project** > **GitHub** > pick
-   `jaymoore74/reit-street`. If it isn't listed, click **Configure the Netlify app on
-   GitHub** and allow that repo.
+1. Sign in at app.netlify.com (same account as sci.help) > **Projects** > **jwalteranalytics**.
+2. **Project configuration** > **Build & deploy** > **Continuous deployment** >
+   **Link repository** > **GitHub** > pick `jaymoore74/reit-street`. If it isn't listed,
+   click **Configure the Netlify app on GitHub** and add that repo to the app's access.
 3. Branch `main`. **Base directory** `apps/landing`. **Build command** empty.
-   **Publish directory** `apps/landing`. **Deploy**.
-4. Optional: **Project configuration** > **Change project name** to `jwalteranalytics`, so
-   the Netlify address is `jwalteranalytics.netlify.app`. Open it to check the page.
+   **Publish directory** `apps/landing`. Save, then **Deploys** > **Trigger deploy** >
+   **Deploy project**.
+4. Open https://jwalteranalytics.netlify.app to check the page.
 
 ### 2. Add the domain in Netlify
 
@@ -52,7 +53,7 @@ DreamHost panel > **Websites** > **Manage Websites** > `jwalteranalytics.com` > 
    (Netlify prefers an ALIAS/ANAME to `apex-loadbalancer.netlify.com`; DreamHost's
    custom records don't offer that, so the A record is Netlify's documented fallback.)
 3. **Add Record**: Type **CNAME**, Name `www`, Value `YOUR-PROJECT.netlify.app` (the
-   Netlify address from step 1.4). Save.
+   Netlify address, `jwalteranalytics.netlify.app`). Save.
 
 ### 4. Check
 
