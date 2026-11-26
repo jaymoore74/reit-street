@@ -16,6 +16,7 @@ dependencies = [
   "cryptography>=42",        # MySQL 8 caching_sha2_password auth
   "requests>=2.31,<3",
   "pypdf>=6.9,<8",           # first-page title and period of downloaded PDFs
+  "openpyxl>=3.1,<4",        # NAV / AFFO model workbooks
   "pdfplumber>=0.11.11,<0.12",  # positioned words for the supplemental table parser (MIT)
 ]
 
@@ -40,7 +41,7 @@ reitstreet = "reitstreet.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-reitstreet = ["reference/data/*.csv", "py.typed", "migrations/*.py", "migrations/*.mako", "migrations/versions/*.py", "migrations_app/*.py", "migrations_app/*.mako", "migrations_app/versions/*.py"]
+reitstreet = ["reference/data/*.csv", "models/inputs/*.toml", "py.typed", "migrations/*.py", "migrations/*.mako", "migrations/versions/*.py", "migrations_app/*.py", "migrations_app/*.mako", "migrations_app/versions/*.py"]
 
 [tool.ruff]
 line-length = 120

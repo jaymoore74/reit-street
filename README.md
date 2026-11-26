@@ -33,8 +33,11 @@ with lineage from every number back to the page it came from.
 - Client website (`apps/web`, not deployed yet): sign-in for client firms, research notes,
   metric charts, CSV, Excel and Parquet downloads limited by each firm's subscription and
   logged, newsletter sign-up. See [apps/web/README.md](apps/web/README.md).
+- Builds NAV and AFFO models as Excel workbooks with live formulas from a cited inputs
+  file per company and quarter (Essex 3Q26 first). See
+  [docs/adr/0012-nav-affo-models.md](docs/adr/0012-nav-affo-models.md).
 
-Next: the NAV models, the IR email inbox and a client API. See
+Next: NAV models for the rest of the universe, the IR email inbox and a client API. See
 [docs/architecture.md](docs/architecture.md).
 
 ## Production (AWS)
@@ -91,6 +94,7 @@ until `[sec] user_agent` in `config.ini` is set.
 | `company-profile` | every relevant metric and schedule for one company |
 | `parse-coverage` | supplemental parse coverage by company |
 | `parse-eval` | parser quality on a folder of PDFs, no database needed |
+| `model` | `check` or `build` a NAV and AFFO workbook from an inputs file, no database |
 
 `reitstreet <command> --help` for options. Exit codes: 0 ok, 1 failed or partial,
 2 configuration error, 3 already running, 4 source blocked us.

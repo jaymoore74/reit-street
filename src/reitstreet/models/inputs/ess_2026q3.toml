@@ -1,0 +1,1264 @@
+# Essex Property Trust (ESS): NAV and AFFO model inputs, 3Q26.
+# Every [[inputs]] row is cited to a document and page. Every [[assumptions]] row is an analyst estimate with a
+# rationale. Units: $ thousands unless the unit says otherwise. Build: reitstreet model build <this file>
+
+[model]
+ticker = "ESS"
+company = "Essex Property Trust, Inc."
+sector = "apartment"
+period = "3Q26"
+as_of = "2026-09-30"
+price_date = "11/25/26"
+quarter_label = "3Q26A"
+ytd_label = "9M26A"
+forecast_years = [2026, 2027, 2028]
+
+[sources.supp]
+title = "ESS 3Q26 earnings release and supplemental"
+date = "2026-10-28"
+url = "https://app.bigdata.com/documents/8E0280A9CF0819924102C193BA89446C"
+
+[sources.tenq]
+title = "ESS Form 10-Q, 3Q26"
+date = "2026-10-28"
+url = "https://app.bigdata.com/documents/C2602B6E249DCFB6CBC69CE7F5B6B5DC"
+
+[sources.quartr]
+title = "ESS 3Q26 report (10-Q statements), Quartr"
+date = "2026-10-28"
+url = "https://app.bigdata.com/documents/88504C2CE60B7046D34D69C53B27DE5A"
+
+[sources.px]
+title = "Bigdata.com market data"
+date = "2026-11-25"
+url = "https://bigdata.com"
+
+# ------------------------------------------------------------------------------------------------ market data
+[[inputs]]
+section = "Market data and shares"
+key = "price"
+label = "Share price"
+value = 279.21
+unit = "$"
+source = "px"
+page = "Close 11/25/26"
+
+[[inputs]]
+section = "Market data and shares"
+key = "div_q"
+label = "Quarterly dividend per share"
+value = 2.59
+unit = "$"
+source = "tenq"
+page = "Equity stmt (parenthetical)"
+note = "9M26 dividends $7.77 = 3 x $2.59; $2.57 in 3Q25."
+
+[[inputs]]
+section = "Market data and shares"
+key = "sh_common"
+label = "Common shares outstanding (000)"
+value = 64338
+unit = "000 sh"
+source = "supp"
+page = "S-6"
+
+[[inputs]]
+section = "Market data and shares"
+key = "sh_units"
+label = "OP units (000)"
+value = 2184
+unit = "000 sh"
+source = "supp"
+page = "S-6"
+
+[[inputs]]
+section = "Market data and shares"
+key = "sh_options"
+label = "Options, treasury method (000)"
+value = 15
+unit = "000 sh"
+source = "supp"
+page = "S-6"
+
+[[inputs]]
+section = "Market data and shares"
+key = "sh_wtd_q"
+label = "Weighted average diluted shares, FFO, 3Q26 (000)"
+value = 66496
+unit = "000 sh"
+source = "supp"
+page = "S-3"
+note = "66,495,937 shares."
+
+[[inputs]]
+section = "Market data and shares"
+key = "sh_wtd_ytd"
+label = "Weighted average diluted shares, FFO, 9M26 (000)"
+value = 66548
+unit = "000 sh"
+source = "supp"
+page = "S-3"
+note = "66,548,417 shares."
+
+[[inputs]]
+section = "Market data and shares"
+key = "sh_guide"
+label = "2026 guidance weighted average shares, FFO (000)"
+value = 66550
+unit = "000 sh"
+source = "supp"
+page = "S-15"
+
+# ------------------------------------------------------------------------------------------------ NOI
+[[inputs]]
+section = "Net operating income"
+key = "noi_q"
+label = "Total NOI, 3Q26"
+value = 340850
+unit = "$000"
+source = "supp"
+page = "S-8"
+note = "Includes straight-line rent concessions of (117)."
+
+[[inputs]]
+section = "Net operating income"
+key = "noi_q1"
+label = "Total NOI, 2Q26"
+value = 345709
+unit = "$000"
+source = "supp"
+page = "S-8"
+
+[[inputs]]
+section = "Net operating income"
+key = "noi_q2"
+label = "Total NOI, 1Q26"
+value = 341187
+unit = "$000"
+source = "supp"
+page = "S-8"
+
+[[inputs]]
+section = "Net operating income"
+key = "noi_q3"
+label = "Total NOI, 4Q25"
+value = 335823
+unit = "$000"
+source = "supp"
+page = "S-8"
+
+[[inputs]]
+section = "Net operating income"
+key = "rev_q"
+label = "Total rental and other property revenues, 3Q26"
+value = 490346
+unit = "$000"
+source = "supp"
+page = "S-8"
+
+[[inputs]]
+section = "Net operating income"
+key = "rev_q1"
+label = "Total rental and other property revenues, 2Q26"
+value = 486731
+unit = "$000"
+source = "supp"
+page = "S-8"
+
+[[inputs]]
+section = "Net operating income"
+key = "rev_q2"
+label = "Total rental and other property revenues, 1Q26"
+value = 482443
+unit = "$000"
+source = "supp"
+page = "S-8"
+
+[[inputs]]
+section = "Net operating income"
+key = "rev_q3"
+label = "Total rental and other property revenues, 4Q25"
+value = 477323
+unit = "$000"
+source = "supp"
+page = "S-8"
+
+[[inputs]]
+section = "Net operating income"
+key = "noi_adj_pf"
+label = "Pro forma NOI, assets sold or acquired (annualized)"
+value = -1722
+unit = "$000"
+source = "supp"
+page = "S-17.4"
+
+[[inputs]]
+section = "Net operating income"
+key = "noi_adj_other"
+label = "Other NOI adjustments, net (annualized)"
+value = -4722
+unit = "$000"
+source = "supp"
+page = "S-17.4"
+note = "Adjusted Total NOI 1,356,956 = 1,363,400 annualized less these two."
+
+[[inputs]]
+section = "Net operating income"
+key = "sl_q"
+label = "Straight-line rent concessions in NOI, 3Q26"
+value = -117
+unit = "$000"
+source = "supp"
+page = "S-8"
+
+# ------------------------------------------------------------------------------------------------ JV
+[[inputs]]
+section = "Co-investments"
+key = "jv_noi_q"
+label = "Essex share of co-investment NOI, 3Q26"
+value = 21791
+unit = "$000"
+source = "supp"
+page = "S-13"
+
+[[inputs]]
+section = "Co-investments"
+key = "jv_debt"
+label = "Co-investment debt at pro rata share"
+value = 885457
+unit = "$000"
+source = "supp"
+page = "S-17.3"
+
+[[inputs]]
+section = "Co-investments"
+key = "jv_debt_rate"
+label = "Co-investment debt, weighted average rate"
+value = 0.036
+unit = "%"
+source = "supp"
+page = "S-13"
+
+[[inputs]]
+section = "Co-investments"
+key = "jv_debt_years"
+label = "Co-investment debt, remaining term"
+value = 7.0
+unit = "yrs"
+source = "supp"
+page = "S-13"
+
+[[inputs]]
+section = "Co-investments"
+key = "jv_cash"
+label = "Co-investment unrestricted cash at pro rata share"
+value = 31713
+unit = "$000"
+source = "supp"
+page = "S-17.3"
+
+# ------------------------------------------------------------------------------------------------ balance sheet
+[[inputs]]
+section = "Balance sheet"
+key = "cip"
+label = "Real estate under development"
+value = 210654
+unit = "$000"
+source = "supp"
+page = "S-4"
+note = "7 South Linden ($176M incurred, $135M to go, stabilizes 1Q30) plus $35M land (S-11)."
+
+[[inputs]]
+section = "Balance sheet"
+key = "pref_eq"
+label = "Preferred equity investments"
+value = 198272
+unit = "$000"
+source = "supp"
+page = "S-13"
+note = "10.5% weighted return, 2.1 years expected term."
+
+[[inputs]]
+section = "Balance sheet"
+key = "notes_rec"
+label = "Notes and other receivables"
+value = 94064
+unit = "$000"
+source = "supp"
+page = "S-4"
+note = "Includes a $64.2M Oakland subordinated loan on non-accrual, converted to property after quarter end (10-Q)."
+
+[[inputs]]
+section = "Balance sheet"
+key = "mkt_sec"
+label = "Marketable securities"
+value = 102665
+unit = "$000"
+source = "supp"
+page = "S-4"
+note = "S-17.3 shows 102,965; balance sheet and 10-Q show 102,665, used here."
+
+[[inputs]]
+section = "Balance sheet"
+key = "cash"
+label = "Cash and cash equivalents, unrestricted"
+value = 72059
+unit = "$000"
+source = "supp"
+page = "S-17.3"
+
+[[inputs]]
+section = "Balance sheet"
+key = "cash_restr"
+label = "Restricted cash"
+value = 8239
+unit = "$000"
+source = "tenq"
+page = "Balance sheet"
+
+[[inputs]]
+section = "Balance sheet"
+key = "other_assets"
+label = "Prepaid expenses and other assets"
+value = 113830
+unit = "$000"
+source = "supp"
+page = "S-4"
+note = "Includes interest rate swap assets of $26.5M (10-Q note 10)."
+
+[[inputs]]
+section = "Balance sheet"
+key = "other_liab"
+label = "Other liabilities"
+value = 584250
+unit = "$000"
+source = "supp"
+page = "S-4"
+
+[[inputs]]
+section = "Balance sheet"
+key = "redeem_nci"
+label = "Redeemable noncontrolling interest"
+value = 26069
+unit = "$000"
+source = "supp"
+page = "S-4"
+
+# ------------------------------------------------------------------------------------------------ AFFO items
+[[inputs]]
+section = "FFO and AFFO items"
+key = "ffo_rep_q"
+label = "FFO as reported, 3Q26"
+value = 264693
+unit = "$000"
+source = "supp"
+page = "S-3"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "ffo_rep_ytd"
+label = "FFO as reported, 9M26"
+value = 763277
+unit = "$000"
+source = "supp"
+page = "S-3"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "core_rep_q"
+label = "Core FFO as reported, 3Q26"
+value = 266201
+unit = "$000"
+source = "supp"
+page = "S-3"
+note = "The release table on page 2 prints 266,291; S-3 and the line items give 266,201."
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "core_rep_ytd"
+label = "Core FFO as reported, 9M26"
+value = 808491
+unit = "$000"
+source = "supp"
+page = "S-3"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "stock_comp_ytd"
+label = "Equity-based compensation, 9M26"
+value = 9165
+unit = "$000"
+source = "quartr"
+page = "Cash flow stmt"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "fin_amort_ytd"
+label = "Amortization of discounts and debt financing costs, 9M26"
+value = 7716
+unit = "$000"
+source = "quartr"
+page = "Cash flow stmt"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "sl_rent_ytd"
+label = "Straight-lined rents (cash flow adjustment), 9M26"
+value = 573
+unit = "$000"
+source = "quartr"
+page = "Cash flow stmt"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "ytd_months"
+label = "Months in year-to-date period"
+value = 9
+unit = "months"
+source = "tenq"
+page = "Cover"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "capex_q"
+label = "Non-revenue generating capex, 3Q26"
+value = 35585
+unit = "$000"
+source = "supp"
+page = "S-12"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "capex_t4q"
+label = "Non-revenue generating capex, trailing four quarters"
+value = 115337
+unit = "$000"
+source = "supp"
+page = "S-12"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "capex_unit_t4q"
+label = "Non-revenue generating capex per unit, trailing four quarters"
+value = 2078
+unit = "$/unit"
+source = "supp"
+page = "S-12"
+
+[[inputs]]
+section = "FFO and AFFO items"
+key = "avg_units_t4q"
+label = "Average consolidated units, trailing four quarters"
+value = 55508
+unit = "units"
+source = "supp"
+page = "S-12"
+
+# ------------------------------------------------------------------------------------------------ guidance
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_noi"
+label = "Total NOI from consolidated communities"
+value = 1375500
+unit = "$000"
+source = "supp"
+page = "S-15"
+note = "Range 1,372,400 to 1,378,600; same-property NOI growth 2.8% to 3.2%."
+
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_fees"
+label = "Management fees"
+value = 9200
+unit = "$000"
+source = "supp"
+page = "S-15"
+
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_int"
+label = "Net interest expense"
+value = -259800
+unit = "$000"
+source = "supp"
+page = "S-15"
+
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_other"
+label = "Interest and other income"
+value = 8200
+unit = "$000"
+source = "supp"
+page = "S-15"
+
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_jvffo"
+label = "FFO from co-investments"
+value = 68900
+unit = "$000"
+source = "supp"
+page = "S-15"
+
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_ga"
+label = "General and administrative"
+value = -63000
+unit = "$000"
+source = "supp"
+page = "S-15"
+
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_corp"
+label = "Corporate-level property management expenses"
+value = -53700
+unit = "$000"
+source = "supp"
+page = "S-15"
+
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_nci"
+label = "Noncontrolling interest"
+value = -9600
+unit = "$000"
+source = "supp"
+page = "S-15"
+
+[[inputs]]
+section = "2026 guidance (midpoints)"
+key = "gd_core_ps"
+label = "Core FFO per diluted share"
+value = 16.16
+unit = "$"
+source = "supp"
+page = "S-15"
+note = "Range $16.10 to $16.22."
+
+# ------------------------------------------------------------------------------------------------ maturities
+[[inputs]]
+section = "Scheduled debt maturities"
+key = "mat_2026"
+label = "Maturities, 2026"
+value = 46092
+unit = "$000"
+source = "supp"
+page = "S-5"
+
+[[inputs]]
+section = "Scheduled debt maturities"
+key = "mrate_2026"
+label = "Rate on 2026 maturities"
+value = 0.040
+unit = "%"
+source = "supp"
+page = "S-5"
+
+[[inputs]]
+section = "Scheduled debt maturities"
+key = "mat_2027"
+label = "Maturities, 2027"
+value = 434397
+unit = "$000"
+source = "supp"
+page = "S-5"
+note = "Text extraction of the S-5 schedule is garbled; total taken from the % of total debt column (6.6%)."
+
+[[inputs]]
+section = "Scheduled debt maturities"
+key = "mrate_2027"
+label = "Rate on 2027 maturities"
+value = 0.036
+unit = "%"
+source = "supp"
+page = "S-5"
+
+[[inputs]]
+section = "Scheduled debt maturities"
+key = "mat_2028"
+label = "Maturities, 2028"
+value = 518332
+unit = "$000"
+source = "supp"
+page = "S-5"
+note = "As above; total from the % of total debt column (7.8%)."
+
+[[inputs]]
+section = "Scheduled debt maturities"
+key = "mrate_2028"
+label = "Rate on 2028 maturities"
+value = 0.022
+unit = "%"
+source = "supp"
+page = "S-5"
+
+# ------------------------------------------------------------------------------------------------ FFO reconciliation
+[[ffo_items]]
+key = "ni"
+label = "Net income available to common stockholders"
+kind = "ffo"
+q = 98069
+ytd = 266717
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "da"
+label = "Depreciation and amortization"
+kind = "ffo"
+q = 152552
+ytd = 461520
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "gains"
+label = "Gains not included in FFO"
+kind = "ffo"
+q = -12539
+ytd = -23770
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "impair"
+label = "Impairment loss"
+kind = "ffo"
+q = 10709
+ytd = 10709
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "jvda"
+label = "Depreciation from unconsolidated co-investments"
+kind = "ffo"
+q = 12611
+ytd = 39094
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "opnci"
+label = "Noncontrolling interest, OP units"
+kind = "ffo"
+q = 3330
+ytd = 9122
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "third"
+label = "Depreciation attributable to third parties and other"
+kind = "ffo"
+q = -39
+ytd = -115
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "tax"
+label = "Tax (benefit) expense, technology co-investments"
+kind = "core"
+q = -493
+ytd = 2758
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "sec"
+label = "Losses (gains) on marketable securities"
+kind = "core"
+q = 508
+ytd = -3482
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "credit"
+label = "Provision for credit losses"
+kind = "core"
+q = 0
+ytd = -222
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "tech"
+label = "Equity loss (income), technology co-investments"
+kind = "core"
+q = 33
+ytd = -16154
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "pref"
+label = "Income from early redemption of preferred equity"
+kind = "core"
+q = 0
+ytd = -179
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "ga"
+label = "General and administrative and other, net"
+kind = "core"
+q = 1504
+ytd = 62835
+source = "supp"
+page = "S-3"
+
+[[ffo_items]]
+key = "ins"
+label = "Insurance reimbursements and other, net"
+kind = "core"
+q = -44
+ytd = -342
+source = "supp"
+page = "S-3"
+
+# ------------------------------------------------------------------------------------------------ markets
+# units, noi_pct, jv_units, jv_noi_pct: S-7 (share of actual 3Q26 NOI). cap_rate and growth: analyst estimates.
+# Cap rates: no market cap rate source in hand yet. Anchored on Essex's 3Q26 East Bay purchase (474 units, over
+# $200M) at a mid-5% yield (3Q26 call), set lower where forward growth is stronger. Growth: forward 12-month NOI,
+# leaning on 3Q26 same-property revenue growth by county (S-9).
+[[markets]]
+key = "la"
+name = "Los Angeles"
+units = 9565
+noi_pct = 0.147
+jv_units = 1586
+jv_noi_pct = 0.207
+source = "supp"
+page = "S-7"
+cap_rate = 0.0500
+growth = 0.015
+rationale = "Mid-5% East Bay trade less a premium for LA depth; held above the coastal average because LA revenue grew only 0.5% in 3Q26 (S-9)."
+growth_rationale = "3Q26 same-property revenue +0.5% YoY (S-9); slow recovery assumed."
+
+[[markets]]
+key = "oc"
+name = "Orange County"
+units = 5741
+noi_pct = 0.108
+jv_units = 265
+jv_noi_pct = 0.037
+source = "supp"
+page = "S-7"
+cap_rate = 0.0475
+growth = 0.030
+rationale = "Lowest-cap SoCal market: low supply and steady growth; 25 bp inside LA."
+growth_rationale = "3Q26 same-property revenue +2.7% YoY (S-9)."
+
+[[markets]]
+key = "sd"
+name = "San Diego"
+units = 5449
+noi_pct = 0.099
+jv_units = 443
+jv_noi_pct = 0.071
+source = "supp"
+page = "S-7"
+cap_rate = 0.0490
+growth = 0.025
+rationale = "Between Orange County and LA."
+growth_rationale = "3Q26 same-property revenue +2.1% YoY (S-9)."
+
+[[markets]]
+key = "vc"
+name = "Ventura and other"
+units = 2760
+noi_pct = 0.049
+jv_units = 373
+jv_noi_pct = 0.071
+source = "supp"
+page = "S-7"
+cap_rate = 0.0510
+growth = 0.020
+rationale = "Smaller, less liquid market; 10 bp over LA."
+growth_rationale = "3Q26 same-property revenue +1.3% YoY (S-9)."
+
+[[markets]]
+key = "scl"
+name = "Santa Clara"
+units = 10673
+noi_pct = 0.235
+jv_units = 511
+jv_noi_pct = 0.086
+source = "supp"
+page = "S-7"
+cap_rate = 0.0490
+growth = 0.050
+rationale = "Silicon Valley core, strongest growth among large markets; 50 bp inside the East Bay trade."
+growth_rationale = "3Q26 same-property revenue +5.7% YoY (S-9); AI hiring tailwind cited on the 3Q26 call."
+
+[[markets]]
+key = "ala"
+name = "Alameda"
+units = 3970
+noi_pct = 0.066
+jv_units = 1328
+jv_noi_pct = 0.184
+source = "supp"
+page = "S-7"
+cap_rate = 0.0540
+growth = 0.040
+rationale = "East Bay: the 3Q26 acquisition at a mid-5% yield is the direct comp."
+growth_rationale = "3Q26 same-property revenue +4.5% YoY (S-9)."
+
+[[markets]]
+key = "smt"
+name = "San Mateo"
+units = 2483
+noi_pct = 0.057
+jv_units = 195
+jv_noi_pct = 0.037
+source = "supp"
+page = "S-7"
+cap_rate = 0.0485
+growth = 0.055
+rationale = "Peninsula; tight supply and strong growth; in line with Santa Clara."
+growth_rationale = "3Q26 same-property revenue +6.6% YoY (S-9). Excludes the 543-unit 7 South Linden development, valued at cost."
+
+[[markets]]
+key = "cc"
+name = "Contra Costa"
+units = 2619
+noi_pct = 0.047
+jv_units = 0
+jv_noi_pct = 0.0
+source = "supp"
+page = "S-7"
+cap_rate = 0.0540
+growth = 0.030
+rationale = "East Bay suburban; same cap rate as Alameda."
+growth_rationale = "3Q26 same-property revenue +3.0% YoY (S-9)."
+
+[[markets]]
+key = "sf"
+name = "San Francisco"
+units = 1356
+noi_pct = 0.027
+jv_units = 537
+jv_noi_pct = 0.097
+source = "supp"
+page = "S-7"
+cap_rate = 0.0510
+growth = 0.065
+rationale = "Recovering urban market; higher cap for volatility offsets the strongest growth."
+growth_rationale = "3Q26 same-property revenue +8.0% YoY (S-9), the fastest in the portfolio."
+
+[[markets]]
+key = "sea"
+name = "Seattle Metro"
+units = 10823
+noi_pct = 0.165
+jv_units = 1759
+jv_noi_pct = 0.210
+source = "supp"
+page = "S-7"
+cap_rate = 0.0510
+growth = 0.025
+rationale = "Higher supply than California; 10 bp over LA."
+growth_rationale = "3Q26 same-property revenue +1.3% YoY (S-9); Seattle region NOI -0.4% in 3Q26 (S-2); supply easing in 2027."
+
+# ------------------------------------------------------------------------------------------------ debt tranches
+[[debt]]
+key = "ub"
+name = "Unsecured bonds, fixed"
+principal = 5000000
+coupon = 0.037
+years = 6.9
+fixed = 1
+secured = 0
+source = "supp"
+page = "S-5"
+
+[[debt]]
+key = "tlf"
+name = "Term loan, swapped to fixed"
+principal = 600000
+coupon = 0.041
+years = 4.0
+fixed = 0
+secured = 0
+source = "supp"
+page = "S-5"
+note = "Floating loan swapped to 4.1%; loan held at par, swap value is in other assets."
+
+[[debt]]
+key = "tlv"
+name = "Term loan, variable"
+principal = 275000
+coupon = 0.046
+years = 3.0
+fixed = 0
+secured = 0
+source = "supp"
+page = "S-5"
+note = "SOFR + 0.80%, September 2029 maturity (10-Q)."
+
+[[debt]]
+key = "sf"
+name = "Secured mortgages, fixed"
+principal = 505804
+coupon = 0.049
+years = 5.1
+fixed = 1
+secured = 1
+source = "supp"
+page = "S-5"
+
+[[debt]]
+key = "sv"
+name = "Secured mortgages, variable"
+principal = 257954
+coupon = 0.032
+years = 12.5
+fixed = 0
+secured = 1
+source = "supp"
+page = "S-5"
+note = "Tax-exempt, linked to SIFMA; total return swaps convert $258M of fixed mortgages to floating (10-Q)."
+
+# ------------------------------------------------------------------------------------------------ assumptions
+[[assumptions]]
+section = "NAV"
+key = "as_jv_cap_spread"
+label = "Co-investment cap rate spread over the market"
+value = 0.0
+unit = "%"
+rationale = "Co-investments own the same coastal assets as the consolidated book (Wesco, 55% owned, is most of it); no spread until a JV trade says otherwise."
+
+[[assumptions]]
+section = "NAV"
+key = "as_rate_unsec"
+label = "Market rate, unsecured debt"
+value = 0.050
+unit = "%"
+rationale = "Yield on new 7-year BBB+/A- REIT bonds. Calibration: at 5.0% the fixed and swapped debt is worth about $5.7B against $6.1B carrying, matching the 10-Q fair value note ($5.7B)."
+
+[[assumptions]]
+section = "NAV"
+key = "as_rate_sec"
+label = "Market rate, secured and co-investment debt"
+value = 0.050
+unit = "%"
+rationale = "Agency multifamily debt prices near unsecured for Essex; same 5.0%."
+
+[[assumptions]]
+section = "NAV"
+key = "as_other_assets_rec"
+label = "Recovery on prepaid and other assets"
+value = 0.50
+unit = "%"
+rationale = "Reference models haircut other assets 50% to 75%; this line mixes swap assets ($26.5M, real value) with deferred costs (no value)."
+
+[[assumptions]]
+section = "NAV"
+key = "as_other_liab_pct"
+label = "Other liabilities counted"
+value = 1.0
+unit = "%"
+rationale = "Accrued interest, dividends payable and accounts payable are real claims; counted in full."
+
+[[assumptions]]
+section = "NAV"
+key = "as_cip_pct"
+label = "Development and land, % of cost"
+value = 1.0
+unit = "%"
+rationale = "At cost: 7 South Linden does not stabilize until 1Q30 (S-11), so no development profit is credited yet."
+
+[[assumptions]]
+section = "NAV"
+key = "as_pref_pct"
+label = "Preferred equity, % of book"
+value = 1.0
+unit = "%"
+rationale = "10.5% return with 2.1 years left (S-13); book value."
+
+[[assumptions]]
+section = "NAV"
+key = "as_notes_pct"
+label = "Notes receivable, % of book"
+value = 1.0
+unit = "%"
+rationale = "Book. The $64.2M Oakland loan was converted to property after quarter end; challenge if that asset is worth less than the loan."
+
+[[assumptions]]
+section = "NAV"
+key = "as_fee_margin"
+label = "Management platform: margin on fees"
+value = 0.40
+unit = "%"
+rationale = "Fee income less the cost to run the third-party and JV management business; reference models use a margin times multiple."
+
+[[assumptions]]
+section = "NAV"
+key = "as_fee_mult"
+label = "Management platform: multiple of fee profit"
+value = 10.0
+unit = "x"
+rationale = "Low multiple for a small, JV-dependent fee stream."
+
+[[assumptions]]
+section = "NAV"
+key = "as_jv_units_share"
+label = "Co-investment units at Essex share"
+value = 3776
+unit = "units"
+rationale = "S-13: Wesco 5,547 units x 55% + BEX IV 732 x 50% + other 718 x 50%."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_rev_g_2027"
+label = "Same-property revenue growth, 2027E"
+value = 0.0325
+unit = "%"
+rationale = "3Q26 same-property revenue +3.0% (S-9); management cited about 150 bp of earn-in into 2027 and supply down about 20% (3Q26 call)."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_exp_g_2027"
+label = "Same-property expense growth, 2027E"
+value = 0.035
+unit = "%"
+rationale = "3Q26 same-property expenses +1.9% (S-10) was helped by insurance; taxes (Prop 13 at 2%) and utilities (+6.8%) argue for mid-3%."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_rev_g_2028"
+label = "Same-property revenue growth, 2028E"
+value = 0.0325
+unit = "%"
+rationale = "Held at 2027E: low supply on the coast persists."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_exp_g_2028"
+label = "Same-property expense growth, 2028E"
+value = 0.0325
+unit = "%"
+rationale = "Long-run expense growth."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_fee_g"
+label = "Management fee growth"
+value = 0.02
+unit = "%"
+rationale = "Fees track co-investment revenue."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_other_g"
+label = "Interest and other income growth"
+value = 0.0
+unit = "%"
+rationale = "Held flat."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_ga_g"
+label = "G&A, corporate property management and stock comp growth"
+value = 0.03
+unit = "%"
+rationale = "Wage inflation."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_jvffo_adj_2027"
+label = "FFO from co-investments: one-off change, 2027E"
+value = -8900
+unit = "$000"
+rationale = "Wesco swaps on $624.3M at 2.7% expire Dec 2026 and Mar 2027; replacements at 5.3%. 624.3 x 2.6% x 55% = about $8.9M (S-13 and 10-Q). Conservative: treats the whole notional at the new rate."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_jvffo_adj_2028"
+label = "FFO from co-investments: one-off change, 2028E"
+value = 0
+unit = "$000"
+rationale = "None identified."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_refi_rate"
+label = "Rate on refinanced and new debt"
+value = 0.050
+unit = "%"
+rationale = "Same as the unsecured market rate used for the debt mark."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_refi_timing"
+label = "Share of a year's maturities refinanced at mid-year"
+value = 0.5
+unit = "%"
+rationale = "Maturities spread through the year: half the year's cost change lands in that year, the rest the next year."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_int_adj_2027"
+label = "Other interest expense change, 2027E"
+value = 1200
+unit = "$000"
+rationale = "Forward swaps on $300M of the term loan step from 4.1% to about 4.5% after October 2026 (S-5 note 1): about $1.2M."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_int_adj_2028"
+label = "Other interest expense change, 2028E"
+value = 0
+unit = "$000"
+rationale = "None identified."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_acq_amt_2027"
+label = "Net acquisitions, 2027E"
+value = 350000
+unit = "$000"
+rationale = "Essex has bought a few hundred million a year net (3Q26: East Bay, over $200M). Debt funded."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_acq_amt_2028"
+label = "Net acquisitions, 2028E"
+value = 0
+unit = "$000"
+rationale = "No external growth assumed beyond 2027."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_acq_yield"
+label = "Acquisition NOI yield"
+value = 0.055
+unit = "%"
+rationale = "Mid-5% yield on the 3Q26 East Bay purchase (3Q26 call)."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_acq_debt_pct"
+label = "Share of acquisitions funded with debt"
+value = 1.0
+unit = "%"
+rationale = "Shares trade below NAV, so no equity issuance; funded with debt (dispositions would net down the amount)."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_acq_timing"
+label = "Share of the year an acquisition is owned in its first year"
+value = 0.5
+unit = "%"
+rationale = "Mid-year convention."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_share_g"
+label = "Share count growth"
+value = 0.0
+unit = "%"
+rationale = "No issuance below NAV; buybacks not assumed."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_capex_g"
+label = "Recurring capex per unit growth"
+value = 0.03
+unit = "%"
+rationale = "Construction cost inflation. 2026E uses the trailing-four-quarter $2,078 per unit (S-12) grown by this."
+
+[[assumptions]]
+section = "Forecast"
+key = "as_div_g"
+label = "Dividend growth"
+value = 0.01
+unit = "%"
+rationale = "$2.59 vs $2.57 a year earlier (+0.8%, 10-Q)."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_cs_1"
+label = "Cap rate shift 1"
+value = -0.005
+unit = "%"
+rationale = "Sensitivity grid axis."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_cs_2"
+label = "Cap rate shift 2"
+value = -0.0025
+unit = "%"
+rationale = "Sensitivity grid axis."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_cs_3"
+label = "Cap rate shift 3"
+value = 0.0
+unit = "%"
+rationale = "Sensitivity grid axis (base)."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_cs_4"
+label = "Cap rate shift 4"
+value = 0.0025
+unit = "%"
+rationale = "Sensitivity grid axis."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_cs_5"
+label = "Cap rate shift 5"
+value = 0.005
+unit = "%"
+rationale = "Sensitivity grid axis."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_gs_1"
+label = "NOI growth shift 1"
+value = -0.02
+unit = "%"
+rationale = "Sensitivity grid axis."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_gs_2"
+label = "NOI growth shift 2"
+value = -0.01
+unit = "%"
+rationale = "Sensitivity grid axis."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_gs_3"
+label = "NOI growth shift 3"
+value = 0.0
+unit = "%"
+rationale = "Sensitivity grid axis (base)."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_gs_4"
+label = "NOI growth shift 4"
+value = 0.01
+unit = "%"
+rationale = "Sensitivity grid axis."
+
+[[assumptions]]
+section = "Sensitivity"
+key = "as_gs_5"
+label = "NOI growth shift 5"
+value = 0.02
+unit = "%"
+rationale = "Sensitivity grid axis."

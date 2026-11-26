@@ -13,4 +13,5 @@ One file per decision. To change a decision, add a new ADR that supersedes the o
 - [0009](0009-ir-fetcher.md): IR website fetcher: strategy chain, profiles as data, polite crawling
 - [0010](0010-property-master.md): Property master: source records, stable property ids, matching, ownership history
 - [0011](0011-supplemental-parser.md): Supplemental PDF parser, record tables with lineage and quarantine, sector metric catalog
+- [0012](0012-nav-affo-models.md): NAV and AFFO models generated from cited inputs, one formula language for Python and Excel
 - [0013](0013-client-website.md): Client website: Next.js in apps/web, own sign-in, entitlements as rows, separate app schema

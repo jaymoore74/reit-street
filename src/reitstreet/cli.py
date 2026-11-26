@@ -1116,6 +1116,14 @@ def build_parser() -> argparse.ArgumentParser:
     dl.add_argument("--note", default="")
     dl.add_argument("--stage")
     dl.add_argument("--all", action="store_true", help="include resolved and ignored")
+    mo = sp.add_parser(
+        "model",
+        help="build a NAV and AFFO model workbook from an inputs file (no database or network)",
+        description="Build a NAV and AFFO model workbook (.xlsx, live formulas) from a TOML inputs file.",
+    )
+    mo.add_argument("action", choices=["build", "check"], help="build: write the workbook; check: validate only")
+    mo.add_argument("inputs", help="inputs TOML, e.g. src/reitstreet/models/inputs/ess_2026q3.toml")
+    mo.add_argument("--out", help="output .xlsx (default: <TICKER>_nav_affo_<period>.xlsx next to the inputs)")
     dd = cmd("db-docs", cmd_db_docs, "write the data dictionary from the live schema")
     dd.add_argument("--out", default="docs/data-dictionary.md")
     pe = cmd("parse-eval", cmd_parse_eval, "measure the supplemental parser on a folder of PDFs (no database)")
@@ -1189,8 +1197,36 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def cmd_model(a: argparse.Namespace) -> int:
+    """Standalone: needs no config, database or network."""
+    from .models import build_model, load_inputs, write_xlsx
+
+    mi = load_inputs(a.inputs)
+    book = build_model(mi)
+    problems = book.validate(set(mi.sources))
+    if problems:
+        for p in problems:
+            print(f"model check: {p}", file=sys.stderr)
+        return EXIT_CONFIG
+    v = book.evaluate()
+    years = mi.forecast_years
+    print(
+        f"{mi.ticker} {mi.period}: NAV/share ${v['nav_ps']:,.2f}, price ${v['nav_price']:,.2f} "
+        f"({v['nav_prem']:+.1%}), implied cap {v['nav_imp_cap']:.2%}"
+    )
+    print("AFFO/share: " + ", ".join(f"{y}E ${v[f'a_affops_{y}']:,.2f}" for y in years))
+    if a.action == "check":
+        return EXIT_OK
+    out = Path(a.out) if a.out else Path(a.inputs).with_name(f"{mi.ticker.lower()}_nav_affo_{mi.period}.xlsx")
+    write_xlsx(book, out)
+    print(f"wrote {out}")
+    return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     a = build_parser().parse_args(argv)
+    if a.cmd == "model":
+        return cmd_model(a)
     if a.cmd == "dead-letter" and a.action != "list" and a.id is None:
         print("dead-letter show/resolve/ignore needs an id", file=sys.stderr)
         return EXIT_CONFIG
