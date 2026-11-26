@@ -34,7 +34,8 @@ format are the public interface.
   and listed in `ops_parse_quarantine`.
 - Per-company parse overrides (`parse_overrides.csv`, `ref_parse_override`): skip, force kind,
   scale, confidence bar, by title pattern, page range and validity dates.
-- Record tables, bitemporal with full lineage: `wh_property_metric`, `wh_debt_instrument`,
+- Record tables, bitemporal with full lineage: `wh_property_metric` (keyed to the property
+  master's staged records, property id through `wh_property_xref`), `wh_debt_instrument`,
   `wh_lease_expiration`, `wh_tenant_exposure`, `wh_development_project`; `wh_debt_maturity`
   extended (Thereafter and Total buckets, debt type, share of total).
 - Sector metric catalog: `ref_sector` (37 sectors), `ref_company_sector`, `ref_metric_sector`;
@@ -54,7 +55,7 @@ format are the public interface.
   quarantined items are excluded from the metric build.
 - New dependency: pdfplumber 0.11.11 (MIT) with pdfminer.six, pypdfium2, Pillow pinned in
   `constraints.txt`.
-- Migration 0005.
+- Migration 0005 (after 0004). Supplemental property rows are staged in `stg_property_record`.
 
 ## [0.3.0] - 2026-11-26
 

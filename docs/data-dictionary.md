@@ -221,12 +221,16 @@ Table. Immutable content-addressed objects. Never updated or deleted by the pipe
 - [`ref_company_name_history`](#ref_company_name_history): Former company names from SEC submissions.
 - [`ref_company_sector`](#ref_company_sector): Sectors each company invests in. Drives which metrics are relevant for it.
 - [`ref_company_ticker_history`](#ref_company_ticker_history): Tickers over time, so old client files still resolve after a ticker change.
+- [`ref_geocode_cache`](#ref_geocode_cache): Geocoder answers per normalized address, so each address is geocoded once.
 - [`ref_ir_profile`](#ref_ir_profile): How each company IR site is fetched. Seeded from reference/data/ir_profiles.csv.
 - [`ref_ir_source`](#ref_ir_source): IR website, supplemental and alert-signup URLs per company. Input to the IR fetcher and inbox.
 - [`ref_metric`](#ref_metric): Standard REIT metric dictionary. Seeded from src/reitstreet/reference/data/metrics.csv.
 - [`ref_metric_map`](#ref_metric_map): Rules mapping XBRL tags and supplemental row labels to metrics. Mappings are data, not code.
 - [`ref_metric_sector`](#ref_metric_sector): Sector metric catalog: which metrics matter for which sector. Seeded from reference/data/metric_sectors.csv.
 - [`ref_parse_override`](#ref_parse_override): Per-company supplemental parsing rules. Rules are data, so fixing one REIT never changes code.
+- [`ref_property_source`](#ref_property_source): Source map: where each REIT lists its properties. Seeded from reference/data/property_sources.csv.
+- [`ref_property_type`](#ref_property_type): Property types and their sectors. Seeded from reference/data/property_types.csv.
+- [`ref_property_type_map`](#ref_property_type_map): Rules mapping reported property type text to ref_property_type. Seeded from reference/data/property_type_map.csv.
 - [`ref_sector`](#ref_sector): Property sectors. Seeded from reference/data/sectors.csv.
 - [`ref_web_host`](#ref_web_host): robots.txt state per web host, refreshed by the IR fetcher (default every 24 hours).
 
@@ -293,6 +297,25 @@ Table. Tickers over time, so old client files still resolve after a ticker chang
 | `exchange` | varchar(32) | YES |  | Exchange for that ticker |
 | `first_seen` | date | NO |  | First date we saw it |
 | `last_seen` | date | NO |  | Most recent date we saw it |
+
+### ref_geocode_cache
+
+Table. Geocoder answers per normalized address, so each address is geocoded once.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `address_key` | char(64) | NO | PRI | Hash of the normalized address (see properties.normalize.address_key) |
+| `input_address` | varchar(512) | NO |  | Address sent to the geocoder |
+| `provider` | varchar(32) | NO |  | Geocoder, e.g. census |
+| `status` | enum('match','no_match','tie','error') | NO | MUL | Geocoder answer |
+| `match_type` | varchar(16) | YES |  | Exact or Non_Exact (Census) |
+| `matched_address` | varchar(512) | YES |  | Address the geocoder matched |
+| `latitude` | decimal(9,6) | YES |  | Latitude (WGS84) |
+| `longitude` | decimal(9,6) | YES |  | Longitude (WGS84) |
+| `precision_level` | enum('rooftop','street','zip','city','none') | NO |  | How precise the point is |
+| `provider_ref` | varchar(64) | YES |  | Provider id of the matched feature (Census TIGER line id) |
+| `raw_sha256` | char(64) | YES |  | Raw object with the provider response |
+| `geocoded_at` | datetime(6) | NO |  | UTC time of the answer |
 
 ### ref_ir_profile
 
@@ -416,6 +439,57 @@ Table. Per-company supplemental parsing rules. Rules are data, so fixing one REI
 | `notes` | varchar(512) | YES |  | Why the rule exists |
 | `updated_at` | datetime(6) | NO |  | Last change (UTC) |
 
+### ref_property_source
+
+Table. Source map: where each REIT lists its properties. Seeded from reference/data/property_sources.csv.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `source_row_id` | int unsigned | NO | PRI | Surrogate key |
+| `company_id` | int unsigned | NO | MUL | Company |
+| `source_kind` | enum('sec_schedule_iii','supplemental','corporate_website','public_dataset','manual') | NO |  | Kind of source |
+| `lists_properties` | enum('yes','partial','no','unknown') | NO |  | yes: one row per property; partial: some properties or segments only; no: not at property level |
+| `status` | enum('active','candidate','not_available','blocked','unknown') | NO |  | active: a loader runs it; candidate: found, no loader yet; not_available: source does not list properties; blocked: site refuses us |
+| `list_url` | varchar(2048) | YES |  | Page or file that lists the properties (website and dataset sources) |
+| `list_url_hash` | char(64) (generated) | YES |  | Hash of list_url, for uniqueness |
+| `list_format` | enum('xbrl','html_table','html_cards','json','csv','xlsx','pdf','map_only','unknown') | NO |  | How the list is published (html_table, json, csv and xlsx have a loader) |
+| `records_path` | varchar(255) | YES |  | JSON: dotted path to the list; HTML: table index (default the largest); XLSX: sheet name |
+| `field_map` | varchar(1024) | YES |  | JSON object: record field to source column; empty = guess from headers |
+| `detail` | varchar(32) | YES |  | Schedule III detail level: individual, by_market, mixed, unknown |
+| `approx_property_count` | int unsigned | YES |  | Property count the company states, for coverage checks |
+| `count_unit` | varchar(32) | YES |  | Unit of approx_property_count (properties, communities, hotels, towers...) |
+| `checked_date` | date | YES |  | When the source map row was last researched |
+| `notes` | varchar(1024) | YES |  | Research notes |
+| `profile_source` | varchar(255) | YES |  | Seed file and hash this row came from |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
+### ref_property_type
+
+Table. Property types and their sectors. Seeded from reference/data/property_types.csv.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `type_code` | varchar(32) | NO | PRI | Stable type code, e.g. apartment, senior_housing, net_lease_retail |
+| `sector` | varchar(32) | NO |  | Sector the type rolls up to, e.g. residential, healthcare, retail |
+| `name` | varchar(64) | NO |  | Display name |
+| `default_unit_kind` | enum('sf','units','beds','keys','sites','acres','towers','screens','mw','other') | YES |  | Usual size unit for the type (sf, units, beds, keys, sites, acres...) |
+| `description` | varchar(512) | YES |  | What belongs in the type |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
+### ref_property_type_map
+
+Table. Rules mapping reported property type text to ref_property_type. Seeded from reference/data/property_type_map.csv.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `rule_id` | smallint unsigned | NO | PRI | Surrogate key |
+| `rule_key` | varchar(64) | NO | UNI | Stable key from the seed file |
+| `pattern` | varchar(255) | NO |  | Case-insensitive regular expression on the reported type, name or sector text |
+| `type_code` | varchar(32) | NO | MUL | Type assigned when the pattern matches |
+| `priority` | smallint | NO |  | Lower runs first; first match wins |
+| `applies_to` | enum('type','name','company_sector') | NO |  | Which text the pattern is tested against |
+| `notes` | varchar(255) | YES |  | Why the rule exists |
+
 ### ref_sector
 
 Table. Property sectors. Seeded from reference/data/sectors.csv.
@@ -450,6 +524,7 @@ Table. robots.txt state per web host, refreshed by the IR fetcher (default every
 - [`stg_doc_table`](#stg_doc_table): Tables found in parsed documents.
 - [`stg_document`](#stg_document): Every supplemental, earnings release and other document from every source, one registry.
 - [`stg_ir_link`](#stg_ir_link): Every document link seen on a company IR site. New supplemental links are downloaded.
+- [`stg_property_record`](#stg_property_record): Every property row any source gave us: one per property per source per as-of date, faithful to the source, with lineage.
 - [`stg_sec_filing`](#stg_sec_filing): Every SEC filing of every tracked company, from data.sec.gov submissions.
 - [`stg_sec_filing_document`](#stg_sec_filing_document): Documents listed on EDGAR filing index pages (earnings 8-Ks, 10-Ks, 10-Qs).
 - [`stg_xbrl_concept`](#stg_xbrl_concept): XBRL concepts seen in companyfacts.
@@ -614,6 +689,72 @@ Table. Every document link seen on a company IR site. New supplemental links are
 | `last_seen_at` | datetime(6) | NO |  | UTC time last seen on the page |
 | `first_run_id` | bigint unsigned | YES |  | Run that first saw it |
 
+### stg_property_record
+
+Table. Every property row any source gave us: one per property per source per as-of date, faithful to the source, with lineage.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `record_id` | bigint unsigned | NO | PRI | Surrogate key; supplemental property metrics key to this |
+| `record_key` | char(64) | NO | UNI | Hash of company, source, source locator, as-of date and row identity; reloads are idempotent on it |
+| `company_id` | int unsigned | NO | MUL | Company whose list this row came from |
+| `source_kind` | enum('sec_schedule_iii','supplemental','corporate_website','public_dataset','manual') | NO |  | Kind of source |
+| `source_row_id` | int unsigned | YES |  | ref_property_source row, when the source is in the source map |
+| `source_doc_id` | bigint unsigned | YES | MUL | stg_document row (supplementals) |
+| `source_parse_id` | bigint unsigned | YES |  | stg_doc_parse row (supplementals) |
+| `source_table_id` | bigint unsigned | YES |  | stg_doc_table row (supplementals) |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+| `source_row_index` | int unsigned | YES |  | Row position in the source table or list, 1-based |
+| `source_sha256` | char(64) | YES |  | Raw object the row was read from |
+| `source_url` | varchar(2048) | YES |  | URL the row was read from |
+| `accession_no` | char(20) | YES |  | SEC filing (Schedule III) |
+| `as_of_date` | date | NO |  | Date the list describes (balance sheet date, page date for websites) |
+| `known_from` | date | NO |  | Knowledge time: when the market could know it (filing or publication date, or fetch date) |
+| `source_property_ref` | varchar(255) | YES |  | The source's own identifier for the row (XBRL member, website id, property code) |
+| `name` | varchar(255) | YES |  | Property name as reported |
+| `address_line` | varchar(255) | YES |  | Street address as reported |
+| `city` | varchar(128) | YES |  | City |
+| `state` | varchar(64) | YES |  | State or province (2-letter for the US when known) |
+| `postal_code` | varchar(16) | YES |  | Postal code |
+| `country` | char(2) | YES |  | ISO country code |
+| `market` | varchar(128) | YES |  | Market, MSA or region as reported |
+| `raw_property_type` | varchar(128) | YES |  | Property type text as reported |
+| `type_code` | varchar(32) | YES | MUL | ref_property_type code from ref_property_type_map rules |
+| `rentable_sf` | decimal(16,2) | YES |  | Rentable square feet |
+| `unit_count` | decimal(14,2) | YES |  | Size in unit_kind (apartment units, beds, keys, sites, acres...) |
+| `unit_kind` | enum('sf','units','beds','keys','sites','acres','towers','screens','mw','other') | YES |  | Unit of unit_count |
+| `land_acres` | decimal(14,3) | YES |  | Land area in acres |
+| `year_built` | smallint unsigned | YES |  | Year built (first year when a range is reported) |
+| `year_renovated` | smallint unsigned | YES |  | Latest renovation year |
+| `acquired_date` | date | YES |  | Acquisition date as reported (first day of the year when only a year is given) |
+| `acquired_text` | varchar(64) | YES |  | Acquisition date text as printed, e.g. 2004/2016 |
+| `disposed_date` | date | YES |  | Disposition date as reported |
+| `ownership_pct` | decimal(7,4) | YES |  | Company share of the property, percent |
+| `interest_type` | enum('fee','ground_lease','leasehold','joint_venture','mortgage','unknown') | YES |  | Fee, ground lease, leasehold, joint venture, mortgage |
+| `occupancy_pct` | decimal(7,4) | YES |  | Occupancy percent as reported with the list |
+| `encumbrances` | decimal(20,2) | YES |  | Schedule III: encumbrances, USD |
+| `initial_cost_land` | decimal(20,2) | YES |  | Schedule III: initial cost of land, USD |
+| `initial_cost_bldg` | decimal(20,2) | YES |  | Schedule III: initial cost of buildings and improvements, USD |
+| `costs_capitalized` | decimal(20,2) | YES |  | Schedule III: costs capitalized after acquisition, USD |
+| `gross_land` | decimal(20,2) | YES |  | Schedule III: gross amount carried, land, USD |
+| `gross_bldg` | decimal(20,2) | YES |  | Schedule III: gross amount carried, buildings and improvements, USD |
+| `gross_total` | decimal(20,2) | YES |  | Schedule III: gross amount carried, total, USD |
+| `accum_depreciation` | decimal(20,2) | YES |  | Schedule III: accumulated depreciation, USD |
+| `is_aggregate` | tinyint(1) | NO |  | 1 when the row stands for several properties (market, type or other totals); never becomes a property |
+| `aggregate_count` | int unsigned | YES |  | Properties the aggregate row stands for, when stated |
+| `latitude` | decimal(9,6) | YES |  | Latitude as reported by the source |
+| `longitude` | decimal(9,6) | YES |  | Longitude as reported by the source |
+| `attributes` | json | YES |  | Sector-specific attributes as reported (e.g. tenant, brand, operator, care mix, MW) |
+| `norm_name` | varchar(255) | YES |  | Normalized name used for matching |
+| `norm_address` | varchar(255) | YES |  | Normalized street address used for matching |
+| `address_key` | char(64) | YES | MUL | Hash of normalized street and ZIP (or city and state); NULL without a street address |
+| `loader` | varchar(64) | NO |  | Loader or parser that produced the row |
+| `loader_version` | varchar(16) | NO |  | Its version |
+| `run_id` | bigint unsigned | YES |  | Job run that loaded it |
+| `created_at` | datetime(6) | NO |  | System time inserted |
+| `retired_at` | datetime(6) | YES |  | System time a newer load of the same source replaced it; NULL = live |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
+
 ### stg_sec_filing
 
 Table. Every SEC filing of every tracked company, from data.sec.gov submissions.
@@ -705,9 +846,12 @@ Table. One row per value per reporting filing. Restatements are new rows, never 
 - [`wh_lease_expiration`](#wh_lease_expiration): Lease expiration schedules from supplementals.
 - [`wh_metric_latest`](#wh_metric_latest) (view): VIEW
 - [`wh_metric_value`](#wh_metric_value): Curated metric values, bitemporal: valid time (period), knowledge time (known_from/to) and system time (recorded/retired). Rows are retired, never deleted.
-- [`wh_property`](#wh_property): Property master, filled by the supplemental parser.
+- [`wh_property`](#wh_property): Property master: one row per real property, stable ids, canonical attributes chosen by source priority.
+- [`wh_property_alias`](#wh_property_alias): Every name, address and source reference seen for a property, so later records match it.
 - [`wh_property_metric`](#wh_property_metric): Per-property figures from supplementals (size, occupancy, rent, NOI, RevPAR ...), bitemporal, with lineage to page and row.
+- [`wh_property_ownership`](#wh_property_ownership): Ownership spells: which REIT owned which property when, with system time like wh_metric_value.
 - [`wh_property_snapshot`](#wh_property_snapshot): Property figures per reporting date, with lineage to page and cell.
+- [`wh_property_xref`](#wh_property_xref): Record to property links with method, score and review status. Manual links survive rebuilds.
 - [`wh_tenant_exposure`](#wh_tenant_exposure): Top tenant, customer and operator concentration from supplementals.
 
 ### wh_debt_instrument
@@ -927,25 +1071,57 @@ Table. Curated metric values, bitemporal: valid time (period), knowledge time (k
 
 ### wh_property
 
-Table. Property master, filled by the supplemental parser.
+Table. Property master: one row per real property, stable ids, canonical attributes chosen by source priority.
 
 | Column | Type | Null | Key | Description |
 |---|---|---|---|---|
-| `property_id` | bigint unsigned | NO | PRI | Surrogate key |
-| `company_id` | int unsigned | NO | MUL | Current owner |
-| `property_key` | char(64) | NO |  | Hash of normalized name and address, for matching across documents |
-| `name` | varchar(255) | NO |  | Property name as reported |
-| `address` | varchar(255) | YES |  | Street address |
+| `property_id` | bigint unsigned | NO | PRI | Stable property id: assigned once, never reused, survives sales between REITs |
+| `status` | enum('active','inactive','merged') | NO |  | active: owned by a tracked REIT now; inactive: no current owner in the universe; merged: duplicate, see merged_into_property_id |
+| `merged_into_property_id` | bigint unsigned | YES | MUL | Survivor when this row was found to duplicate another |
+| `owner_company_id` | int unsigned | YES | MUL | Largest current owner (denormalized from wh_property_ownership) |
+| `name` | varchar(255) | YES |  | Canonical name (highest-priority, newest source) |
+| `address_line` | varchar(255) | YES |  | Canonical street address |
 | `city` | varchar(128) | YES |  | City |
-| `state` | varchar(64) | YES |  | State or province |
+| `state` | varchar(64) | YES | MUL | State or province |
 | `postal_code` | varchar(16) | YES |  | Postal code |
 | `country` | char(2) | YES |  | ISO country code |
 | `market` | varchar(128) | YES |  | Market or MSA as reported |
-| `property_type` | varchar(64) | YES |  | Property type |
-| `latitude` | decimal(9,6) | YES |  | Latitude |
-| `longitude` | decimal(9,6) | YES |  | Longitude |
-| `first_doc_id` | bigint unsigned | YES |  | Document where first seen |
+| `type_code` | varchar(32) | YES | MUL | Property type |
+| `sector` | varchar(32) | YES |  | Sector of the type |
+| `rentable_sf` | decimal(16,2) | YES |  | Latest rentable square feet |
+| `unit_count` | decimal(14,2) | YES |  | Latest size in unit_kind |
+| `unit_kind` | enum('sf','units','beds','keys','sites','acres','towers','screens','mw','other') | YES |  | Unit of unit_count |
+| `land_acres` | decimal(14,3) | YES |  | Land area in acres |
+| `year_built` | smallint unsigned | YES |  | Year built |
+| `latitude` | decimal(9,6) | YES |  | Latitude (WGS84) |
+| `longitude` | decimal(9,6) | YES |  | Longitude (WGS84) |
+| `geo_precision` | enum('rooftop','street','zip','city','reported','none') | NO |  | Precision of the point |
+| `geo_source` | varchar(32) | YES |  | Where the point came from: census, source, manual |
+| `address_key` | char(64) | YES | MUL | Hash of the canonical normalized address |
+| `first_seen` | date | YES |  | Earliest as-of date of any linked record |
+| `last_seen` | date | YES |  | Latest as-of date of any linked record |
+| `n_records` | int unsigned | NO |  | Live records linked to it |
+| `n_source_kinds` | tinyint unsigned | NO |  | Distinct source kinds that list it (more = better confirmed) |
+| `attr_hash` | char(64) | YES |  | Hash of the canonical attributes; a rebuild updates the row only when it changes |
+| `created_run_id` | bigint unsigned | YES |  | Build run that created the id |
 | `created_at` | datetime(6) | NO |  | Row creation (UTC) |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
+### wh_property_alias
+
+Table. Every name, address and source reference seen for a property, so later records match it.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `property_id` | bigint unsigned | NO | PRI | Property |
+| `alias_type` | enum('name','address','source_ref') | NO | PRI | What the alias is |
+| `alias_norm` | varchar(255) | NO |  | Normalized alias used for matching |
+| `alias_hash` | char(64) (generated) | NO | PRI | Hash of alias_norm, for the key |
+| `alias_value` | varchar(512) | NO |  | Alias as first reported |
+| `company_id` | int unsigned | YES |  | Company whose source used it |
+| `source_kind` | enum('sec_schedule_iii','supplemental','corporate_website','public_dataset','manual') | NO | PRI | Source kind that used it |
+| `first_seen` | date | NO |  | Earliest as-of date it was used |
+| `last_seen` | date | NO |  | Latest as-of date it was used |
 
 ### wh_property_metric
 
@@ -955,8 +1131,8 @@ Table. Per-property figures from supplementals (size, occupancy, rent, NOI, RevP
 |---|---|---|---|---|
 | `property_metric_id` | bigint unsigned | NO | PRI | Surrogate key |
 | `company_id` | int unsigned | NO | MUL | Reporting company |
-| `property_id` | bigint unsigned | YES | MUL | Property master row once matched; NULL until the property is matched |
-| `property_key` | char(64) | NO |  | Hash of normalized name, city and state, for matching |
+| `property_record_id` | bigint unsigned | YES | MUL | stg_property_record row for this property in this document; the property master links it to a property_id through wh_property_xref |
+| `property_key` | char(64) | NO |  | Hash of company-normalized name, city and state; the version key across documents |
 | `property_name` | varchar(255) | NO |  | Property name as printed |
 | `city` | varchar(128) | YES |  | City as printed |
 | `state` | varchar(64) | YES |  | State as printed |
@@ -982,6 +1158,32 @@ Table. Per-property figures from supplementals (size, occupancy, rent, NOI, RevP
 | `retired_run_id` | bigint unsigned | YES |  | Build run that retired it |
 | `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
 
+### wh_property_ownership
+
+Table. Ownership spells: which REIT owned which property when, with system time like wh_metric_value.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `ownership_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `property_id` | bigint unsigned | NO | MUL | Property |
+| `company_id` | int unsigned | NO | MUL | Owner |
+| `spell_no` | smallint unsigned | NO |  | 1 for the first period of ownership, 2+ if the company sold and bought it back |
+| `ownership_pct` | decimal(7,4) | YES |  | Latest reported share, percent (NULL = not reported, usually 100) |
+| `interest_type` | enum('fee','ground_lease','leasehold','joint_venture','mortgage','unknown') | YES |  | Latest reported interest type |
+| `acquired_date` | date | YES |  | Start of ownership |
+| `acquired_basis` | enum('reported','first_seen') | NO |  | reported by a source, or the first as-of date it was listed |
+| `disposed_date` | date | YES |  | End of ownership; NULL = still owned |
+| `disposed_basis` | enum('reported','not_listed') | YES |  | reported by a source, or the first complete list from the same source that no longer had it |
+| `first_seen_as_of` | date | NO |  | Earliest as-of date the company listed it |
+| `last_seen_as_of` | date | NO |  | Latest as-of date the company listed it |
+| `known_from` | date | NO |  | Knowledge time: first publication of the spell |
+| `last_record_id` | bigint unsigned | NO |  | Newest record behind the spell |
+| `row_hash` | char(64) | NO |  | Hash of the spell; equal hash = identical row |
+| `recorded_at` | datetime(6) | NO |  | System time inserted |
+| `recorded_run_id` | bigint unsigned | YES |  | Build run that inserted it |
+| `retired_at` | datetime(6) | YES |  | System time a rebuild replaced it; NULL = live |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
+
 ### wh_property_snapshot
 
 Table. Property figures per reporting date, with lineage to page and cell.
@@ -1002,6 +1204,25 @@ Table. Property figures per reporting date, with lineage to page and cell.
 | `source_page_no` | int unsigned | YES |  | Source page |
 | `recorded_at` | datetime(6) | NO |  | System time inserted |
 | `retired_at` | datetime(6) | YES |  | System time replaced; NULL = live |
+
+### wh_property_xref
+
+Table. Record to property links with method, score and review status. Manual links survive rebuilds.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `xref_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `record_id` | bigint unsigned | NO | MUL | Source record |
+| `property_id` | bigint unsigned | NO | MUL | Property it was matched to |
+| `method` | enum('source_ref','address','name_city','geo','new','manual') | NO |  | Rule that made the link (new = no match, a property was created) |
+| `score` | decimal(5,4) | NO |  | Match strength 0..1 |
+| `review_status` | enum('auto','needs_review','confirmed','rejected') | NO | MUL | needs_review: close call, see candidates; confirmed or rejected by a person |
+| `candidates` | json | YES |  | Other properties considered, with scores, for review |
+| `matcher_version` | varchar(16) | NO |  | Matcher version |
+| `run_id` | bigint unsigned | YES |  | Build run |
+| `matched_at` | datetime(6) | NO |  | System time linked |
+| `retired_at` | datetime(6) | YES |  | System time the link was replaced (re-match or merge); NULL = live |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
 
 ### wh_tenant_exposure
 
@@ -1052,6 +1273,7 @@ Table. Top tenant, customer and operator concentration from supplementals.
 - [`dl_metric_catalog`](#dl_metric_catalog) (view): VIEW
 - [`dl_metrics`](#dl_metrics) (view): VIEW
 - [`dl_metrics_history`](#dl_metrics_history) (view): VIEW
+- [`dl_properties`](#dl_properties) (view): VIEW
 - [`dl_property_metrics`](#dl_property_metrics) (view): VIEW
 - [`dl_top_tenants`](#dl_top_tenants) (view): VIEW
 
@@ -1294,6 +1516,42 @@ View.
 | `source_page_no` | int unsigned | YES |  | Page in the source document |
 | `value_id` | bigint unsigned | NO |  | Surrogate key |
 
+### dl_properties
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `property_id` | bigint unsigned | NO |  | Stable property id: assigned once, never reused, survives sales between REITs |
+| `name` | varchar(255) | YES |  | Canonical name (highest-priority, newest source) |
+| `address_line` | varchar(255) | YES |  | Canonical street address |
+| `city` | varchar(128) | YES |  | City |
+| `state` | varchar(64) | YES |  | State or province |
+| `postal_code` | varchar(16) | YES |  | Postal code |
+| `country` | char(2) | YES |  | ISO country code |
+| `market` | varchar(128) | YES |  | Market or MSA as reported |
+| `type_code` | varchar(32) | YES |  | Property type |
+| `sector` | varchar(32) | YES |  | Sector of the type |
+| `rentable_sf` | decimal(16,2) | YES |  | Latest rentable square feet |
+| `unit_count` | decimal(14,2) | YES |  | Latest size in unit_kind |
+| `unit_kind` | enum('sf','units','beds','keys','sites','acres','towers','screens','mw','other') | YES |  | Unit of unit_count |
+| `land_acres` | decimal(14,3) | YES |  | Land area in acres |
+| `year_built` | smallint unsigned | YES |  | Year built |
+| `latitude` | decimal(9,6) | YES |  | Latitude (WGS84) |
+| `longitude` | decimal(9,6) | YES |  | Longitude (WGS84) |
+| `geo_precision` | enum('rooftop','street','zip','city','reported','none') | NO |  | Precision of the point |
+| `status` | enum('active','inactive','merged') | NO |  | active: owned by a tracked REIT now; inactive: no current owner in the universe; merged: duplicate, see merged_into_property_id |
+| `owner_ticker` | varchar(16) | YES |  | Current primary ticker |
+| `owner_cik` | int unsigned | NO |  | SEC Central Index Key (permanent company id) |
+| `ownership_pct` | decimal(7,4) | YES |  | Latest reported share, percent (NULL = not reported, usually 100) |
+| `interest_type` | enum('fee','ground_lease','leasehold','joint_venture','mortgage','unknown') | YES |  | Latest reported interest type |
+| `acquired_date` | date | YES |  | Start of ownership |
+| `acquired_basis` | enum('reported','first_seen') | NO |  | reported by a source, or the first as-of date it was listed |
+| `first_seen` | date | YES |  | Earliest as-of date of any linked record |
+| `last_seen` | date | YES |  | Latest as-of date of any linked record |
+| `n_source_kinds` | tinyint unsigned | NO |  | Distinct source kinds that list it (more = better confirmed) |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
 ### dl_property_metrics
 
 View.
@@ -1301,7 +1559,8 @@ View.
 | Column | Type | Null | Key | Description |
 |---|---|---|---|---|
 | `ticker` | varchar(16) | YES |  | Current primary ticker |
-| `property_id` | bigint unsigned | YES |  | Property master row once matched; NULL until the property is matched |
+| `property_id` | bigint unsigned | YES |  | Property it was matched to |
+| `property_record_id` | bigint unsigned | YES |  | stg_property_record row for this property in this document; the property master links it to a property_id through wh_property_xref |
 | `property_name` | varchar(255) | NO |  | Property name as printed |
 | `city` | varchar(128) | YES |  | City as printed |
 | `state` | varchar(64) | YES |  | State as printed |

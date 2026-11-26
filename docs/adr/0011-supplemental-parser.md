@@ -49,10 +49,16 @@ this parser does not write it.
    `wh_property_metric` hold one row per schedule line, versioned like `wh_metric_value`
    (known_from / known_to from publication dates, retired rows kept, `row_hash` diffing
    so a rebuild is idempotent) with full lineage to file hash, page, table and record.
-7. **Property facts key to the property master, not into it.** `wh_property_metric` keys a
-   property by a hash of normalized name, city and state (`property_key`) and fills
-   `property_id` when `wh_property` has a row with that key for the company. Matching,
-   merging and history of properties stay with ADR 0010.
+7. **Property facts key to the property master's records, not into the master.** Each
+   property row of a supplemental is staged in `stg_property_record` (source kind
+   `supplemental`, with doc, parse, table, page, row and file hash) through the property
+   master's `stage_records`, and `wh_property_metric.property_record_id` points at that
+   record. The stable `property_id` comes through `wh_property_xref` after
+   `build-properties`, so `dl_property_metrics` shows it as soon as a match exists and a
+   re-match never rewrites a figure. Versions are keyed by company, a hash of normalized
+   name, city and state (`property_key`), metric and date, so a later document restating
+   the same figure does not start a new version. Matching, merging and history of
+   properties stay with ADR 0010; this parser never writes `wh_property`.
 8. **Sector metric catalog.** `ref_sector` (37 sectors under equity and mortgage),
    `ref_company_sector` (from the universe's sector label through
    `sector_labels.csv`, manual rows kept), and `ref_metric_sector` (each metric's
@@ -81,8 +87,6 @@ this parser does not write it.
   scope for this decision.
 - Guidance ranges (low, high) are read as items but not yet mapped to metrics; that needs
   its own period semantics (a forecast is not a fact) and will get its own ADR.
-- `wh_property_metric.property_id` changes when the property master learns a new match;
-  the row is retired and reinserted like any other change, so history shows when the
-  link was made.
-- The migration is revision 0005 after 0003. If the property master migration (0004)
-  merges first, 0005's `down_revision` moves to 0004; the two touch different tables.
+- A property's id can change when the property master re-matches or merges it; the figure
+  rows stay as they are and the view follows the live link in `wh_property_xref`.
+- The migration is revision 0005 after the property master's 0004, so #3 merges first.

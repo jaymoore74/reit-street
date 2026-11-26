@@ -10,17 +10,16 @@ ref_parse_override per-company parsing rules (skip a table, force its kind, set 
 stg_doc_record     one row per row of a property, tenant, development, debt or lease
                    expiration table, typed fields in JSON, with page and position.
 wh_*               typed, bitemporal tables built from those records, plus
-                   wh_property_metric for per-property figures. wh_property (the
-                   property master) is not changed here: it belongs to the property
-                   master work, and wh_property_metric links to it by property_id when
-                   a property is matched (NULL until then; the raw name, city and state
-                   are kept so matching can happen later).
-
-Revision 0005 follows 0003. The property master migration (0004) is developed in
-parallel; whichever merges second points its down_revision at the other.
+                   wh_property_metric for per-property figures. The property master
+                   (0004, ADR 0010) is not changed here: each property row of a
+                   supplemental is staged in stg_property_record through
+                   reitstreet.properties.records.stage_records, and wh_property_metric
+                   keys to that record_id. The stable property_id comes through
+                   wh_property_xref after build-properties, so a re-match never
+                   rewrites a figure.
 
 Revision ID: 0005
-Revises: 0003
+Revises: 0004
 Create Date: 2026-11-26
 """
 
@@ -29,7 +28,7 @@ from __future__ import annotations
 from alembic import op
 
 revision = "0005"
-down_revision = "0003"
+down_revision = "0004"
 branch_labels = None
 depends_on = None
 
@@ -152,8 +151,8 @@ CREATE TABLE stg_doc_record (
 CREATE TABLE wh_property_metric (
   property_metric_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Surrogate key',
   company_id        INT UNSIGNED NOT NULL COMMENT 'Reporting company',
-  property_id       BIGINT UNSIGNED NULL COMMENT 'Property master row once matched; NULL until the property is matched',
-  property_key      CHAR(64) NOT NULL COMMENT 'Hash of normalized name, city and state, for matching',
+  property_record_id BIGINT UNSIGNED NULL COMMENT 'stg_property_record row for this property in this document; the property master links it to a property_id through wh_property_xref',
+  property_key      CHAR(64) NOT NULL COMMENT 'Hash of company-normalized name, city and state; the version key across documents',
   property_name     VARCHAR(255) NOT NULL COMMENT 'Property name as printed',
   city              VARCHAR(128) NULL COMMENT 'City as printed',
   state             VARCHAR(64) NULL COMMENT 'State as printed',
@@ -167,10 +166,10 @@ CREATE TABLE wh_property_metric (
   PRIMARY KEY (property_metric_id),
   UNIQUE KEY uq_hash_live (row_hash, is_live),
   KEY ix_company (company_id, as_of_date),
-  KEY ix_property (property_id, metric_id, as_of_date),
+  KEY ix_record (property_record_id),
   KEY ix_key (company_id, property_key),
   CONSTRAINT fk_pm_company FOREIGN KEY (company_id) REFERENCES ref_company (company_id),
-  CONSTRAINT fk_pm_property FOREIGN KEY (property_id) REFERENCES wh_property (property_id),
+  CONSTRAINT fk_pm_record FOREIGN KEY (property_record_id) REFERENCES stg_property_record (record_id),
   CONSTRAINT fk_pm_metric FOREIGN KEY (metric_id) REFERENCES ref_metric (metric_id)
 ) {T} COMMENT='Per-property figures from supplementals (size, occupancy, rent, NOI, RevPAR ...), bitemporal, with lineage to page and row.'""",
     ),
@@ -414,13 +413,14 @@ LEFT JOIN stg_document d ON d.doc_id = v.source_doc_id""",
         "dl_property_metrics",
         """
 CREATE OR REPLACE SQL SECURITY INVOKER VIEW dl_property_metrics AS
-SELECT c.ticker, x.property_id, x.property_name, x.city, x.state, x.market, x.property_type, m.metric_code,
+SELECT c.ticker, px.property_id, x.property_record_id, x.property_name, x.city, x.state, x.market, x.property_type, m.metric_code,
        m.name AS metric_name, x.as_of_date, x.value, x.unit, x.known_from AS published_date, x.confidence,
        d.source_url AS source_document_url, x.source_page_no, x.property_metric_id
 FROM wh_property_metric x
 JOIN ref_company c ON c.company_id = x.company_id
 JOIN ref_metric m ON m.metric_id = x.metric_id
 JOIN stg_document d ON d.doc_id = x.source_doc_id
+LEFT JOIN wh_property_xref px ON px.record_id = x.property_record_id AND px.is_live = 1
 WHERE x.retired_at IS NULL AND x.known_to IS NULL""",
     ),
     (

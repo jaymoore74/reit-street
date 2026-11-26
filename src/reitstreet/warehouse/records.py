@@ -16,9 +16,11 @@ full desired set of rows for a company from the current parse of each document a
 diffs it against the live rows by row_hash, so a rebuild with no upstream change writes
 nothing and a parser fix retires the old rows instead of deleting them.
 
-Quarantined records never reach these tables. Property rows link to the property master
-(wh_property) only when a property with the same key already exists; this module never
-creates or edits properties.
+Quarantined records never reach these tables. Each property row is also staged in
+stg_property_record (source_kind 'supplemental') through the property master's
+stage_records, and wh_property_metric keys to that record_id; the stable property_id
+comes through wh_property_xref once build-properties has matched it (ADR 0010, 0011).
+This module never writes wh_property.
 """
 
 from __future__ import annotations
@@ -34,6 +36,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from ..core.db import Db, in_clause
+from ..properties.records import PropertyRecord, stage_records
 from .metrics import UNIT_FOR_TYPE
 from .periods import build_versions
 
@@ -76,6 +79,7 @@ class Target:
     kinds: tuple[str, ...]
     key: tuple[str, ...]  # natural key within a company: one version chain per key
     values: tuple[str, ...]  # columns that, when changed by a later document, start a new version
+    links: tuple[str, ...] = ()  # stored with the version's first observation, never start a new version
 
 
 TARGETS = (
@@ -84,7 +88,8 @@ TARGETS = (
         "property_metric_id",
         ("property",),
         ("property_key", "metric_id", "as_of_date"),
-        ("value", "unit", "property_id", "property_name", "city", "state", "market", "property_type"),
+        ("value", "unit", "property_name", "city", "state", "market", "property_type"),
+        ("property_record_id",),
     ),
     Target(
         "wh_lease_expiration",
@@ -324,7 +329,7 @@ def _property(rec: dict[str, Any], f: dict[str, Any], ctx: dict[str, Any]) -> Ro
     key = property_key(name, city, state)
     base = {
         "property_key": key,
-        "property_id": ctx["property_ids"].get(key),
+        "property_record_id": ctx["property_records"].get(rec["record_id"]),
         "property_name": name,
         "city": city,
         "state": state,
@@ -358,8 +363,8 @@ MAPPERS: dict[str, Callable[[dict[str, Any], dict[str, Any], dict[str, Any]], Ro
 # ------------------------------------------------------------------ build
 def _records(db: Db, company_id: int) -> list[dict[str, Any]]:
     return db.query(
-        """SELECT r.record_id, r.table_id, r.page_no, r.row_index, r.record_kind, r.label, r.fields, r.confidence,
-                  COALESCE(r.as_of_date, d.period_end_date) AS as_of_date,
+        """SELECT r.record_id, r.parse_id, r.table_id, r.page_no, r.row_index, r.record_kind, r.label, r.fields,
+                  r.confidence, COALESCE(r.as_of_date, d.period_end_date) AS as_of_date,
                   COALESCE(d.published_date, DATE(d.created_at)) AS published, d.doc_id, d.sha256
            FROM stg_document d
            JOIN stg_doc_record r ON r.parse_id = d.current_parse_id AND r.quarantined = 0
@@ -375,10 +380,15 @@ def desired_rows(db: Db, company_id: int) -> dict[str, Rows]:
             r["metric_code"]: r
             for r in db.query("SELECT metric_id, metric_code, unit_type FROM ref_metric WHERE grain='property'")
         },
-        "property_ids": {
-            r["property_key"]: r["property_id"]
+        "property_records": {
+            int(r["source_record_id"]): int(r["record_id"])
             for r in db.query(
-                "SELECT property_id, property_key FROM wh_property WHERE company_id=:c", {"c": company_id}
+                """SELECT p.record_id, CAST(JSON_UNQUOTE(JSON_EXTRACT(p.attributes, '$.source_record_id')) AS UNSIGNED)
+                          AS source_record_id
+                   FROM stg_property_record p
+                   WHERE p.company_id = :c AND p.source_kind = 'supplemental' AND p.retired_at IS NULL
+                     AND JSON_EXTRACT(p.attributes, '$.source_record_id') IS NOT NULL""",
+                {"c": company_id},
             )
         },
     }
@@ -413,7 +423,7 @@ def desired_rows(db: Db, company_id: int) -> dict[str, Rows]:
         for obs in chains.values():
             for v in build_versions(obs.values()):
                 rec = v["rec"]
-                r = {k: v["row"].get(k) for k in (*t.key, *t.values)}
+                r = {k: v["row"].get(k) for k in (*t.key, *t.values, *t.links)}
                 r.update(
                     company_id=company_id,
                     known_from=v["known_from"],
@@ -449,7 +459,7 @@ def apply_target(db: Db, t: Target, company_id: int, desired: Rows, run_id: int 
             {"run": run_id, **p2},
         )
     if insert:
-        cols = ("company_id", *t.key, *t.values, *LINEAGE_COLS, "row_hash", "recorded_run_id")
+        cols = ("company_id", *t.key, *t.values, *t.links, *LINEAGE_COLS, "row_hash", "recorded_run_id")
         db.executemany(
             f"INSERT INTO {t.table} ({', '.join(cols)}) VALUES ({', '.join(':' + c for c in cols)})",
             ({**r, "recorded_run_id": run_id} for r in insert),
@@ -457,8 +467,71 @@ def apply_target(db: Db, t: Target, company_id: int, desired: Rows, run_id: int 
     return {"retired": len(retire), "inserted": len(insert), "unchanged": len(live) - len(retire)}
 
 
+PROPERTY_LOADER = "supplemental_pdf"
+PROPERTY_LOADER_VERSION = "1.0"
+
+
+def property_records(db: Db, company_id: int) -> list[PropertyRecord]:
+    """Each property row of the company's current supplemental parses, as a property master record.
+
+    The parser owns what the row says; the property master (ADR 0010) owns which property it is.
+    attributes.source_record_id ties the staged row back to stg_doc_record."""
+    out: list[PropertyRecord] = []
+    for rec in _records(db, company_id):
+        if rec["record_kind"] != "property" or rec["as_of_date"] is None:
+            continue
+        f = rec["fields"]
+        if isinstance(f, str | bytes):
+            f = json.loads(f)
+        if f.get("is_total") or not (rec["label"] or "").strip():
+            continue
+        units, beds, rooms = dec(f.get("units")), dec(f.get("beds")), dec(f.get("rooms"))
+        unit_count, unit_kind = next(
+            ((v, k) for v, k in ((units, "units"), (beds, "beds"), (rooms, "keys")) if v), (None, None)
+        )
+        year = year_of(text(f.get("year_built"), 32))
+        own = dec(f.get("ownership_pct"))
+        occ = dec(f.get("occupancy"))
+        out.append(
+            PropertyRecord(
+                company_id=company_id,
+                source_kind="supplemental",
+                as_of_date=rec["as_of_date"],
+                known_from=rec["published"],
+                loader=PROPERTY_LOADER,
+                loader_version=PROPERTY_LOADER_VERSION,
+                source_doc_id=rec["doc_id"],
+                source_parse_id=rec["parse_id"],
+                source_table_id=rec["table_id"],
+                source_page_no=rec["page_no"],
+                source_row_index=(rec["row_index"] or 0) + 1,
+                source_sha256=rec["sha256"],
+                name=rec["label"][:255],
+                city=text(f.get("city"), 128),
+                state=text(f.get("state"), 64),
+                market=text(f.get("market"), 128),
+                raw_property_type=text(f.get("property_type"), 128),
+                rentable_sf=dec(f.get("sf")),
+                unit_count=unit_count,
+                unit_kind=unit_kind,
+                year_built=year if year and 1700 < year < 2100 else None,
+                ownership_pct=own if own is not None and 0 <= own <= 100 else None,
+                occupancy_pct=occ if occ is not None and 0 <= occ <= 100 else None,
+                attributes={"source_record_id": int(rec["record_id"])},
+            )
+        )
+    return out
+
+
+def stage_properties(db: Db, company_id: int, run_id: int | None) -> int:
+    """Stage the company's supplemental property rows in stg_property_record (idempotent)."""
+    recs = property_records(db, company_id)
+    return len(stage_records(db, recs, run_id)) if recs else 0
+
+
 def build_company_records(db: Db, company_id: int, run_id: int | None) -> dict[str, int]:
     """Rebuild every record table for one company. Call inside a transaction."""
+    stage_properties(db, company_id, run_id)
     desired = desired_rows(db, company_id)
     total = {"retired": 0, "inserted": 0, "unchanged": 0}
     for t in TARGETS:

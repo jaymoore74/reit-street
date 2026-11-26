@@ -89,19 +89,45 @@ def test_pdf_supplemental_to_record_tables_and_metrics(env: Path, sec_root: Path
     assert _count(db, "wh_lease_expiration") == 5
     # property facts: 3 communities x (units, occupancy), not linked to the property master yet
     grove = db.query(
-        """SELECT m.metric_code, p.value, p.property_id, p.city FROM wh_property_metric p
+        """SELECT m.metric_code, p.value, p.property_record_id, p.city FROM wh_property_metric p
            JOIN ref_metric m USING (metric_id) WHERE p.is_live = 1 AND p.property_name = 'The Grove'"""
     )
     assert {r["metric_code"]: r["value"] for r in grove} == {
         "PROP_UNITS": Decimal("412"),
         "PROP_OCCUPANCY": Decimal("96.1"),
     }
-    assert all(r["property_id"] is None and r["city"] == "Austin" for r in grove)
-    assert _count(db, "wh_property", "1=1") == 0  # the property master is not written here
+    assert all(r["city"] == "Austin" for r in grove)
+    # each property row is staged for the property master, and the figures key to that record
+    staged = db.query(
+        """SELECT record_id, name, state, unit_count, unit_kind, occupancy_pct, source_page_no, source_sha256
+           FROM stg_property_record WHERE source_kind = 'supplemental' AND retired_at IS NULL ORDER BY name"""
+    )
+    assert [r["name"] for r in staged] == ["Elm Street Lofts", "Harbor Point", "The Grove"]
+    g = staged[-1]
+    assert g["state"] == "TX" and g["unit_count"] == Decimal("412.00") and g["unit_kind"] == "units"
+    assert g["occupancy_pct"] == Decimal("96.1000") and g["source_page_no"] == 3 and g["source_sha256"]
+    assert {r["property_record_id"] for r in grove} == {g["record_id"]}
+    assert _count(db, "wh_property", "1=1") == 0  # matching is the property master's job, not the parser's
 
     # quarantine is visible for review
     q = db.query("SELECT * FROM ops_parse_quarantine")
     assert len(q) == 4 and all("scale unknown" in (r["quarantine_reason"] or "") for r in q)
+
+
+def test_property_figures_resolve_through_the_property_master(env: Path, sec_root: Path, db: Db) -> None:
+    _load(env, sec_root)
+    assert not [r for r in db.query("SELECT property_id FROM dl_property_metrics") if r["property_id"]]
+    assert cli("build-properties") == 0
+    rows = db.query("SELECT property_id, property_name FROM dl_property_metrics WHERE ticker = 'PLD'")
+    assert len(rows) == 6 and all(r["property_id"] for r in rows)
+    assert len({r["property_id"] for r in rows}) == 3
+    # a rebuild of the record tables does not disturb the link or the figures
+    before = _count(db, "wh_property_metric", "1=1")
+    assert cli("build-metrics", "--tickers", "PLD") == 0
+    assert _count(db, "wh_property_metric", "1=1") == before
+    assert _count(db, "stg_property_record", "source_kind = 'supplemental'") == 3
+    again = db.query("SELECT property_id FROM dl_property_metrics WHERE ticker = 'PLD'")
+    assert {r["property_id"] for r in again} == {r["property_id"] for r in rows}
 
 
 def test_rebuild_is_idempotent_and_reparse_versions(env: Path, sec_root: Path, db: Db) -> None:
