@@ -19,6 +19,10 @@ records stay exactly as they are. Only the web records for `@` and `www` change.
 
 ## Netlify steps (Windows, browser only)
 
+The click-by-click version, with the DreamHost "DNS Only" step and checks, is
+[JWALTER-SITE-SETUP.md](../../JWALTER-SITE-SETUP.md) at the repo root. Follow that file;
+the summary below is for reference.
+
 ### 1. Link the Netlify project to the repo (one time)
 
 The project already exists: **jwalteranalytics** in your Netlify team (made 2026-11-26),
