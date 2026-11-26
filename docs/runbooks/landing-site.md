@@ -52,8 +52,7 @@ DreamHost panel > **Websites** > **Manage Websites** > `jwalteranalytics.com` > 
 2. **Add Record**: Type **A**, Name blank (root), Value `75.2.60.5`. Save.
    (Netlify prefers an ALIAS/ANAME to `apex-loadbalancer.netlify.com`; DreamHost's
    custom records don't offer that, so the A record is Netlify's documented fallback.)
-3. **Add Record**: Type **CNAME**, Name `www`, Value `YOUR-PROJECT.netlify.app` (the
-   Netlify address, `jwalteranalytics.netlify.app`). Save.
+3. **Add Record**: Type **CNAME**, Name `www`, Value `jwalteranalytics.netlify.app`. Save.
 
 ### 4. Check
 
