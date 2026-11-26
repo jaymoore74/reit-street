@@ -1,0 +1,39 @@
+name: ops-migrate
+# Upgrade the Aurora schema to a revision (default: latest) and seed reference data.
+# Downgrades are destructive and are not offered here; see docs/runbooks/schema-change.md.
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Alembic revision to upgrade to
+        required: false
+        default: head
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ops-db-admin
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/reitstreet-env
+        with:
+          role: migrator
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: reitstreet config
+      - name: Migrate
+        env:
+          REVISION: ${{ inputs.revision }}
+        run: reitstreet migrate --revision "$REVISION"
+      - run: reitstreet status
+      - if: failure()
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: failure

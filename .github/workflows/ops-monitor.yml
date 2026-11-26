@@ -1,0 +1,44 @@
+name: ops-monitor
+# Hourly health check: stale runs, failures, overdue sync, data quality errors, old dead
+# letters. Alerts land in ops_alert and, on failure, as a GitHub issue.
+# Kill switch: repository variable REITSTREET_SCHEDULES = off.
+on:
+  schedule:
+    - cron: "5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ops-monitor
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    if: github.event_name == 'workflow_dispatch' || vars.REITSTREET_SCHEDULES != 'off'
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/reitstreet-env
+        with:
+          role: loader
+          aws-region: ${{ vars.AWS_REGION }}
+      - id: ready
+        run: python deploy/aws/ready.py
+      - if: steps.ready.outputs.ready == 'true'
+        run: reitstreet monitor
+      - name: Runner disk space
+        run: |
+          used=$(df --output=pcent /srv/reitstreet | tail -1 | tr -dc '0-9')
+          echo "runner disk ${used}% used"
+          if [ "$used" -ge 85 ]; then
+            echo "::error::Runner disk ${used}% full. Grow the EBS volume (docs/runbooks/cloud-setup.md, Operations)."
+            exit 1
+          fi
+      - if: failure()
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: failure

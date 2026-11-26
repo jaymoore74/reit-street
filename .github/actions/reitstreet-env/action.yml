@@ -1,0 +1,54 @@
+name: reitstreet environment
+description: >
+  On the AWS runner: install the package into a fresh venv and export REITSTREET_* settings.
+  Database credentials come from AWS Secrets Manager (reitstreet/db/<role>) through the
+  runner's instance role. Nothing secret is stored in GitHub or printed in the log.
+inputs:
+  role:
+    description: database login to use (migrator, loader or reader)
+    required: true
+  aws-region:
+    description: AWS region of the cluster and secrets
+    required: true
+  sec-user-agent:
+    description: SEC User-Agent, a real name and email
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Install reitstreet
+      shell: bash
+      run: |
+        python3 -m venv "$RUNNER_TEMP/venv"
+        "$RUNNER_TEMP/venv/bin/pip" install -q --disable-pip-version-check -c constraints.txt .
+        echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+    - name: Settings and ${{ inputs.role }} database login
+      shell: bash
+      env:
+        ROLE: ${{ inputs.role }}
+        AWS_REGION: ${{ inputs.aws-region }}
+        SEC_UA: ${{ inputs.sec-user-agent }}
+      run: |
+        set -euo pipefail
+        if [ -z "$AWS_REGION" ]; then echo "::error::Set the repository variable AWS_REGION (docs/runbooks/cloud-setup.md)"; exit 2; fi
+        case "$ROLE" in migrator|loader|reader) ;; *) echo "unknown role $ROLE"; exit 2;; esac
+        secret=$(aws secretsmanager get-secret-value --region "$AWS_REGION" --secret-id "reitstreet/db/$ROLE" \
+                   --query SecretString --output text)
+        pw=$(jq -r .password <<<"$secret")
+        echo "::add-mask::$pw"
+        {
+          echo "AWS_REGION=$AWS_REGION"
+          echo "REITSTREET_DB_HOST=$(jq -r .host <<<"$secret")"
+          echo "REITSTREET_DB_PORT=$(jq -r '.port // 3306' <<<"$secret")"
+          echo "REITSTREET_DB_NAME=$(jq -r '.dbname // "reitstreet"' <<<"$secret")"
+          echo "REITSTREET_DB_USER=$(jq -r .username <<<"$secret")"
+          echo "REITSTREET_DB_PASSWORD=$pw"
+          echo "REITSTREET_DB_SSL_CA=/etc/reitstreet/rds-global-bundle.pem"
+          echo "REITSTREET_DATA_DIR=/srv/reitstreet/data"
+          echo "REITSTREET_RAW_DIR=/srv/reitstreet/data/raw"
+          echo "REITSTREET_UNIVERSE_CSV=$GITHUB_WORKSPACE/universe/reits.csv"
+          echo "REITSTREET_LOGGING_FORMAT=text"
+          if [ -n "$SEC_UA" ]; then echo "REITSTREET_SEC_USER_AGENT=$SEC_UA"; fi
+        } >> "$GITHUB_ENV"
+        unset secret pw

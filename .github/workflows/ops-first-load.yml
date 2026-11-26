@@ -1,0 +1,77 @@
+name: ops-first-load
+# Initial load: migrate, import the universe, full SEC history, checks. 1 to 3 hours.
+# Re-run with resume_run_id (from the log or `reitstreet status`) to continue an interrupted load.
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: comma-separated tickers to load (blank = whole universe)
+        required: false
+        default: ""
+      resume_run_id:
+        description: run_id of an interrupted sec-sync to resume (blank = new run)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ops-first-load
+  cancel-in-progress: false
+
+env:
+  BUCKET: ${{ vars.REITSTREET_S3_BUCKET }}
+
+jobs:
+  migrate:
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/reitstreet-env
+        with:
+          role: migrator
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: reitstreet migrate
+      - if: failure()
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: failure
+
+  load:
+    needs: migrate
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 720
+    steps:
+      - uses: actions/checkout@v4
+      - id: env
+        uses: ./.github/actions/reitstreet-env
+        with:
+          role: loader
+          aws-region: ${{ vars.AWS_REGION }}
+          sec-user-agent: ${{ vars.REITSTREET_SEC_USER_AGENT }}
+      - run: reitstreet universe
+      - name: SEC full history
+        env:
+          TICKERS: ${{ inputs.tickers }}
+          RESUME: ${{ inputs.resume_run_id }}
+        run: |
+          args=(--full-history)
+          if [ -n "$TICKERS" ]; then args+=(--tickers "$TICKERS"); fi
+          if [ -n "$RESUME" ]; then args+=(--resume "$RESUME"); fi
+          reitstreet sec-sync "${args[@]}"
+      - if: always() && steps.env.outcome == 'success'
+        run: reitstreet dq
+      - if: always() && steps.env.outcome == 'success'
+        run: reitstreet spotcheck --tickers PLD,O,SPG
+      - if: always() && steps.env.outcome == 'success'
+        run: reitstreet status
+      - name: Copy raw store and logs to S3
+        if: always() && steps.env.outcome == 'success'
+        run: deploy/aws/s3-sync.sh raw logs
+      - if: failure()
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: failure

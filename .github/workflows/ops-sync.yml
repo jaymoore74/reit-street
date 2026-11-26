@@ -1,0 +1,67 @@
+name: ops-sync
+# Incremental SEC sync, data quality checks and monitor. Weekdays every 30 minutes while
+# EDGAR accepts filings (about 6 AM to 10 PM Eastern). Times are UTC.
+# Kill switch: repository variable REITSTREET_SCHEDULES = off.
+on:
+  schedule:
+    - cron: "15,45 11-23 * * 1-5"
+    - cron: "15,45 0-2 * * 2-6"
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: comma-separated tickers (blank = whole universe)
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ops-sync
+  cancel-in-progress: false
+
+env:
+  BUCKET: ${{ vars.REITSTREET_S3_BUCKET }}
+
+jobs:
+  sync:
+    if: github.event_name == 'workflow_dispatch' || vars.REITSTREET_SCHEDULES != 'off'
+    runs-on: [self-hosted, reitstreet-aws]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/reitstreet-env
+        with:
+          role: loader
+          aws-region: ${{ vars.AWS_REGION }}
+          sec-user-agent: ${{ vars.REITSTREET_SEC_USER_AGENT }}
+      - id: ready
+        run: python deploy/aws/ready.py
+      - name: SEC sync
+        if: steps.ready.outputs.ready == 'true'
+        env:
+          TICKERS: ${{ inputs.tickers }}
+        run: |
+          args=()
+          if [ -n "$TICKERS" ]; then args+=(--tickers "$TICKERS"); fi
+          rc=0
+          reitstreet sec-sync "${args[@]}" || rc=$?
+          # 3 = the previous run still holds the lock: not a failure
+          if [ "$rc" -eq 3 ]; then echo "::notice::previous sync still running, skipped"; exit 0; fi
+          exit "$rc"
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet dq
+      - if: always() && steps.ready.outputs.ready == 'true'
+        run: reitstreet monitor
+      - name: Copy raw store and logs to S3
+        if: always() && steps.ready.outputs.ready == 'true'
+        run: deploy/aws/s3-sync.sh raw logs
+      - if: failure()
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: failure
+      - if: success() && steps.ready.outputs.ready == 'true'
+        uses: ./.github/actions/ops-issue
+        with:
+          outcome: success

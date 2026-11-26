@@ -2,6 +2,9 @@
 
 ## What runs
 
+In production these run as GitHub Actions on AWS (ops-sync, ops-weekly, ops-monitor);
+schedules and alerting are in [cloud-setup.md](cloud-setup.md). On a workstation:
+
 | Task | Script | When | Does |
 |---|---|---|---|
 | sync | `sync.bat` | weekdays every 30 min, 1 PM to 8 PM | `sec-sync`, `dq`, `monitor` |
@@ -9,6 +12,9 @@
 | monitor | `monitor.bat` | hourly | stale runs, failures, overdue sync, DQ errors, old dead letters |
 
 ## Morning check (2 minutes)
+
+Production: GitHub > Issues, filter label `ops-failure` (empty is good). Each ops-sync
+run's log shows the `dq` and `monitor` output. On a workstation:
 
 ```powershell
 reitstreet status                 # row counts, last runs and their status
