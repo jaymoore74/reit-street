@@ -94,7 +94,7 @@ one public interface). The site should read those views and nothing else of the 
 - CSV cells that start with `= + - @` are neutralized; decimals are exact (Parquet
   DECIMAL(28,6)).
 
-### Hosting (written as code; needs his yes before anything is created)
+### Hosting (written as code; option B chosen 2026-11-26; nothing created yet)
 In his AWS account, us-east-2, next to Aurora. Both options are CloudFormation templates in
 `deploy/aws/web/` with the same parameters, checked by cfn-lint and unit tests; steps are in
 `docs/runbooks/web-hosting.md`. Prices below are us-east-1 list prices read on 2026-11-26;
@@ -102,19 +102,21 @@ Ohio is usually the same for these services, confirm before building.
 
 | Option | What | $/month |
 |---|---|---:|
-| **A (recommended)** `web-fargate.yaml` | ECS Fargate (ARM, 0.5 vCPU, 1 GB, one task) behind an Application Load Balancer with a free ACM certificate, task in the Aurora VPC with a public IP that only the ALB can reach | about 40 to 48 |
-| B `web-ec2.yaml` | One t4g.small EC2 instance running the container behind Caddy (Let's Encrypt certificate), Elastic IP, Session Manager instead of SSH | about 16 |
+| A `web-fargate.yaml` (upgrade path) | ECS Fargate (ARM, 0.5 vCPU, 1 GB, one task) behind an Application Load Balancer with a free ACM certificate, task in the Aurora VPC with a public IP that only the ALB can reach | about 40 to 48 |
+| **B (chosen)** `web-ec2.yaml` | One t4g.small EC2 instance running the container behind Caddy (Let's Encrypt certificate), Elastic IP, Session Manager instead of SSH | about 16 |
 
 Option A breakdown: Fargate 14.42, ALB 16.43 plus about 2 to 6 for load units, three
 public IPv4 addresses 10.95 (two for the ALB, one for the task), logs and secrets about 2.
 Avoiding a NAT gateway (32.85 plus data) is why the task gets a public IP. App Runner is
 closed to new customers, so it is not an option. Option B is cheaper but is a server to
 patch; A has no servers and adds a second task for zero-downtime deploys at about 15 more.
+Jason chose B for the test site (a handful of users); moving to A later uses the same image
+and settings.
 
 - **Domain**: the stack parameter `DomainName` is the only place it is set; it becomes
   `RS_PUBLIC_BASE_URL` and the certificate. The test site is
   `research.jwalteranalytics.com` (`EnvName=staging`), a name under a domain he owns whose
-  mail runs on Google Workspace: the site adds only a `research` record (and ACM or SES
+  mail runs on Google Workspace and whose DNS is at DreamHost: the site adds only a `research` record (and ACM or SES
   validation CNAMEs), never MX, SPF or root records. The business site is a second stack
   (`EnvName=production`) on its own domain once chosen.
 - **Image**: `apps/web/Dockerfile` (Next standalone output, non-root, Node 22, the RDS CA
@@ -129,9 +131,9 @@ patch; A has no servers and adds a second task for zero-downtime deploys at abou
 - **Safe start**: the service starts at 0 tasks (A), email off and the sample-data banner on.
 
 ### Steps that need his yes
-1. Creating the AWS resources for option A or B, and re-running ops-bootstrap-db to
+1. Creating the AWS resources for option B (chosen), and re-running ops-bootstrap-db to
    create `rs_web` (safe to re-run; it only adds the login and grants).
-2. The DNS records for `research.jwalteranalytics.com` at that domain's DNS host, and
+2. The A record for `research.jwalteranalytics.com` at DreamHost, and
    later a domain for the business (registrar about $15 a year).
 3. Amazon SES for email: verifying the domain (three DKIM CNAMEs) and the production
    access request. About $0.10 per 1,000 emails.

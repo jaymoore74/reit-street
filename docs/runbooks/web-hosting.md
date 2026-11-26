@@ -5,9 +5,10 @@ Nothing here has been created yet; every step is yours to start. The test site i
 `research.jwalteranalytics.com` (`EnvName` = `staging`); the business site gets its own
 domain later as a second stack (`EnvName` = `production`).
 
-Two ways, same image, same settings. Pick one:
+Two ways, same image, same settings. **Option B is the chosen one** (Jason, 2026-11-26); A is
+the upgrade path later and needs no change to the site:
 
-| | A: Fargate + load balancer | B: one EC2 instance + Caddy |
+| | A: Fargate + load balancer (later) | B: one EC2 instance + Caddy (chosen) |
 |---|---|---|
 | Template | [deploy/aws/web/web-fargate.yaml](../../deploy/aws/web/web-fargate.yaml) | [deploy/aws/web/web-ec2.yaml](../../deploy/aws/web/web-ec2.yaml) |
 | About $/month | 40 to 48 | 16 |
@@ -36,62 +37,32 @@ Let's Encrypt subscriber agreement for the domain.
 
 ## Where the domain's DNS lives
 
-Records are added wherever `jwalteranalytics.com`'s DNS is hosted, often the registrar.
-To check from Windows PowerShell:
+`jwalteranalytics.com`'s DNS is at **DreamHost**, and its mail is Google Workspace. The site
+needs one new record there, added after the stack exists (its value is the server's IP):
 
-```powershell
-Resolve-DnsName jwalteranalytics.com -Type NS
-```
+1. DreamHost panel > **Websites** > **Manage Websites** > find `jwalteranalytics.com` >
+   **DNS** (under the three-dot menu or the site's settings, depending on the panel version).
+2. **Add Record**: Type **A**, Name/Host **research**, Value the Elastic IP from the
+   stack's `DnsRecord` output, TTL default > Save.
+3. Check from Windows PowerShell after a few minutes:
 
-The name servers it prints belong to the DNS host (for example `ns-cloud-*.googledomains.com`
-is Google, `*.domaincontrol.com` is GoDaddy, `*.awsdns-*` is Route 53). Log in there.
+   ```powershell
+   Resolve-DnsName research.jwalteranalytics.com -Type A
+   ```
 
 **Do not change** the root (`@`) records, `www`, MX, or the root TXT records (SPF, Google
 site verification). Google Workspace mail keeps working because the site only adds new
-names under `research` and `_domainkey`.
-
-## Option A: Fargate
-
-1. CloudFormation console (us-east-2) > **Create stack** > With new resources > Upload a
-   template file > `deploy/aws/web/web-fargate.yaml` > Next.
-2. Stack name `reitstreet-web-staging`. Parameters: VpcId, PublicSubnetIds (two),
-   DbSecurityGroupId, DbSecretArn from above. Leave the rest at their defaults
-   (`DesiredCount` 0, `EmailProvider` none, `SampleData` 1). Next > tick "I acknowledge
-   that AWS CloudFormation might create IAM resources" > Submit.
-3. The stack stops at **Certificate** (CREATE_IN_PROGRESS). Open Certificate Manager >
-   the certificate for `research.jwalteranalytics.com` > Domains > copy the CNAME name and
-   value. At your DNS host add:
-
-   | Type | Name | Value |
-   |---|---|---|
-   | CNAME | `_xxxxxxxx.research` (the part before `.jwalteranalytics.com`) | `_yyyyyyyy.xxxxxx.acm-validations.aws.` |
-
-   Leave this record in place: it is how the certificate renews. The stack finishes a
-   few minutes after the record appears.
-4. Stack > **Outputs** > `DnsRecord`. At your DNS host add:
-
-   | Type | Name | Value |
-   |---|---|---|
-   | CNAME | `research` | the load balancer name from `DnsRecord` (`reitstreet-web-staging-....us-east-2.elb.amazonaws.com`) |
-
-5. Build the image: see [Build an image](#build-an-image) below.
-6. Stack > **Update** > Use existing template > `ImageTag` = the tag from step 5,
-   `DesiredCount` = 1 > Submit. When it finishes, open https://research.jwalteranalytics.com.
-
-Deploy a new version: build an image, then update the stack's `ImageTag`. A failed
-version rolls back by itself (deployment circuit breaker).
+names under `research` (and `_domainkey` if SES is turned on). If DreamHost already lists
+`research.jwalteranalytics.com` as a hosted site or subdomain, remove that first, or the
+panel refuses a custom record with the same name.
 
 ## Option B: one instance with Caddy
 
 1. CloudFormation > Create stack > Upload `deploy/aws/web/web-ec2.yaml`.
 2. Stack name `reitstreet-web-staging`. Parameters: VpcId, PublicSubnetId (one),
    DbSecurityGroupId, DbSecretArn. Leave the rest. Acknowledge IAM > Submit.
-3. Stack > **Outputs** > `DnsRecord`. At your DNS host add:
-
-   | Type | Name | Value |
-   |---|---|---|
-   | A | `research` | the Elastic IP from `DnsRecord` |
-
+3. Stack > **Outputs** > `DnsRecord` shows the Elastic IP. Add it at DreamHost as above
+   (type A, name `research`).
 4. Build the image: see [Build an image](#build-an-image).
 5. EC2 > Instances > `reitstreet-web-staging` > Connect > **Session Manager** > Connect:
 
@@ -103,6 +74,37 @@ version rolls back by itself (deployment circuit breaker).
    https://research.jwalteranalytics.com.
 
 Deploy a new version: build an image, then run the same command with the new tag.
+
+## Option A: Fargate (later, if wanted)
+
+1. CloudFormation console (us-east-2) > **Create stack** > With new resources > Upload a
+   template file > `deploy/aws/web/web-fargate.yaml` > Next.
+2. Stack name `reitstreet-web-staging`. Parameters: VpcId, PublicSubnetIds (two),
+   DbSecurityGroupId, DbSecretArn from above. Leave the rest at their defaults
+   (`DesiredCount` 0, `EmailProvider` none, `SampleData` 1). Next > tick "I acknowledge
+   that AWS CloudFormation might create IAM resources" > Submit.
+3. The stack stops at **Certificate** (CREATE_IN_PROGRESS). Open Certificate Manager >
+   the certificate for `research.jwalteranalytics.com` > Domains > copy the CNAME name and
+   value. At DreamHost add (Add Record):
+
+   | Type | Name | Value |
+   |---|---|---|
+   | CNAME | `_xxxxxxxx.research` (the part before `.jwalteranalytics.com`) | `_yyyyyyyy.xxxxxx.acm-validations.aws.` |
+
+   Leave this record in place: it is how the certificate renews. The stack finishes a
+   few minutes after the record appears.
+4. Stack > **Outputs** > `DnsRecord`. At DreamHost add (Add Record):
+
+   | Type | Name | Value |
+   |---|---|---|
+   | CNAME | `research` | the load balancer name from `DnsRecord` (`reitstreet-web-staging-....us-east-2.elb.amazonaws.com`) |
+
+5. Build the image: see [Build an image](#build-an-image) below.
+6. Stack > **Update** > Use existing template > `ImageTag` = the tag from step 5,
+   `DesiredCount` = 1 > Submit. When it finishes, open https://research.jwalteranalytics.com.
+
+Deploy a new version: build an image, then update the stack's `ImageTag`. A failed
+version rolls back by itself (deployment circuit breaker).
 
 ## Build an image
 

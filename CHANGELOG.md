@@ -28,11 +28,12 @@ format are the public interface.
     `docs/web-copy-review.md`.
   - Dockerfile (standalone server, non-root, RDS CA bundle), 38 unit tests, end-to-end run
     of 31 checks (38 with a development mailbox).
-- Hosting as code, nothing created: CloudFormation for option A (`deploy/aws/web/web-fargate.yaml`,
-  Fargate behind a load balancer with ACM) and option B (`web-ec2.yaml`, one instance with
-  Caddy), test domain `research.jwalteranalytics.com` as the one `DomainName` parameter.
-  Manual `ops-web-image` workflow builds the image on the runner and pushes it to ECR;
-  `deploy/aws/iam/web-image-policy.json`. Runbook `docs/runbooks/web-hosting.md`.
+- Hosting as code, nothing created: CloudFormation for option B, chosen (`deploy/aws/web/web-ec2.yaml`,
+  one t4g.small instance with Caddy), and option A as the upgrade path (`web-fargate.yaml`,
+  Fargate behind a load balancer with ACM). Test domain `research.jwalteranalytics.com`
+  (DNS at DreamHost) is the one `DomainName` parameter. Manual `ops-web-image` workflow
+  builds the image on the runner and pushes it to ECR; `deploy/aws/iam/web-image-policy.json`.
+  Runbook `docs/runbooks/web-hosting.md`.
 - Website schema `reitstreet_app` with its own Alembic history (`migrations_app`,
   revision `a0001`), `[db] app_name` setting, `migrate --target warehouse|app|all`,
   `db-docs --target app`, generated `docs/data-dictionary-app.md`.

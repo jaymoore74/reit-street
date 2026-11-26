@@ -53,6 +53,6 @@ jobs:
             echo
             echo "Tag: \`$TAG\`"
             echo
-            echo "Deploy it: set the stack parameter ImageTag to this tag (option A), or run"
-            echo "\`sudo /opt/reitstreet-web/deploy.sh $TAG\` on the site's instance (option B)."
+            echo "Deploy it: run \`sudo /opt/reitstreet-web/deploy.sh $TAG\` on the site's instance"
+            echo "(option B), or set the stack parameter ImageTag to this tag (option A)."
           } >> "$GITHUB_STEP_SUMMARY"
