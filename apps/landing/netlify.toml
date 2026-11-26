@@ -1,0 +1,14 @@
+# Netlify settings for the jwalteranalytics.com landing page.
+# Base directory in Netlify: apps/landing. No build step; files are served as they are.
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy = "default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-3tkD3hw9DOmx6/iRLqsDsahSCjzUpQJ25IHKJMxgcP4='; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"

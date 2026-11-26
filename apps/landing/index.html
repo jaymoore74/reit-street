@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>J. Walter Analytics</title>
+  <!-- PLACEHOLDER: description, see docs/landing-copy-review.md -->
+  <meta name="description" content="J. Walter Analytics: REIT research and data.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://jwalteranalytics.com/">
+  <style>
+    :root {
+      --bg: #ffffff; --text: #14181f; --muted: #5b6573; --line: #e3e6ea; --accent: #1f4e79;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0f1216; --text: #e8ebef; --muted: #9aa3ae; --line: #262c34; --accent: #7fb0e0; }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    main { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 18vh 16px 48px; }
+    .mark { width: 40px; height: 40px; margin-bottom: 28px; }
+    h1 { font-size: 30px; line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em; }
+    .lede { font-size: 18px; color: var(--muted); margin: 0 0 24px; }
+    main p:not(.lede) { margin: 0 0 16px; }
+    ul { margin-top: 36px !important; }
+    ul { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+    li { padding: 14px 0; border-bottom: 1px solid var(--line); display: flex; gap: 16px; flex-wrap: wrap; }
+    .k { color: var(--muted); min-width: 92px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover, a:focus-visible { text-decoration: underline; }
+    footer { max-width: 640px; width: 100%; margin: 0 auto; padding: 24px 16px; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <svg class="mark" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="8" style="fill:var(--accent)"/><path d="M11 25v4h18v-4M15 25V15m5 10V11m5 14V18" style="stroke:var(--bg)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+    <h1>J. Walter Analytics</h1>
+    <!-- PLACEHOLDER: one-line description, see docs/landing-copy-review.md -->
+    <p class="lede">REIT research and data.</p>
+    <!-- PLACEHOLDER: what we do and founder lines, see docs/landing-copy-review.md -->
+    <p>Company-level and property-level data on US REITs, built from SEC filings and company supplementals.</p>
+    <p>Founded by Jason Moore, a data scientist with about 20 years of experience finding and analyzing real estate datasets. Previously at Green Street Advisors, the REIT and commercial real estate research firm, with hedge fund analyst experience.</p>
+    <ul>
+      <li><span class="k">Contact</span><a href="mailto:jason@jwalteranalytics.com">jason@jwalteranalytics.com</a></li>
+      <li><span class="k">LinkedIn</span><a href="https://www.linkedin.com/in/jasonmoorecfa" rel="noopener">Jason Moore</a></li>
+      <!-- Client login: uncomment once research.jwalteranalytics.com is live (docs/runbooks/web-hosting.md)
+      <li><span class="k">Clients</span><a href="https://research.jwalteranalytics.com/login">Client login</a></li>
+      -->
+    </ul>
+  </main>
+  <footer>&copy; <span id="y">2026</span> J. Walter Analytics</footer>
+  <script>document.getElementById("y").textContent = new Date().getFullYear();</script>
+</body>
+</html>

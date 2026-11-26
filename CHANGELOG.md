@@ -3,6 +3,13 @@
 All notable changes. Versions follow semantic versioning; the `dl_*` views and export
 format are the public interface.
 
+## [Unreleased]
+
+### Added
+- Landing page for jwalteranalytics.com in `apps/landing` (static HTML, no tracking,
+  Netlify config with security headers). Not deployed. Steps in
+  `docs/runbooks/landing-site.md`; wording for review in `docs/landing-copy-review.md`.
+
 ## [0.5.0] - 2026-11-26
 
 ### Added

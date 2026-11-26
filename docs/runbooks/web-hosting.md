@@ -50,7 +50,8 @@ needs one new record there, added after the stack exists (its value is the serve
    Resolve-DnsName research.jwalteranalytics.com -Type A
    ```
 
-**Do not change** the root (`@`) records, `www`, MX, or the root TXT records (SPF, Google
+**Do not change** the root (`@`) records or `www` here (they belong to the landing page, see
+[landing-site](landing-site.md)), MX, or the root TXT records (SPF, Google
 site verification). Google Workspace mail keeps working because the site only adds new
 names under `research` (and `_domainkey` if SES is turned on). If DreamHost already lists
 `research.jwalteranalytics.com` as a hosted site or subdomain, remove that first, or the

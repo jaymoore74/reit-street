@@ -101,7 +101,7 @@ until `[sec] user_agent` in `config.ini` is set.
 - [Data dictionary](docs/data-dictionary.md) and [website schema](docs/data-dictionary-app.md) (generated)
 - [IR website coverage](docs/ir-coverage.md)
 - [Property coverage](docs/property-coverage.md)
-- [Runbooks](docs/runbooks/): cloud setup (AWS), first run, daily operations, IR fetcher, property master, web admin, web hosting, SEC 403, dead letters, replay,
+- [Runbooks](docs/runbooks/): cloud setup (AWS), first run, daily operations, IR fetcher, property master, web admin, web hosting, landing site, SEC 403, dead letters, replay,
   metric mappings, archive import, backup and restore, schema changes
 - [Architecture decision records](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
