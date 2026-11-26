@@ -11,7 +11,9 @@ inputs:
     description: AWS region of the cluster and secrets
     required: true
   sec-user-agent:
-    description: SEC User-Agent, a real name and email
+    description: >
+      SEC User-Agent, a real name and email. Blank uses the project contact,
+      "Jason Moore reits@jwalteranalytics.com"; the repository variable REITSTREET_SEC_USER_AGENT overrides it.
     required: false
     default: ""
   extras:
@@ -43,6 +45,7 @@ runs:
         ROLE: ${{ inputs.role }}
         AWS_REGION: ${{ inputs.aws-region }}
         SEC_UA: ${{ inputs.sec-user-agent }}
+        SEC_UA_DEFAULT: Jason Moore reits@jwalteranalytics.com
       run: |
         set -euo pipefail
         if [ -z "$AWS_REGION" ]; then echo "::error::Set the repository variable AWS_REGION (docs/runbooks/cloud-setup.md)"; exit 2; fi
@@ -63,6 +66,6 @@ runs:
           echo "REITSTREET_RAW_DIR=/srv/reitstreet/data/raw"
           echo "REITSTREET_UNIVERSE_CSV=$GITHUB_WORKSPACE/universe/reits.csv"
           echo "REITSTREET_LOGGING_FORMAT=text"
-          if [ -n "$SEC_UA" ]; then echo "REITSTREET_SEC_USER_AGENT=$SEC_UA"; fi
+          echo "REITSTREET_SEC_USER_AGENT=${SEC_UA:-$SEC_UA_DEFAULT}"
         } >> "$GITHUB_ENV"
         unset secret pw

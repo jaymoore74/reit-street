@@ -10,6 +10,11 @@ format are the public interface.
   Netlify config with security headers). Not deployed. Steps in
   `docs/runbooks/landing-site.md`; wording for review in `docs/landing-copy-review.md`.
 
+### Changed
+- AWS jobs send the SEC contact `Jason Moore reits@jwalteranalytics.com` by default, so
+  `REITSTREET_SEC_USER_AGENT` is now an optional override and setup needs two repository
+  variables, not three.
+
 ## [0.5.0] - 2026-11-26
 
 ### Added
