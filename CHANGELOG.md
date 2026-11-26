@@ -9,6 +9,8 @@ format are the public interface.
 - Landing page for jwalteranalytics.com (J. Walter Analytics) in `apps/landing` (static HTML, no tracking,
   Netlify config with security headers). Not deployed. Steps in
   `docs/runbooks/landing-site.md`; wording for review in `docs/landing-copy-review.md`.
+- `JWALTER-SITE-SETUP.md` at the repo root: click-by-click Netlify and DreamHost steps to
+  put the landing page live.
 
 ## [0.5.0] - 2026-11-26
 
