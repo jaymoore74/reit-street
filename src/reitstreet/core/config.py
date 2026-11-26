@@ -37,6 +37,9 @@ class Settings:
     db_user: str = "reit"
     db_password: str = ""
     db_name: str = "reitstreet"
+    # CA bundle for TLS to the server (e.g. AWS RDS global-bundle.pem). When set, the
+    # connection is encrypted and the server certificate and host name are verified.
+    db_ssl_ca: Path | None = None
     # [paths]
     data_dir: Path = Path("data")
     raw_dir: Path | None = None  # defaults to <data_dir>/raw
@@ -71,7 +74,10 @@ class Settings:
             return self.db_url
         pw = quote_plus(self.db_password) if self.db_password else ""
         auth = f"{quote_plus(self.db_user)}:{pw}@" if pw else f"{quote_plus(self.db_user)}@"
-        return f"mysql+pymysql://{auth}{self.db_host}:{self.db_port}/{self.db_name}?charset=utf8mb4"
+        url = f"mysql+pymysql://{auth}{self.db_host}:{self.db_port}/{self.db_name}?charset=utf8mb4"
+        if self.db_ssl_ca:
+            url += f"&ssl_ca={quote_plus(str(self.db_ssl_ca))}&ssl_check_hostname=true"
+        return url
 
     def require_sec_user_agent(self) -> str:
         ua = (self.sec_user_agent or "").strip()

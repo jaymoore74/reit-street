@@ -5,6 +5,15 @@ format are the public interface.
 
 ## [Unreleased]
 
+### Added
+- Production on AWS: GitHub Actions workflows for the existing Aurora MySQL cluster
+  (`ops-bootstrap-db`, `ops-migrate`, `ops-first-load`, `ops-sync`, `ops-weekly`,
+  `ops-monitor`) on a self-hosted runner in the cluster's VPC. Logins from AWS Secrets
+  Manager, raw store, logs and exports copied to S3, failures raised as GitHub issues.
+  Runbook `docs/runbooks/cloud-setup.md`, ADR 0008.
+- `[db] ssl_ca` setting: TLS with certificate and host name verification.
+- `universe/reits.csv` is now versioned in the repo; scheduled runs read it from there.
+
 ## [0.2.0] - 2026-11-26
 
 ### Added

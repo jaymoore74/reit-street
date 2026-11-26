@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadAuroraMasterSecretOnce",
+      "Effect": "Allow",
+      "Action": ["secretsmanager:GetSecretValue"],
+      "Resource": "YOUR-MASTER-SECRET-ARN"
+    },
+    {
+      "Sid": "CreateAppDatabaseSecrets",
+      "Effect": "Allow",
+      "Action": ["secretsmanager:CreateSecret", "secretsmanager:PutSecretValue", "secretsmanager:TagResource"],
+      "Resource": "arn:aws:secretsmanager:*:*:secret:reitstreet/db/*"
+    }
+  ]
+}

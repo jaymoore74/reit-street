@@ -1,0 +1,47 @@
+name: ops issue
+description: >
+  Failure alerting through GitHub issues. On failure, open an issue labelled ops-failure for
+  this workflow (or comment on the open one). On success, close that issue as recovered.
+  The repo owner is notified by GitHub's normal issue email.
+inputs:
+  outcome:
+    description: failure or success
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@v7
+      env:
+        OUTCOME: ${{ inputs.outcome }}
+      with:
+        script: |
+          const {owner, repo} = context.repo;
+          const label = 'ops-failure';
+          const title = `Ops failure: ${context.workflow}`;
+          const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+          const open = await github.paginate(github.rest.issues.listForRepo,
+            {owner, repo, state: 'open', labels: label, per_page: 100});
+          const hit = open.find(i => i.title === title);
+          if (process.env.OUTCOME === 'success') {
+            if (hit) {
+              await github.rest.issues.createComment({owner, repo, issue_number: hit.number,
+                body: `Recovered: [run ${context.runId}](${runUrl}) succeeded.`});
+              await github.rest.issues.update({owner, repo, issue_number: hit.number, state: 'closed',
+                state_reason: 'completed'});
+            }
+            return;
+          }
+          const body = `[Run ${context.runId}](${runUrl}) of **${context.workflow}** failed ` +
+            `(${context.eventName}, ${new Date().toISOString()}). Open the run for the failing step. ` +
+            `See docs/runbooks/daily-ops.md and docs/runbooks/cloud-setup.md.`;
+          if (hit) {
+            await github.rest.issues.createComment({owner, repo, issue_number: hit.number, body});
+            return;
+          }
+          try { await github.rest.issues.getLabel({owner, repo, name: label}); }
+          catch (e) {
+            if (e.status !== 404) throw e;
+            await github.rest.issues.createLabel({owner, repo, name: label, color: 'B60205',
+              description: 'Scheduled pipeline run failed'});
+          }
+          await github.rest.issues.create({owner, repo, title, body, labels: [label]});
