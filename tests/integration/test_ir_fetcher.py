@@ -10,7 +10,7 @@ import pytest
 
 from reitstreet.core.db import Db
 from tests.integration.helpers import cli
-from tests.sec_fixtures import IR_HOST
+from tests.sec_fixtures import IR_HOST, tiny_pdf
 
 pytestmark = pytest.mark.mysql
 
@@ -23,7 +23,7 @@ def _page(site: Path, ticker: str, rows: list[tuple[str, str]]) -> None:
     (d / "index.html").write_text(f"<html><body><h2>Quarterly results</h2><table>{body}</table></body></html>")
     for _t, f in rows:
         (d / "files").mkdir(exist_ok=True)
-        (d / "files" / f).write_bytes(b"%PDF-1.4 " + f.encode())
+        (d / "files" / f).write_bytes(tiny_pdf(f))
 
 
 PLD_ROWS = [

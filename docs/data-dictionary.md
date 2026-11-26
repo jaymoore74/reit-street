@@ -1,6 +1,6 @@
 # Data dictionary
 
-Generated from the database schema at Alembic revision `0003` by `reitstreet db-docs`. Do not edit by hand: change the COMMENT in a migration and regenerate.
+Generated from the database schema at Alembic revision `0005` by `reitstreet db-docs`. Do not edit by hand: change the COMMENT in a migration and regenerate.
 
 ## ops_* Operations: runs, checkpoints, dead letters, data quality, alerts
 
@@ -11,6 +11,7 @@ Generated from the database schema at Alembic revision `0003` by `reitstreet db-
 - [`ops_ir_coverage`](#ops_ir_coverage) (view): VIEW
 - [`ops_job_item`](#ops_job_item): Per-item checkpoints. --resume <run_id> skips items that finished ok in that run.
 - [`ops_job_run`](#ops_job_run): One row per job execution. The monitor alerts on failed, partial, aborted and overdue runs.
+- [`ops_parse_quarantine`](#ops_parse_quarantine) (view): VIEW
 
 ### ops_alert
 
@@ -159,6 +160,26 @@ Table. One row per job execution. The monitor alerts on failed, partial, aborted
 | `rows_written` | bigint unsigned | NO |  | Rows inserted or changed across all tables |
 | `error_summary` | text | YES |  | First lines of the errors, for a quick look |
 
+### ops_parse_quarantine
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `kind` | varchar(6) | NO |  |  |
+| `id` | bigint unsigned | NO |  |  |
+| `doc_id` | bigint unsigned | NO |  |  |
+| `ticker` | varchar(16) | YES |  |  |
+| `period_end_date` | date | YES |  |  |
+| `page_no` | int unsigned | NO |  |  |
+| `table_title` | varchar(512) | YES |  |  |
+| `table_kind` | varchar(32) | YES |  |  |
+| `label` | varchar(512) | NO |  |  |
+| `detail` | varchar(255) | YES |  |  |
+| `raw_text` | varchar(255) | YES |  |  |
+| `confidence` | decimal(4,3) | YES |  |  |
+| `quarantine_reason` | varchar(255) | YES |  |  |
+
 ## raw_* Raw layer: every byte received, content-addressed, immutable
 
 - [`raw_fetch`](#raw_fetch): Every retrieval attempt, successful or not. Replay reads from here.
@@ -198,11 +219,15 @@ Table. Immutable content-addressed objects. Never updated or deleted by the pipe
 
 - [`ref_company`](#ref_company): Company master. One row per SEC registrant (CIK).
 - [`ref_company_name_history`](#ref_company_name_history): Former company names from SEC submissions.
+- [`ref_company_sector`](#ref_company_sector): Sectors each company invests in. Drives which metrics are relevant for it.
 - [`ref_company_ticker_history`](#ref_company_ticker_history): Tickers over time, so old client files still resolve after a ticker change.
 - [`ref_ir_profile`](#ref_ir_profile): How each company IR site is fetched. Seeded from reference/data/ir_profiles.csv.
 - [`ref_ir_source`](#ref_ir_source): IR website, supplemental and alert-signup URLs per company. Input to the IR fetcher and inbox.
 - [`ref_metric`](#ref_metric): Standard REIT metric dictionary. Seeded from src/reitstreet/reference/data/metrics.csv.
 - [`ref_metric_map`](#ref_metric_map): Rules mapping XBRL tags and supplemental row labels to metrics. Mappings are data, not code.
+- [`ref_metric_sector`](#ref_metric_sector): Sector metric catalog: which metrics matter for which sector. Seeded from reference/data/metric_sectors.csv.
+- [`ref_parse_override`](#ref_parse_override): Per-company supplemental parsing rules. Rules are data, so fixing one REIT never changes code.
+- [`ref_sector`](#ref_sector): Property sectors. Seeded from reference/data/sectors.csv.
 - [`ref_web_host`](#ref_web_host): robots.txt state per web host, refreshed by the IR fetcher (default every 24 hours).
 
 ### ref_company
@@ -244,6 +269,18 @@ Table. Former company names from SEC submissions.
 | `name` | varchar(255) | NO | PRI | Former name per SEC |
 | `valid_from` | date | YES |  | Start of use |
 | `valid_to` | date | YES |  | End of use |
+
+### ref_company_sector
+
+Table. Sectors each company invests in. Drives which metrics are relevant for it.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `company_id` | int unsigned | NO | PRI | Company |
+| `sector_code` | varchar(32) | NO | PRI | Sector the company invests in |
+| `is_primary` | tinyint(1) | NO |  | 1 for the main sector |
+| `origin` | enum('seed','manual') | NO |  | seed rows come from the universe sector label; manual rows are never touched by the seed |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
 
 ### ref_company_ticker_history
 
@@ -310,8 +347,9 @@ Table. Standard REIT metric dictionary. Seeded from src/reitstreet/reference/dat
 | `metric_code` | varchar(48) | NO | UNI | Stable public code used in client files, e.g. FFO_PER_SHARE |
 | `name` | varchar(128) | NO |  | Display name |
 | `category` | varchar(48) | NO |  | Grouping, e.g. Earnings, Balance Sheet |
-| `unit_type` | enum('USD','USD_PER_SHARE','PCT','SF','COUNT','SHARES','RATIO','YEARS','USD_PER_SF') | NO |  | Unit family |
+| `unit_type` | enum('USD','USD_PER_SHARE','PCT','SF','COUNT','SHARES','RATIO','YEARS','USD_PER_SF','USD_PER_UNIT','MW') | NO |  | Unit family (USD_PER_UNIT: per room, unit, bed or occupied room per night or month) |
 | `period_nature` | enum('duration','instant') | NO |  | Flow over a period or balance at a date |
+| `grain` | enum('company','segment','property') | NO |  | Level the metric describes: company (incl. segments of it) or a single property |
 | `is_non_gaap` | tinyint(1) | NO |  | 1 for non-GAAP measures |
 | `is_nareit_defined` | tinyint(1) | NO |  | 1 if Nareit publishes the definition |
 | `definition` | text | YES |  | Definition shown to clients |
@@ -334,6 +372,8 @@ Table. Rules mapping XBRL tags and supplemental row labels to metrics. Mappings 
 | `label_regex` | varchar(512) | YES |  | Row label pattern, MySQL REGEXP, case-insensitive (supplemental rules) |
 | `exclude_regex` | varchar(512) | YES |  | Row labels matching this are excluded |
 | `segment_regex` | varchar(512) | YES |  | Optional segment label filter |
+| `col_role` | enum('value','change','share','any') | NO |  | Supplemental rules: which column role the rule reads (change = % change columns) |
+| `table_kind_regex` | varchar(255) | YES |  | Supplemental rules: only tables whose kind matches, e.g. ^(same_store\|operating)$ |
 | `priority` | smallint unsigned | NO |  | Lower wins when several rules match the same period |
 | `multiplier` | decimal(18,8) | NO |  | Applied to the source value (e.g. 1000 for thousands) |
 | `company_id` | int unsigned | YES | MUL | NULL = applies to all; set = company-specific override |
@@ -342,6 +382,51 @@ Table. Rules mapping XBRL tags and supplemental row labels to metrics. Mappings 
 | `is_active` | tinyint(1) | NO |  | 0 = disabled (kept for audit) |
 | `origin` | enum('seed','manual') | NO |  | seed rows are managed by the seed command; manual rows never touched by it |
 | `notes` | varchar(512) | YES |  | Why this rule exists |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
+### ref_metric_sector
+
+Table. Sector metric catalog: which metrics matter for which sector. Seeded from reference/data/metric_sectors.csv.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `metric_id` | smallint unsigned | NO | PRI | Metric |
+| `sector_code` | varchar(32) | NO | PRI | Sector, or a group (equity, mortgage, all) covering its children |
+| `relevance` | enum('core','common','optional') | NO |  | core: every company in the sector reports it; common: most do; optional: some do |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
+### ref_parse_override
+
+Table. Per-company supplemental parsing rules. Rules are data, so fixing one REIT never changes code.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `override_id` | int unsigned | NO | PRI | Surrogate key |
+| `override_key` | varchar(191) | NO | UNI | Stable key from the seed file (or manual:<n>) so edits upsert cleanly |
+| `company_id` | int unsigned | NO | MUL | Company whose documents the rule applies to |
+| `action` | enum('skip','force_kind','scale','min_confidence') | NO |  | skip a table; force its kind/orientation; set its scale; change the quarantine bar |
+| `title_regex` | varchar(255) | YES |  | Applies to tables whose title matches (case-insensitive); NULL = all tables |
+| `page_from` | int unsigned | YES |  | First page it applies to |
+| `page_to` | int unsigned | YES |  | Last page it applies to |
+| `params` | json | YES |  | Action parameters, e.g. {"kind": "tenant", "orientation": "records"} or {"money": 1000} |
+| `valid_from` | date | YES |  | Applies to documents for periods ending on or after |
+| `valid_to` | date | YES |  | Applies to documents for periods ending on or before |
+| `is_active` | tinyint(1) | NO |  | 0 = disabled (kept for audit) |
+| `origin` | enum('seed','manual') | NO |  | seed rows are managed by the seed command; manual rows never touched by it |
+| `notes` | varchar(512) | YES |  | Why the rule exists |
+| `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
+### ref_sector
+
+Table. Property sectors. Seeded from reference/data/sectors.csv.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `sector_code` | varchar(32) | NO | PRI | Stable code, e.g. apartments, net_lease, senior_housing |
+| `name` | varchar(96) | NO |  | Display name |
+| `parent_code` | varchar(32) | YES |  | Broader group: equity or mortgage; all for the two groups |
+| `description` | varchar(512) | YES |  | What the sector covers |
+| `sort_order` | smallint unsigned | NO |  | Display order |
 | `updated_at` | datetime(6) | NO |  | Last change (UTC) |
 
 ### ref_web_host
@@ -361,6 +446,7 @@ Table. robots.txt state per web host, refreshed by the IR fetcher (default every
 
 - [`stg_doc_line_item`](#stg_doc_line_item): Individual values extracted from document tables, with page and cell position.
 - [`stg_doc_parse`](#stg_doc_parse): Every parse of every document. Old parses are kept, so parser upgrades can be compared and rolled back.
+- [`stg_doc_record`](#stg_doc_record): Rows of property, tenant, development, debt and lease-expiration tables in documents, as typed records.
 - [`stg_doc_table`](#stg_doc_table): Tables found in parsed documents.
 - [`stg_document`](#stg_document): Every supplemental, earnings release and other document from every source, one registry.
 - [`stg_ir_link`](#stg_ir_link): Every document link seen on a company IR site. New supplemental links are downloaded.
@@ -384,14 +470,21 @@ Table. Individual values extracted from document tables, with page and cell posi
 | `col_index` | smallint unsigned | YES |  | Column in the table, 1-based |
 | `row_label` | varchar(512) | NO |  | Row label as printed |
 | `col_label` | varchar(255) | YES |  | Column header as printed |
+| `metric_label` | varchar(512) | YES |  | Label naming the metric: row label (series tables) or column header (segment tables); rules match this |
 | `raw_text` | varchar(255) | YES |  | Cell text as printed, e.g. (1,234) |
 | `value_numeric` | decimal(28,6) | YES |  | Parsed number after sign and scale |
 | `scale_hint` | varchar(32) | YES |  | Scale stated on the page, e.g. in thousands |
 | `unit_hint` | varchar(32) | YES |  | Unit stated, e.g. $, %, sf |
 | `period_start` | date | YES |  | Period start the column refers to |
 | `period_end` | date | YES |  | Period end the column refers to |
+| `period_type` | enum('Q','YTD','FY','TTM','INSTANT') | YES |  | Period type read from the header |
 | `segment_label` | varchar(255) | YES |  | Segment, region or property type the row refers to |
+| `group_label` | varchar(255) | YES |  | Sub-heading the row sits under |
+| `col_role` | enum('value','change','share') | NO |  | value, change (e.g. % change) or share (e.g. % of total) column |
+| `bbox` | json | YES |  | Cell position on the page [x0, top, x1, bottom] in PDF points |
 | `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 |
+| `quarantined` | tinyint(1) | NO |  | 1 = below the confidence bar or failed a hard check; not used by the warehouse |
+| `quarantine_reason` | varchar(255) | YES |  | Why it was quarantined (or kept despite a warning) |
 
 ### stg_doc_parse
 
@@ -404,13 +497,37 @@ Table. Every parse of every document. Old parses are kept, so parser upgrades ca
 | `sha256` | char(64) | NO |  | Exact bytes parsed |
 | `parser_name` | varchar(64) | NO |  | Parser used |
 | `parser_version` | varchar(16) | NO |  | Parser version |
+| `config_hash` | char(64) | YES |  | Hash of the overrides and settings the parse ran with (with parser_version, reproduces the parse) |
 | `run_id` | bigint unsigned | YES |  | Job run |
 | `status` | enum('running','succeeded','failed') | NO |  | Outcome |
 | `n_tables` | int unsigned | NO |  | Tables extracted |
 | `n_items` | int unsigned | NO |  | Line items extracted |
+| `n_records` | int unsigned | NO |  | Records extracted |
+| `n_quarantined` | int unsigned | NO |  | Items and records below the confidence bar |
 | `started_at` | datetime(6) | NO |  | UTC start |
 | `finished_at` | datetime(6) | YES |  | UTC end |
 | `error_message` | text | YES |  | Error, when failed |
+
+### stg_doc_record
+
+Table. Rows of property, tenant, development, debt and lease-expiration tables in documents, as typed records.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `record_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `parse_id` | bigint unsigned | NO | MUL | Parse that produced it |
+| `table_id` | bigint unsigned | YES |  | Table it sits in |
+| `doc_id` | bigint unsigned | NO | MUL | Document |
+| `page_no` | int unsigned | NO |  | Page number, 1-based |
+| `row_index` | smallint unsigned | YES |  | Row in the table (column for wide maturity ladders), 1-based |
+| `record_kind` | enum('property','tenant','development','debt_maturity','debt_detail','lease_expiration') | NO |  | What one row describes |
+| `label` | varchar(512) | NO |  | Row label as printed, footnote markers removed (property, tenant, project, year) |
+| `fields` | json | NO |  | Typed fields read from the row (names in reference/data/record_fields.csv); unmapped columns under extra |
+| `as_of_date` | date | YES |  | Date the table describes |
+| `bbox` | json | YES |  | Row position on the page [x0, top, x1, bottom] in PDF points |
+| `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 |
+| `quarantined` | tinyint(1) | NO |  | 1 = below the confidence bar or failed a hard check; not used by the warehouse |
+| `quarantine_reason` | varchar(255) | YES |  | Why it was quarantined (or kept despite a warning) |
 
 ### stg_doc_table
 
@@ -425,6 +542,17 @@ Table. Tables found in parsed documents.
 | `table_index` | smallint unsigned | NO |  | Order of the table on the page, 1-based |
 | `title` | varchar(512) | YES |  | Table heading as printed |
 | `section` | varchar(255) | YES |  | Section of the document, e.g. Debt Summary |
+| `table_kind` | varchar(32) | YES |  | Kind from reference/data/table_kinds.csv, e.g. ffo, same_store, debt_maturity |
+| `orientation` | enum('series','segments','records') | YES |  | series: periods across; segments: metrics across, segments down; records: one row per thing |
+| `kind_score` | decimal(4,3) | YES |  | How well the title and labels matched the kind, 0..1 |
+| `scale_text` | varchar(128) | YES |  | Scale note as printed, e.g. dollars in thousands |
+| `scale_factor` | decimal(20,0) | YES |  | Multiplier applied to money values (1000 for thousands) |
+| `scale_source` | enum('table','page','document','override','none') | YES |  | Where the scale came from: the table, its page, a document-wide statement, an override, or none |
+| `headers` | json | YES |  | Column headers as read |
+| `n_rows` | smallint unsigned | YES |  | Rows read |
+| `n_cols` | smallint unsigned | YES |  | Value columns read |
+| `total_check` | enum('pass','fail','mixed') | YES |  | Total rows equal the rows above them: pass, fail, mixed; NULL = no totals |
+| `as_of_date` | date | YES |  | Date the table describes |
 | `bbox` | json | YES |  | Position on the page [x0, y0, x1, y1] in PDF points |
 
 ### stg_document
@@ -571,11 +699,50 @@ Table. One row per value per reporting filing. Restatements are new rows, never 
 
 ## wh_* Warehouse: curated, bitemporal, lineage on every value
 
+- [`wh_debt_instrument`](#wh_debt_instrument): Individual loans and notes from supplemental debt schedules (input to debt mark-to-market in NAV).
 - [`wh_debt_maturity`](#wh_debt_maturity): Debt maturity ladders from supplementals.
+- [`wh_development_project`](#wh_development_project): Development and redevelopment pipelines from supplementals.
+- [`wh_lease_expiration`](#wh_lease_expiration): Lease expiration schedules from supplementals.
 - [`wh_metric_latest`](#wh_metric_latest) (view): VIEW
 - [`wh_metric_value`](#wh_metric_value): Curated metric values, bitemporal: valid time (period), knowledge time (known_from/to) and system time (recorded/retired). Rows are retired, never deleted.
 - [`wh_property`](#wh_property): Property master, filled by the supplemental parser.
+- [`wh_property_metric`](#wh_property_metric): Per-property figures from supplementals (size, occupancy, rent, NOI, RevPAR ...), bitemporal, with lineage to page and row.
 - [`wh_property_snapshot`](#wh_property_snapshot): Property figures per reporting date, with lineage to page and cell.
+- [`wh_tenant_exposure`](#wh_tenant_exposure): Top tenant, customer and operator concentration from supplementals.
+
+### wh_debt_instrument
+
+Table. Individual loans and notes from supplemental debt schedules (input to debt mark-to-market in NAV).
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `instrument_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `company_id` | int unsigned | NO | MUL | Borrower |
+| `as_of_date` | date | NO |  | Date of the schedule |
+| `instrument` | varchar(255) | NO |  | Loan or note as printed, e.g. 3.600% notes due 2026 |
+| `segment` | varchar(128) | NO |  | Sub-heading, e.g. Unsecured, Mortgages |
+| `debt_type` | varchar(64) | YES |  | Type column as printed |
+| `principal` | decimal(20,2) | YES |  | Principal outstanding, USD |
+| `rate` | decimal(9,4) | YES |  | Stated interest rate, percent |
+| `effective_rate` | decimal(9,4) | YES |  | Effective interest rate, percent |
+| `maturity_text` | varchar(64) | YES |  | Maturity as printed |
+| `maturity_year` | smallint | YES |  | Maturity year read from the text |
+| `is_total` | tinyint(1) | NO |  | 1 for a total row |
+| `known_from` | date | NO |  | Knowledge time: publication date of the source document |
+| `known_to` | date | YES |  | Knowledge time: date a later document gave a different value; NULL = still the latest |
+| `version` | smallint unsigned | NO |  | 1 = first reported, 2+ = later revisions of the same row |
+| `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 of the source record |
+| `source_doc_id` | bigint unsigned | NO |  | stg_document row |
+| `source_sha256` | char(64) | YES |  | Raw object (exact bytes) the value was read from |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+| `source_table_id` | bigint unsigned | YES |  | stg_doc_table row |
+| `source_record_id` | bigint unsigned | YES |  | stg_doc_record row |
+| `row_hash` | char(64) | NO | MUL | Hash of key, knowledge time, values and lineage; equal hash = identical row |
+| `recorded_at` | datetime(6) | NO |  | System time: when this row entered the warehouse |
+| `recorded_run_id` | bigint unsigned | YES |  | Build run that inserted it |
+| `retired_at` | datetime(6) | YES |  | System time: when a rebuild replaced it; NULL = live |
+| `retired_run_id` | bigint unsigned | YES |  | Build run that retired it |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
 
 ### wh_debt_maturity
 
@@ -586,15 +753,102 @@ Table. Debt maturity ladders from supplementals.
 | `maturity_id` | bigint unsigned | NO | PRI | Surrogate key |
 | `company_id` | int unsigned | NO | MUL | Company |
 | `as_of_date` | date | NO |  | Balance sheet date of the schedule |
-| `maturity_year` | smallint | NO |  | Year the debt matures (or first year of a Thereafter bucket) |
+| `maturity_year` | smallint | YES |  | Year the debt matures; NULL for Thereafter and Total buckets |
+| `bucket_label` | varchar(64) | YES |  | Bucket as printed: a year, Thereafter, Total |
 | `debt_type` | varchar(64) | NO |  | Secured, unsecured, line of credit, Total |
 | `amount` | decimal(20,2) | NO |  | Principal maturing, USD |
 | `wtd_avg_rate` | decimal(7,4) | YES |  | Weighted average rate of that bucket, percent |
+| `pct_of_total` | decimal(9,4) | YES |  | Percent of total debt maturing in the bucket |
+| `is_total` | tinyint(1) | NO |  | 1 for the total row |
 | `known_from` | date | NO |  | Knowledge time: publication date |
+| `known_to` | date | YES |  | Knowledge time: date a later document gave a different value; NULL = still the latest |
+| `version` | smallint unsigned | NO |  | 1 = first reported, 2+ = later revisions |
+| `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 of the source record |
 | `source_doc_id` | bigint unsigned | NO |  | Source document |
+| `source_sha256` | char(64) | YES |  | Raw object the value was read from |
 | `source_page_no` | int unsigned | YES |  | Source page |
+| `source_table_id` | bigint unsigned | YES |  | stg_doc_table row |
+| `source_record_id` | bigint unsigned | YES |  | stg_doc_record row |
+| `row_hash` | char(64) | YES | MUL | Hash of key, knowledge time, values and lineage |
 | `recorded_at` | datetime(6) | NO |  | System time inserted |
+| `recorded_run_id` | bigint unsigned | YES |  | Build run that inserted it |
 | `retired_at` | datetime(6) | YES |  | System time replaced; NULL = live |
+| `retired_run_id` | bigint unsigned | YES |  | Build run that retired it |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
+
+### wh_development_project
+
+Table. Development and redevelopment pipelines from supplementals.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `dev_project_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `company_id` | int unsigned | NO | MUL | Company |
+| `as_of_date` | date | NO |  | Date of the schedule |
+| `project_name` | varchar(255) | NO |  | Project, region or bucket as printed |
+| `segment` | varchar(128) | NO |  | Sub-heading the row sat under (e.g. Under construction, Completed), or Total |
+| `market` | varchar(128) | YES |  | Market as printed |
+| `property_type` | varchar(64) | YES |  | Property type as printed |
+| `units` | int | YES |  | Units, homes, beds, keys or MW |
+| `square_feet` | decimal(16,2) | YES |  | Square feet |
+| `total_cost` | decimal(20,2) | YES |  | Estimated total cost or investment, USD |
+| `cost_to_date` | decimal(20,2) | YES |  | Cost incurred to date, USD |
+| `remaining_cost` | decimal(20,2) | YES |  | Cost remaining to fund, USD |
+| `pct_leased` | decimal(9,4) | YES |  | Percent leased or pre-leased |
+| `stabilized_yield` | decimal(9,4) | YES |  | Expected stabilized yield, percent |
+| `ownership_pct` | decimal(9,4) | YES |  | Company ownership share, percent |
+| `completion_text` | varchar(64) | YES |  | Expected completion or stabilization as printed |
+| `is_total` | tinyint(1) | NO |  | 1 for a total row |
+| `known_from` | date | NO |  | Knowledge time: publication date of the source document |
+| `known_to` | date | YES |  | Knowledge time: date a later document gave a different value; NULL = still the latest |
+| `version` | smallint unsigned | NO |  | 1 = first reported, 2+ = later revisions of the same row |
+| `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 of the source record |
+| `source_doc_id` | bigint unsigned | NO |  | stg_document row |
+| `source_sha256` | char(64) | YES |  | Raw object (exact bytes) the value was read from |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+| `source_table_id` | bigint unsigned | YES |  | stg_doc_table row |
+| `source_record_id` | bigint unsigned | YES |  | stg_doc_record row |
+| `row_hash` | char(64) | NO | MUL | Hash of key, knowledge time, values and lineage; equal hash = identical row |
+| `recorded_at` | datetime(6) | NO |  | System time: when this row entered the warehouse |
+| `recorded_run_id` | bigint unsigned | YES |  | Build run that inserted it |
+| `retired_at` | datetime(6) | YES |  | System time: when a rebuild replaced it; NULL = live |
+| `retired_run_id` | bigint unsigned | YES |  | Build run that retired it |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
+
+### wh_lease_expiration
+
+Table. Lease expiration schedules from supplementals.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `lease_exp_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `company_id` | int unsigned | NO | MUL | Company |
+| `as_of_date` | date | NO |  | Date of the schedule |
+| `bucket_label` | varchar(64) | NO |  | Bucket as printed: a year, Thereafter, Month-to-month, Vacant, Total |
+| `expiry_year` | smallint | YES |  | Year, when the bucket is one year |
+| `segment` | varchar(128) | NO |  | Sub-heading the row sat under, or Total |
+| `n_leases` | int | YES |  | Leases expiring |
+| `n_properties` | int | YES |  | Properties with leases expiring |
+| `square_feet` | decimal(16,2) | YES |  | Square feet expiring |
+| `annualized_rent` | decimal(20,2) | YES |  | Annualized rent expiring, USD |
+| `rent_pct` | decimal(9,4) | YES |  | Percent of total annualized rent |
+| `rent_psf` | decimal(12,4) | YES |  | Annualized rent per square foot, USD |
+| `is_total` | tinyint(1) | NO |  | 1 for the total row |
+| `known_from` | date | NO |  | Knowledge time: publication date of the source document |
+| `known_to` | date | YES |  | Knowledge time: date a later document gave a different value; NULL = still the latest |
+| `version` | smallint unsigned | NO |  | 1 = first reported, 2+ = later revisions of the same row |
+| `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 of the source record |
+| `source_doc_id` | bigint unsigned | NO |  | stg_document row |
+| `source_sha256` | char(64) | YES |  | Raw object (exact bytes) the value was read from |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+| `source_table_id` | bigint unsigned | YES |  | stg_doc_table row |
+| `source_record_id` | bigint unsigned | YES |  | stg_doc_record row |
+| `row_hash` | char(64) | NO | MUL | Hash of key, knowledge time, values and lineage; equal hash = identical row |
+| `recorded_at` | datetime(6) | NO |  | System time: when this row entered the warehouse |
+| `recorded_run_id` | bigint unsigned | YES |  | Build run that inserted it |
+| `retired_at` | datetime(6) | YES |  | System time: when a rebuild replaced it; NULL = live |
+| `retired_run_id` | bigint unsigned | YES |  | Build run that retired it |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
 
 ### wh_metric_latest
 
@@ -693,6 +947,41 @@ Table. Property master, filled by the supplemental parser.
 | `first_doc_id` | bigint unsigned | YES |  | Document where first seen |
 | `created_at` | datetime(6) | NO |  | Row creation (UTC) |
 
+### wh_property_metric
+
+Table. Per-property figures from supplementals (size, occupancy, rent, NOI, RevPAR ...), bitemporal, with lineage to page and row.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `property_metric_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `company_id` | int unsigned | NO | MUL | Reporting company |
+| `property_id` | bigint unsigned | YES | MUL | Property master row once matched; NULL until the property is matched |
+| `property_key` | char(64) | NO |  | Hash of normalized name, city and state, for matching |
+| `property_name` | varchar(255) | NO |  | Property name as printed |
+| `city` | varchar(128) | YES |  | City as printed |
+| `state` | varchar(64) | YES |  | State as printed |
+| `market` | varchar(128) | YES |  | Market or MSA as printed |
+| `property_type` | varchar(64) | YES |  | Property type as printed |
+| `metric_id` | smallint unsigned | NO | MUL | Metric (grain = property) |
+| `as_of_date` | date | NO |  | Date or period end the figure describes (valid time) |
+| `value` | decimal(28,6) | NO |  | Value in unit |
+| `unit` | varchar(32) | NO |  | Unit, e.g. USD, sf, pct, count |
+| `known_from` | date | NO |  | Knowledge time: publication date of the source document |
+| `known_to` | date | YES |  | Knowledge time: date a later document gave a different value; NULL = still the latest |
+| `version` | smallint unsigned | NO |  | 1 = first reported, 2+ = later revisions of the same row |
+| `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 of the source record |
+| `source_doc_id` | bigint unsigned | NO |  | stg_document row |
+| `source_sha256` | char(64) | YES |  | Raw object (exact bytes) the value was read from |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+| `source_table_id` | bigint unsigned | YES |  | stg_doc_table row |
+| `source_record_id` | bigint unsigned | YES |  | stg_doc_record row |
+| `row_hash` | char(64) | NO | MUL | Hash of key, knowledge time, values and lineage; equal hash = identical row |
+| `recorded_at` | datetime(6) | NO |  | System time: when this row entered the warehouse |
+| `recorded_run_id` | bigint unsigned | YES |  | Build run that inserted it |
+| `retired_at` | datetime(6) | YES |  | System time: when a rebuild replaced it; NULL = live |
+| `retired_run_id` | bigint unsigned | YES |  | Build run that retired it |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
+
 ### wh_property_snapshot
 
 Table. Property figures per reporting date, with lineage to page and cell.
@@ -714,13 +1003,57 @@ Table. Property figures per reporting date, with lineage to page and cell.
 | `recorded_at` | datetime(6) | NO |  | System time inserted |
 | `retired_at` | datetime(6) | YES |  | System time replaced; NULL = live |
 
+### wh_tenant_exposure
+
+Table. Top tenant, customer and operator concentration from supplementals.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `tenant_exp_id` | bigint unsigned | NO | PRI | Surrogate key |
+| `company_id` | int unsigned | NO | MUL | Company (landlord) |
+| `as_of_date` | date | NO |  | Date of the list |
+| `tenant_name` | varchar(255) | NO | MUL | Tenant, customer or operator as printed |
+| `tenant_rank` | smallint | YES |  | Rank as printed |
+| `industry` | varchar(128) | YES |  | Industry or line of trade as printed |
+| `credit_rating` | varchar(32) | YES |  | Credit rating as printed |
+| `n_properties` | int | YES |  | Properties or locations |
+| `n_leases` | int | YES |  | Leases |
+| `square_feet` | decimal(16,2) | YES |  | Square feet leased |
+| `annualized_rent` | decimal(20,2) | YES |  | Annualized rent, USD |
+| `rent_pct` | decimal(9,4) | YES |  | Percent of total annualized rent (or of the measure the table states) |
+| `wale_years` | decimal(8,2) | YES |  | Weighted average remaining lease term, years |
+| `is_total` | tinyint(1) | NO |  | 1 for a total row such as Top 20 total |
+| `known_from` | date | NO |  | Knowledge time: publication date of the source document |
+| `known_to` | date | YES |  | Knowledge time: date a later document gave a different value; NULL = still the latest |
+| `version` | smallint unsigned | NO |  | 1 = first reported, 2+ = later revisions of the same row |
+| `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 of the source record |
+| `source_doc_id` | bigint unsigned | NO |  | stg_document row |
+| `source_sha256` | char(64) | YES |  | Raw object (exact bytes) the value was read from |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+| `source_table_id` | bigint unsigned | YES |  | stg_doc_table row |
+| `source_record_id` | bigint unsigned | YES |  | stg_doc_record row |
+| `row_hash` | char(64) | NO | MUL | Hash of key, knowledge time, values and lineage; equal hash = identical row |
+| `recorded_at` | datetime(6) | NO |  | System time: when this row entered the warehouse |
+| `recorded_run_id` | bigint unsigned | YES |  | Build run that inserted it |
+| `retired_at` | datetime(6) | YES |  | System time: when a rebuild replaced it; NULL = live |
+| `retired_run_id` | bigint unsigned | YES |  | Build run that retired it |
+| `is_live` | tinyint (generated) | YES |  | 1 while live, NULL once retired |
+
 ## dl_* Delivery: client contract views (changing them is a breaking change)
 
 - [`dl_companies`](#dl_companies) (view): VIEW
+- [`dl_company_profile`](#dl_company_profile) (view): VIEW
+- [`dl_debt_instruments`](#dl_debt_instruments) (view): VIEW
+- [`dl_debt_maturities`](#dl_debt_maturities) (view): VIEW
+- [`dl_development_pipeline`](#dl_development_pipeline) (view): VIEW
 - [`dl_documents`](#dl_documents) (view): VIEW
 - [`dl_filings`](#dl_filings) (view): VIEW
+- [`dl_lease_expirations`](#dl_lease_expirations) (view): VIEW
+- [`dl_metric_catalog`](#dl_metric_catalog) (view): VIEW
 - [`dl_metrics`](#dl_metrics) (view): VIEW
 - [`dl_metrics_history`](#dl_metrics_history) (view): VIEW
+- [`dl_property_metrics`](#dl_property_metrics) (view): VIEW
+- [`dl_top_tenants`](#dl_top_tenants) (view): VIEW
 
 ### dl_companies
 
@@ -738,6 +1071,97 @@ View.
 | `fiscal_year_end` | char(4) | YES |  | Fiscal year end as MMDD |
 | `in_universe` | tinyint(1) | NO |  | 1 if currently tracked; delisted companies stay with 0 |
 | `updated_at` | datetime(6) | NO |  | Last change (UTC) |
+
+### dl_company_profile
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `ticker` | varchar(16) | YES |  | Current primary ticker |
+| `company_name` | varchar(255) | NO |  | Current SEC conformed name |
+| `metric_code` | varchar(48) | NO |  | Stable public code used in client files, e.g. FFO_PER_SHARE |
+| `metric_name` | varchar(128) | NO |  | Display name |
+| `category` | varchar(48) | NO |  | Grouping, e.g. Earnings, Balance Sheet |
+| `grain` | enum('company','segment','property') | NO |  | Level the metric describes: company (incl. segments of it) or a single property |
+| `relevance` | enum('core','common','optional') | YES |  | core: every company in the sector reports it; common: most do; optional: some do |
+| `unit_type` | enum('USD','USD_PER_SHARE','PCT','SF','COUNT','SHARES','RATIO','YEARS','USD_PER_SF','USD_PER_UNIT','MW') | NO |  | Unit family (USD_PER_UNIT: per room, unit, bed or occupied room per night or month) |
+| `period_type` | enum('Q','YTD','FY','TTM','INSTANT') | YES |  | Q quarter, YTD year to date, FY fiscal year, INSTANT balance |
+| `period_end` | date | YES |  | Business period end or balance date (valid time) |
+| `segment` | varchar(128) | YES |  | Total or a segment label |
+| `value` | decimal(28,6) | YES |  | Value in unit |
+| `unit` | varchar(32) | YES |  | Unit, e.g. USD, USD/shares, pct |
+| `source_type` | enum('xbrl','derived','supplemental','manual') | YES |  | xbrl: as tagged; derived: computed from xbrl (e.g. Q4 = FY - 9M); supplemental: parsed from a document; manual: analyst entry |
+| `published_date` | date | YES |  | Knowledge time: date the value was published (filing or document date) |
+| `source_document_url` | varchar(2048) | YES |  | Where it came from (file:// URI for archive imports) |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+| `has_value` | int | NO |  |  |
+
+### dl_debt_instruments
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `ticker` | varchar(16) | YES |  | Current primary ticker |
+| `as_of_date` | date | NO |  | Date of the schedule |
+| `segment` | varchar(128) | NO |  | Sub-heading, e.g. Unsecured, Mortgages |
+| `instrument` | varchar(255) | NO |  | Loan or note as printed, e.g. 3.600% notes due 2026 |
+| `debt_type` | varchar(64) | YES |  | Type column as printed |
+| `principal` | decimal(20,2) | YES |  | Principal outstanding, USD |
+| `rate` | decimal(9,4) | YES |  | Stated interest rate, percent |
+| `effective_rate` | decimal(9,4) | YES |  | Effective interest rate, percent |
+| `maturity_text` | varchar(64) | YES |  | Maturity as printed |
+| `maturity_year` | smallint | YES |  | Maturity year read from the text |
+| `is_total` | tinyint(1) | NO |  | 1 for a total row |
+| `published_date` | date | NO |  | Knowledge time: publication date of the source document |
+| `source_document_url` | varchar(2048) | NO |  | Where it came from (file:// URI for archive imports) |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+
+### dl_debt_maturities
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `ticker` | varchar(16) | YES |  | Current primary ticker |
+| `as_of_date` | date | NO |  | Balance sheet date of the schedule |
+| `maturity_year` | smallint | YES |  | Year the debt matures; NULL for Thereafter and Total buckets |
+| `bucket_label` | varchar(64) | YES |  | Bucket as printed: a year, Thereafter, Total |
+| `debt_type` | varchar(64) | NO |  | Secured, unsecured, line of credit, Total |
+| `amount` | decimal(20,2) | NO |  | Principal maturing, USD |
+| `wtd_avg_rate` | decimal(7,4) | YES |  | Weighted average rate of that bucket, percent |
+| `pct_of_total` | decimal(9,4) | YES |  | Percent of total debt maturing in the bucket |
+| `is_total` | tinyint(1) | NO |  | 1 for the total row |
+| `published_date` | date | NO |  | Knowledge time: publication date |
+| `source_document_url` | varchar(2048) | NO |  | Where it came from (file:// URI for archive imports) |
+| `source_page_no` | int unsigned | YES |  | Source page |
+
+### dl_development_pipeline
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `ticker` | varchar(16) | YES |  | Current primary ticker |
+| `as_of_date` | date | NO |  | Date of the schedule |
+| `segment` | varchar(128) | NO |  | Sub-heading the row sat under (e.g. Under construction, Completed), or Total |
+| `project_name` | varchar(255) | NO |  | Project, region or bucket as printed |
+| `market` | varchar(128) | YES |  | Market as printed |
+| `property_type` | varchar(64) | YES |  | Property type as printed |
+| `units` | int | YES |  | Units, homes, beds, keys or MW |
+| `square_feet` | decimal(16,2) | YES |  | Square feet |
+| `total_cost` | decimal(20,2) | YES |  | Estimated total cost or investment, USD |
+| `cost_to_date` | decimal(20,2) | YES |  | Cost incurred to date, USD |
+| `remaining_cost` | decimal(20,2) | YES |  | Cost remaining to fund, USD |
+| `pct_leased` | decimal(9,4) | YES |  | Percent leased or pre-leased |
+| `stabilized_yield` | decimal(9,4) | YES |  | Expected stabilized yield, percent |
+| `ownership_pct` | decimal(9,4) | YES |  | Company ownership share, percent |
+| `completion_text` | varchar(64) | YES |  | Expected completion or stabilization as printed |
+| `is_total` | tinyint(1) | NO |  | 1 for a total row |
+| `published_date` | date | NO |  | Knowledge time: publication date of the source document |
+| `source_document_url` | varchar(2048) | NO |  | Where it came from (file:// URI for archive imports) |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
 
 ### dl_documents
 
@@ -772,6 +1196,48 @@ View.
 | `items` | varchar(255) | YES |  | 8-K item numbers, e.g. 2.02,9.01 |
 | `index_url` | varchar(512) | NO |  | EDGAR filing index page |
 | `primary_doc_url` | varchar(512) | YES |  | URL of the primary document |
+
+### dl_lease_expirations
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `ticker` | varchar(16) | YES |  | Current primary ticker |
+| `as_of_date` | date | NO |  | Date of the schedule |
+| `segment` | varchar(128) | NO |  | Sub-heading the row sat under, or Total |
+| `bucket_label` | varchar(64) | NO |  | Bucket as printed: a year, Thereafter, Month-to-month, Vacant, Total |
+| `expiry_year` | smallint | YES |  | Year, when the bucket is one year |
+| `n_leases` | int | YES |  | Leases expiring |
+| `n_properties` | int | YES |  | Properties with leases expiring |
+| `square_feet` | decimal(16,2) | YES |  | Square feet expiring |
+| `annualized_rent` | decimal(20,2) | YES |  | Annualized rent expiring, USD |
+| `rent_pct` | decimal(9,4) | YES |  | Percent of total annualized rent |
+| `rent_psf` | decimal(12,4) | YES |  | Annualized rent per square foot, USD |
+| `is_total` | tinyint(1) | NO |  | 1 for the total row |
+| `published_date` | date | NO |  | Knowledge time: publication date of the source document |
+| `source_document_url` | varchar(2048) | NO |  | Where it came from (file:// URI for archive imports) |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+
+### dl_metric_catalog
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `sector_code` | varchar(32) | NO |  | Stable code, e.g. apartments, net_lease, senior_housing |
+| `sector_name` | varchar(96) | NO |  | Display name |
+| `metric_code` | varchar(48) | NO |  | Stable public code used in client files, e.g. FFO_PER_SHARE |
+| `metric_name` | varchar(128) | NO |  | Display name |
+| `category` | varchar(48) | NO |  | Grouping, e.g. Earnings, Balance Sheet |
+| `unit_type` | enum('USD','USD_PER_SHARE','PCT','SF','COUNT','SHARES','RATIO','YEARS','USD_PER_SF','USD_PER_UNIT','MW') | NO |  | Unit family (USD_PER_UNIT: per room, unit, bed or occupied room per night or month) |
+| `period_nature` | enum('duration','instant') | NO |  | Flow over a period or balance at a date |
+| `grain` | enum('company','segment','property') | NO |  | Level the metric describes: company (incl. segments of it) or a single property |
+| `is_non_gaap` | tinyint(1) | NO |  | 1 for non-GAAP measures |
+| `is_nareit_defined` | tinyint(1) | NO |  | 1 if Nareit publishes the definition |
+| `relevance` | enum('core','common','optional') | NO |  | core: every company in the sector reports it; common: most do; optional: some do |
+| `defined_for` | varchar(32) | NO |  | Sector, or a group (equity, mortgage, all) covering its children |
+| `definition` | text | YES |  | Definition shown to clients |
 
 ### dl_metrics
 
@@ -827,4 +1293,51 @@ View.
 | `source_doc_id` | bigint unsigned | YES |  | stg_document row (supplemental) |
 | `source_page_no` | int unsigned | YES |  | Page in the source document |
 | `value_id` | bigint unsigned | NO |  | Surrogate key |
+
+### dl_property_metrics
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `ticker` | varchar(16) | YES |  | Current primary ticker |
+| `property_id` | bigint unsigned | YES |  | Property master row once matched; NULL until the property is matched |
+| `property_name` | varchar(255) | NO |  | Property name as printed |
+| `city` | varchar(128) | YES |  | City as printed |
+| `state` | varchar(64) | YES |  | State as printed |
+| `market` | varchar(128) | YES |  | Market or MSA as printed |
+| `property_type` | varchar(64) | YES |  | Property type as printed |
+| `metric_code` | varchar(48) | NO |  | Stable public code used in client files, e.g. FFO_PER_SHARE |
+| `metric_name` | varchar(128) | NO |  | Display name |
+| `as_of_date` | date | NO |  | Date or period end the figure describes (valid time) |
+| `value` | decimal(28,6) | NO |  | Value in unit |
+| `unit` | varchar(32) | NO |  | Unit, e.g. USD, sf, pct, count |
+| `published_date` | date | NO |  | Knowledge time: publication date of the source document |
+| `confidence` | decimal(4,3) | YES |  | Parser confidence 0..1 of the source record |
+| `source_document_url` | varchar(2048) | NO |  | Where it came from (file:// URI for archive imports) |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
+| `property_metric_id` | bigint unsigned | NO |  | Surrogate key |
+
+### dl_top_tenants
+
+View.
+
+| Column | Type | Null | Key | Description |
+|---|---|---|---|---|
+| `ticker` | varchar(16) | YES |  | Current primary ticker |
+| `as_of_date` | date | NO |  | Date of the list |
+| `tenant_rank` | smallint | YES |  | Rank as printed |
+| `tenant_name` | varchar(255) | NO |  | Tenant, customer or operator as printed |
+| `industry` | varchar(128) | YES |  | Industry or line of trade as printed |
+| `credit_rating` | varchar(32) | YES |  | Credit rating as printed |
+| `n_properties` | int | YES |  | Properties or locations |
+| `n_leases` | int | YES |  | Leases |
+| `square_feet` | decimal(16,2) | YES |  | Square feet leased |
+| `annualized_rent` | decimal(20,2) | YES |  | Annualized rent, USD |
+| `rent_pct` | decimal(9,4) | YES |  | Percent of total annualized rent (or of the measure the table states) |
+| `wale_years` | decimal(8,2) | YES |  | Weighted average remaining lease term, years |
+| `is_total` | tinyint(1) | NO |  | 1 for a total row such as Top 20 total |
+| `published_date` | date | NO |  | Knowledge time: publication date of the source document |
+| `source_document_url` | varchar(2048) | NO |  | Where it came from (file:// URI for archive imports) |
+| `source_page_no` | int unsigned | YES |  | Page in the source document |
 

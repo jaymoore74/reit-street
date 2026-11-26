@@ -1,10 +1,13 @@
 # Import an archive of older supplementals
 
 ```powershell
+reitstreet parse-eval D:\supplementals      # optional: measure the parser first, no database
 reitstreet import-archive D:\supplementals
 reitstreet parse-docs
 reitstreet dq
 ```
+
+Reviewing what the parser held back: [parse-supplementals.md](parse-supplementals.md).
 
 Files are de-duplicated by SHA-256, so importing the same folder twice adds nothing.
 Ticker and period come from the path and file name, for example

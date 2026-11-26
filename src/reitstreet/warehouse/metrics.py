@@ -15,8 +15,10 @@ rebuild with no upstream change writes nothing.
 XBRL path:     stg_xbrl_fact -> ref_metric_map (tag/unit, priority) -> period typing
                -> knowledge versions by filed date -> derived discrete quarters
                (Q2..Q4 = YTD - prior YTD, USD duration metrics only).
-Supplemental:  stg_doc_line_item (current parse of parsed documents) -> label regex
-               rules -> versions by document publication date.
+Supplemental:  stg_doc_line_item (current parse of parsed documents, not quarantined)
+               -> label regex rules on the metric label (row label in series tables,
+               column header in segment tables), filtered by column role and table
+               kind -> versions by document publication date.
 """
 
 from __future__ import annotations
@@ -42,6 +44,8 @@ UNIT_FOR_TYPE = {
     "RATIO": "x",
     "YEARS": "years",
     "USD_PER_SF": "USD/sf",
+    "USD_PER_UNIT": "USD/unit",
+    "MW": "MW",
 }
 HASH_FIELDS = (
     "company_id",
@@ -240,18 +244,24 @@ def desired_xbrl_rows(db: Db, company: dict[str, Any]) -> list[dict[str, Any]]:
 # ------------------------------------------------------------------ supplementals
 def desired_supplemental_rows(db: Db, company: dict[str, Any]) -> list[dict[str, Any]]:
     items = db.query(
-        """SELECT i.item_id, i.table_id, i.page_no, i.value_numeric, i.segment_label, i.period_start,
-                  COALESCE(i.period_end, d.period_end_date) AS period_end,
+        """SELECT i.item_id, i.table_id, i.page_no, i.value_numeric, i.segment_label, i.period_start, i.period_type,
+                  COALESCE(i.period_end, t.as_of_date, d.period_end_date) AS period_end,
                   COALESCE(d.published_date, DATE(d.created_at)) AS as_of, d.doc_id, d.sha256, d.accession_no,
                   m.metric_id, m.priority, m.multiplier, md.period_nature, md.unit_type
            FROM stg_document d
-           JOIN stg_doc_line_item i ON i.parse_id = d.current_parse_id
+           JOIN stg_doc_line_item i ON i.parse_id = d.current_parse_id AND i.quarantined = 0
+           LEFT JOIN stg_doc_table t ON t.table_id = i.table_id
            JOIN ref_metric_map m ON m.source_type='supplemental' AND m.is_active=1
                 AND (m.company_id IS NULL OR m.company_id = d.company_id)
-                AND REGEXP_LIKE(i.row_label, m.label_regex, 'i')
-                AND (m.exclude_regex IS NULL OR NOT REGEXP_LIKE(i.row_label, m.exclude_regex, 'i'))
+                AND (m.col_role = 'any' OR m.col_role = i.col_role)
+                AND REGEXP_LIKE(COALESCE(i.metric_label, i.row_label), m.label_regex, 'i')
+                AND (m.exclude_regex IS NULL
+                     OR NOT REGEXP_LIKE(COALESCE(i.metric_label, i.row_label), m.exclude_regex, 'i'))
                 AND (m.segment_regex IS NULL OR REGEXP_LIKE(COALESCE(i.segment_label, ''), m.segment_regex, 'i'))
-           JOIN ref_metric md ON md.metric_id = m.metric_id AND md.is_active=1
+                AND (m.table_kind_regex IS NULL OR REGEXP_LIKE(COALESCE(t.table_kind, ''), m.table_kind_regex, 'i'))
+                AND (m.valid_from IS NULL OR COALESCE(i.period_end, d.period_end_date) >= m.valid_from)
+                AND (m.valid_to IS NULL OR COALESCE(i.period_end, d.period_end_date) <= m.valid_to)
+           JOIN ref_metric md ON md.metric_id = m.metric_id AND md.is_active=1 AND md.grain <> 'property'
            WHERE d.company_id=:c AND d.status='parsed' AND i.value_numeric IS NOT NULL""",
         {"c": company["company_id"]},
     )
@@ -263,10 +273,16 @@ def desired_supplemental_rows(db: Db, company: dict[str, Any]) -> list[dict[str,
             ptype, start = "INSTANT", None
         else:
             start = i["period_start"]
-            cls = classify_duration((i["period_end"] - start).days + 1) if start else ("Q", 1)
-            if cls is None or cls[0] == "INSTANT":
-                continue
-            ptype = cls[0]
+            if start:
+                cls = classify_duration((i["period_end"] - start).days + 1)
+                if cls is None or cls[0] == "INSTANT":
+                    if i["period_type"] != "TTM":
+                        continue
+                    cls = ("TTM", 4)
+                ptype = "TTM" if i["period_type"] == "TTM" else cls[0]
+            else:
+                # no start read: trust the header's period type; a dated column of a duration metric is a quarter
+                ptype = i["period_type"] if i["period_type"] in ("Q", "YTD", "FY", "TTM") else "Q"
         seg = (i["segment_label"] or "Total")[:128]
         groups[(i["metric_id"], ptype, start, i["period_end"], seg, i["unit_type"])].append(i)
     out = []
@@ -342,7 +358,10 @@ def apply_rows(
 
 def build_company(db: Db, company: dict[str, Any], run_id: int | None) -> dict[str, int]:
     """Rebuild all metric rows for one company in one transaction."""
+    from .records import build_company_records
+
     with db.transaction():
         x = apply_rows(db, company["company_id"], ("xbrl", "derived"), desired_xbrl_rows(db, company), run_id)
         s = apply_rows(db, company["company_id"], ("supplemental",), desired_supplemental_rows(db, company), run_id)
-    return {k: x[k] + s[k] for k in x}
+        r = build_company_records(db, company["company_id"], run_id)
+    return {k: x[k] + s[k] + r[k] for k in x}

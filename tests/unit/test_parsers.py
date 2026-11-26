@@ -84,7 +84,10 @@ def _meta(name: str, mime: str = "text/csv") -> DocMeta:
 
 def test_manual_csv_parser() -> None:
     assert isinstance(pick(_meta("x.csv")), ManualCsvParser)
-    assert pick(_meta("x.pdf", "application/pdf")) is None  # PDF parser not built yet
+    import reitstreet.parsers.run  # noqa: F401  (registers the PDF parser)
+    from reitstreet.parsers.pdf.parser import SupplementalPdfParser
+
+    assert isinstance(pick(_meta("x.pdf", "application/pdf")), SupplementalPdfParser)
     res = ManualCsvParser().parse(b'row_label,value,page_no\nFFO,"(1,000)",4\nNote,n/a,4\n', _meta("x.csv"))
     assert [(i.row_label, i.value_numeric, i.page_no) for i in res.items] == [
         ("FFO", Decimal("-1000"), 4),

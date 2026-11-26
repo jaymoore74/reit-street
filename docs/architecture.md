@@ -35,13 +35,17 @@ One MySQL schema, tables prefixed by layer. The full column list is in
  │ archive folder import     │   │ stg_sec_filing, stg_sec_filing_doc    │
  │ IR email inbox (planned)  │   │ stg_xbrl_concept, stg_xbrl_fact       │
  └───────────────────────────┘   │ stg_document, stg_doc_parse,          │
-                                 │ stg_doc_table, stg_doc_line_item      │
+                                 │ stg_doc_table, stg_doc_line_item,     │
+                                 │ stg_doc_record (quarantine flagged)   │
   ref_company, ref_ir_source ───>└───────────────┬───────────────────────┘
   ref_metric, ref_metric_map ────────────────────┤ build-metrics (rules as data)
+  ref_sector, ref_metric_sector ─────────────────┤
                                  ┌───────────────▼───────────────────────┐
                                  │ wh_metric_value (bitemporal)          │   dl_* views ──> export CSV
                                  │ wh_property, wh_property_snapshot,    │   + manifest ──> client feed
-                                 │ wh_debt_maturity                      │                  (API: planned)
+                                 │ wh_property_metric, wh_debt_maturity, │                  (API: planned)
+                                 │ wh_debt_instrument, wh_lease_exp...,  │   company-profile
+                                 │ wh_tenant_exposure, wh_development... │
                                  └───────────────────────────────────────┘
   ops_job_run, ops_job_item, ops_dead_letter, ops_dq_result, ops_alert  (operations)
 ```
@@ -93,6 +97,10 @@ the raw layer before parsing.
 chain, raw objects match their hash), accounting identities (assets = liabilities + equity,
 quarters sum to the fiscal year), anomalies (sign flips, quarter-on-quarter jumps over 50%),
 reconciliation of supplemental values against XBRL (1%), freshness and queue health.
+Supplemental record tables get their own: lineage to file hash, page and table, one
+current version per key, percentages in range, lease shares summing to about 100%,
+property count swings, the debt ladder against total debt (10%), and parse quarantine
+rates over 25% (ADR 0011).
 
 `reitstreet monitor` marks stale runs aborted and alerts on failed or partial runs, overdue
 syncs, DQ errors and dead letters older than 3 days. Alerts go to `ops_alert`, the log, and
@@ -108,16 +116,14 @@ optionally email and a webhook, de-duplicated over 6 hours.
 | `sources/ir/` | IR website crawl: strategies, robots.txt, link classification, expectations, coverage |
 | `sources/ir_inbox/` | slot for the IR email alert inbox (planned) |
 | `parsers/` | pure functions from bytes to records; document parser registry (`documents.py`) |
+| `parsers/pdf/` | supplemental PDF parser: layout, table classification, periods, scale, records, confidence, offline evaluation (ADR 0011) |
 | `reference/` | universe import, seed of metric dictionary and mapping rules from CSV |
-| `warehouse/` | period typing, versioning, metric build |
-| `quality/` | DQ checks, monitor |
-| `delivery/` | client exports with manifest |
+| `warehouse/` | period typing, versioning, metric build, record tables (`records.py`) |
+| `quality/` | DQ checks, monitor, parse coverage |
+| `delivery/` | client exports with manifest, company profile |
 | `migrations/` | Alembic revisions (raw SQL DDL, every table and column commented) |
 
 ## Planned modules (slots exist)
 
-1. **Supplemental PDF parser**: register a parser class in `parsers/documents.py`; it emits
-   tables and line items with page and cell positions into `stg_doc_*`, then property and
-   debt rows into `wh_*`. Old parses stay in `stg_doc_parse` for comparison.
-2. **IR inbox**: a dedicated mailbox polled into `stg_document` with `source='email'`.
-3. **Client API**: read-only service over the `dl_*` views with the same as-of semantics as export.
+1. **IR inbox**: a dedicated mailbox polled into `stg_document` with `source='email'`.
+2. **Client API**: read-only service over the `dl_*` views with the same as-of semantics as export.
