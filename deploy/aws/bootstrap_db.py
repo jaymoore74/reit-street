@@ -45,6 +45,18 @@ def grant_statements(role: str, schemas: dict[str, str]) -> list[str]:
     return [f"GRANT {', '.join(privs)} ON `{schemas[key]}`.* TO '{user}'@'%'" for privs, key in ROLES[role]]
 
 
+def user_statements(user: str) -> list[str]:
+    """CREATE USER and ALTER USER for one login, each with one %s for the password.
+
+    These run with a parameter, so PyMySQL %-formats them: the host wildcard must be written
+    '%%' to reach the server as '%'. GRANT statements run without parameters and keep '%'.
+    """
+    return [
+        f"CREATE USER IF NOT EXISTS '{user}'@'%%' IDENTIFIED BY %s REQUIRE SSL",
+        f"ALTER USER '{user}'@'%%' IDENTIFIED BY %s REQUIRE SSL",
+    ]
+
+
 def aws(region: str, *args: str) -> str:
     cmd = ["aws", "--region", region, "--output", "json", *args]
     res = subprocess.run(cmd, capture_output=True, text=True)  # noqa: S603  (fixed binary, no shell)
@@ -149,8 +161,8 @@ def main() -> int:
                     },
                 )
                 state = "secret created"
-            cur.execute(f"CREATE USER IF NOT EXISTS '{user}'@'%' IDENTIFIED BY %s REQUIRE SSL", (password,))
-            cur.execute(f"ALTER USER '{user}'@'%' IDENTIFIED BY %s REQUIRE SSL", (password,))
+            for stmt in user_statements(user):
+                cur.execute(stmt, (password,))
             for stmt in grant_statements(role, schemas):
                 cur.execute(stmt)
             granted = "; ".join(f"{', '.join(pv)} on {schemas[k]}" for pv, k in ROLES[role])
